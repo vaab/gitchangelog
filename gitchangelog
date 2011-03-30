@@ -1,0 +1,268 @@
+#!/usr/bin/env python
+
+##
+## TODO:
+##
+##  - use an external template to format changelog
+##
+
+
+import re
+import os
+import sys
+import textwrap
+import datetime
+
+from subprocess import Popen, PIPE
+
+CONFIG_FILENAME = '~/.git-changelog.rc'
+
+
+class ShellError(Exception): pass
+
+def die(msg=None):
+    if msg: sys.stderr.write(msg + "\n")
+    sys.exit(1)
+
+
+## config file functions
+
+def load_config_file(filename, fail_if_not_present=True):
+    """Loads data from a config file."""
+
+    config = {}
+
+    if os.path.exists(filename):
+        try:
+            execfile(filename, config)
+        except SyntaxError, e:
+            die('Syntax error in config file: %s\n'
+                'Line %i offset %i\n' % (filename, e.lineno, e.offset))
+    else:
+        if fail_if_not_present:
+            die('%r is not found and is required.' % (filename, ))
+
+    return config
+
+
+## Text functions
+
+def ucfirst(msg):
+    return msg[0].upper() + msg[1:]
+
+def indent(text, chars="  ", first=None):
+    """Return text string indented with the given chars
+
+    >>> string = 'This is first line.\\nThis is second line\\n'
+
+    >>> print indent(string, chars="| ") # doctest: +NORMALIZE_WHITESPACE
+    | This is first line.
+    | This is second line
+    |
+
+    >>> print indent(string, first="- ") # doctest: +NORMALIZE_WHITESPACE
+    - This is first line.
+      This is second line
+
+
+    """
+    if first:
+        first_line = text.split("\n")[0]
+        rest = '\n'.join(text.split("\n")[1:])
+        return '\n'.join([first + first_line,
+                          indent(rest, chars=chars)])
+    return '\n'.join([chars + line
+                      for line in text.split('\n')])
+
+## System functions
+
+def cmd(command):
+
+    p = Popen(command, shell=True,
+              stdin=PIPE, stdout=PIPE, stderr=PIPE,
+              close_fds=True)
+    p.wait()
+    return p.stdin, p.stdout, p.stderr, p.returncode
+
+
+def wrap(command, quiet=True, exit_on_error=False, ignore_errlvls=[0]):
+    """Wraps a shell command and casts an exception on unexpected errlvl
+
+    >>> wrap('/tmp/lsdjflkjf') # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    Traceback (most recent call last):
+    ...
+    Exception: Wrapped command '/tmp/lsdjflkjf' exited with errorlevel 127.
+      stderr:
+      | /bin/sh: /tmp/lsdjflkjf: not found
+
+    >>> wrap('echo hello') # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    'hello\\n'
+
+
+    """
+
+    _, out, err, errlvl = cmd(command)
+
+    if errlvl not in ignore_errlvls:
+
+        err = err.read()
+        out = out.read()
+
+        formatted = []
+        if out:
+            if out.endswith('\n'):
+                out = out[0:-1]
+            formatted.append("stdout:\n%s" % indent(out, "| "))
+        if err:
+            if err.endswith('\n'):
+                err = err[0:-1]
+            formatted.append("stderr:\n%s" % indent(err, "| "))
+        formatted = '\n'.join(formatted)
+
+        raise ShellError("Wrapped command %r exited with errorlevel %d.\n%s"
+                        % (command, errlvl, indent(formatted, chars="  ")))
+    return out.read()
+
+## git information access
+
+class GitCommit(object):
+
+    def __init__(self, identifier, repos):
+        self.repos = repos
+        self.identifier = identifier
+
+        attrs = {'sha1': "%h",
+                 'subject': "%s",
+                 'author_name': "%an",
+                 'author_date': "%ad",
+                 'committer_name': "%cn",
+                 'committer_date_timestamp': "%ct",
+                 'raw_body': "%B",
+                 'body': "%b",
+                 }
+        aformat = "%x00".join(attrs.values())
+        try:
+            ret = wrap("git show -s %r --pretty=format:%s" % (identifier, aformat))
+        except ShellError:
+            raise ValueError("Given commit identifier %r doesn't exists"
+                             % identifier)
+        attr_values = ret.split("\x00")
+        for attr, value in zip(attrs.keys(), attr_values):
+            setattr(self, attr, value)
+
+    @property
+    def date(self):
+        d = datetime.datetime.utcfromtimestamp(float(self.committer_date_timestamp))
+        return d.strftime('%Y-%m-%d')
+
+    def __sub__(self, value):
+        if not isinstance(value, GitCommit):
+            raise TypeError("Invalid type for %r in operation" % value)
+        commits = wrap('git rev-list %s..%s'
+                                   % (self.identifier,
+                                      value.identifier)).strip()
+        if not commits:
+            raise ValueError('Seems that %r is earlier than %r'
+                             % (self.identifier, value.identifier))
+        return [GitCommit(commit, self.repos)
+                for commit in reversed(commits.split('\n'))]
+
+    def __repr__(self):
+        return "<%s %r>" % (self.__class__.__name__, self.identifier)
+
+
+class GitRepos(object):
+
+    def __init__(self, path):
+
+        self.path = path
+
+    @property
+    def tags(self):
+        tags = wrap('git tag -l').strip().split("\n")
+        return [GitCommit(tag, self) for tag in tags]
+
+
+    def changelog(self, ignore_regexps=[],
+                  replace_regexps={}):
+
+        s =  "Changelog\n"
+        s += "=========\n\n"
+        tags = list(reversed(self.tags))
+        nb_tags = len(tags)
+
+        for i, tag in enumerate(tags):
+            entry = ""
+            if i == 0:
+                title = "%%version%% (unreleased)\n"
+                previous_tag = GitCommit("HEAD", self)
+            else:
+                title = "%s (%s)\n" % (tag.identifier, tag.date)
+                previous_tag = tags[i - 1]
+
+            entry += title
+            entry += "-" * (len(title) - 1) + "\n\n"
+
+            for commit in self[tag, previous_tag]:
+                subject = commit.subject.strip()
+                body = commit.body.strip()
+                if any([re.match(pattern, subject) is not None
+                        for pattern in ignore_regexps]):
+                    continue
+                for regexp, replacement in replace_regexps.iteritems():
+                    subject = re.sub(regexp, replacement, subject)
+
+                entry += indent('\n'.join(textwrap.wrap(ucfirst(subject))),
+                                first="- ").strip() + "\n\n"
+
+                if body.strip():
+                    entry += indent('\n'.join(textwrap.wrap(body))) + "\n"
+
+            s += entry + "\n"
+
+        return s
+
+    def __getitem__(self, key):
+
+        if isinstance(key, basestring):
+            return GitCommit(key, self)
+
+        start, stop = key
+
+        if start is None:
+            raise NotImplementedError(
+                "Could not get a slice from start for now")
+
+        if stop is None:
+            stop = GitCommit('HEAD', self)
+
+        return start - stop
+
+## MAIN CODE
+
+if __name__ == "__main__":
+    import sys
+    import os.path
+
+    basename = os.path.basename(sys.argv[0])
+    
+    if len(sys.argv) == 1:
+        repos = "."
+    elif len(sys.argv) == 2:
+        repos = sys.argv[1]
+    else:
+        die('usage: %s [REPOS]\n' % basename)
+
+    ## warning: not safe (repos is given by the user)
+    changelogrc = wrap("cd %r; git config git-changelog-rc" % repos,
+                       ignore_errlvls=[0,1])
+
+    if not changelogrc:
+        changelogrc = CONFIG_FILENAME
+
+    config = load_config_file(os.path.expanduser(changelogrc))
+
+    print GitRepos(repos).changelog(
+        ignore_regexps=config['ignore_regexps'],
+        replace_regexps=config['replace_regexps'],
+    )

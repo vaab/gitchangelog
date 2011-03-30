@@ -1,0 +1,13 @@
+
+ignore_regexps = ['^Back to development',
+                  '^Tag version',
+                  '^Prepare to release',
+                  '^Prepare release',
+                  '^Merge branch']
+
+replace_regexps = {
+    r'^(chg|fix|new)\s*:\s*(dev|usr|pkg)\s*:\s*([^\n]*)$': r'\3',
+    r'^\[[^\]]+\]\s*([^\n]*)$': r'\1',
+    r'^[A-Z]+\s*:\s*([^\n]*)$': r'\1',
+}
+
