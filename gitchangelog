@@ -17,6 +17,21 @@ from subprocess import Popen, PIPE
 
 CONFIG_FILENAME = '~/.git-changelog.rc'
 
+help="""usage: %(exname)s
+
+Run this command somewhere in a git repository to get a ReST changelog in
+stdout.
+
+%(exname)s uses a config file to remove some commit or do some regexp-replace
+ in commit messages thanks to a config file.
+
+Config file path can be set to be local to a git repository by using:
+
+  $ git config git-changelog-rc <MY-LOCAL-PATH>
+
+If this value is not set, %(CONFIG_FILENAME)r is used.
+"""
+
 
 class ShellError(Exception): pass
 
@@ -241,14 +256,19 @@ class GitRepos(object):
 ## MAIN CODE
 
 if __name__ == "__main__":
+
     import sys
     import os.path
 
     basename = os.path.basename(sys.argv[0])
-    
+
     if len(sys.argv) == 1:
         repos = "."
     elif len(sys.argv) == 2:
+        if sys.argv[1] == "--help":
+            print help % {'exname': basename,
+                          'CONFIG_FILENAME': CONFIG_FILENAME}
+            sys.exit(0)
         repos = sys.argv[1]
     else:
         die('usage: %s [REPOS]\n' % basename)
