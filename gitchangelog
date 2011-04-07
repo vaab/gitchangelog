@@ -173,6 +173,8 @@ class GitCommit(object):
     def __sub__(self, value):
         if not isinstance(value, GitCommit):
             raise TypeError("Invalid type for %r in operation" % value)
+        if self.sha1 == value.sha1:
+            return []
         commits = wrap('git rev-list %s..%s'
                                    % (self.identifier,
                                       value.identifier)).strip()
