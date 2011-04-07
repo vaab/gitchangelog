@@ -1,13 +1,46 @@
 
-ignore_regexps = ['^Back to development',
-                  '^Tag version',
-                  '^Prepare to release',
-                  '^Prepare release',
-                  '^Merge branch']
+CURRENT_FORMAT =  r'^(chg|fix|new)\s*:\s*(dev|usr|pkg)\s*:\s*([^\n]*)$'
+OLD_FORMAT =      r'^\[[^\]]+\]\s*([^\n]*)$'
+VERY_OLD_FORMAT = r'^[A-Z]+\s*:\s*([^\n]*)$'
+
+
+ignore_regexps = [r'^Back to development',
+                  r'^Tag version',
+                  r'^Prepare to release',
+                  r'^Prepare release',
+                  r'^Merge branch',
+                  r'.*[cC]osmetic',
+                  r'.*[cC]leanup',
+                  r'.*[vV]arious',
+                  r'.*[mM][aA][nN][iI][fF][eE][sS][tT].in',
+                  r'.*buildout.cfg',
+                  ]
+
 
 replace_regexps = {
-    r'^(chg|fix|new)\s*:\s*(dev|usr|pkg)\s*:\s*([^\n]*)$': r'\3',
-    r'^\[[^\]]+\]\s*([^\n]*)$': r'\1',
-    r'^[A-Z]+\s*:\s*([^\n]*)$': r'\1',
+    ## current format (ie: 'chg: dev: my commit msg')
+
+    CURRENT_FORMAT: r'\3',
+
+    ## old format (ie: '[US67TOTO3] my commit msg')
+
+    OLD_FORMAT: r'\1',
+
+    ## very old format (ie: 'PACKAGING: my commit msg')
+
+    VERY_OLD_FORMAT: r'\1',
+}
+
+
+section_regexps = {
+    'New': [
+        r'^new\s*:\s*(dev|usr|pkg)\s*:\s*([^\n]*)$',
+    ],
+    'Changes': [
+        r'^chg\s*:\s*(dev|usr|pkg)\s*:\s*([^\n]*)$',
+    ],
+    'Fix': [
+        r'^fix\s*:\s*(dev|usr|pkg)\s*:\s*([^\n]*)$',
+    ],
 }
 
