@@ -206,6 +206,8 @@ class GitRepos(object):
     @property
     def tags(self):
         tags = wrap('git tag -l').strip().split("\n")
+	if '' in tags:
+            tags.remove('')
         return [GitCommit(tag, self) for tag in tags]
 
 
