@@ -217,7 +217,8 @@ class GitRepos(object):
 
     def changelog(self, ignore_regexps=[],
                   replace_regexps={},
-                  section_regexps={}):
+                  section_regexps={},
+                  unreleased_version_label="unreleased"):
 
         s =  "Changelog\n"
         s += "=========\n\n"
@@ -226,7 +227,7 @@ class GitRepos(object):
 
         for i, tag in enumerate(tags):
             if i == 0:
-                title = "%%version%% (unreleased)\n"
+                title = unreleased_version_label + "\n"
                 previous_tag = GitCommit("HEAD", self)
             else:
                 previous_tag = tags[i - 1]
@@ -336,4 +337,5 @@ if __name__ == "__main__":
         ignore_regexps=config['ignore_regexps'],
         replace_regexps=config['replace_regexps'],
         section_regexps=config['section_regexps'],
+        unreleased_version_label=config['unreleased_version_label'],
     )

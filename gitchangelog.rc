@@ -3,6 +3,7 @@ CURRENT_FORMAT =  r'^(chg|fix|new)\s*:\s*(dev|usr|pkg)\s*:\s*([^\n]*)$'
 OLD_FORMAT =      r'^\[[^\]]+\]\s*([^\n]*)$'
 VERY_OLD_FORMAT = r'^[A-Z]+\s*:\s*([^\n]*)$'
 
+unreleased_version_label = "%%version%% (unreleased)"
 
 ignore_regexps = [r'^Back to development',
                   r'^Tag version',
