@@ -321,7 +321,7 @@ if __name__ == "__main__":
 
     ## warning: not safe (repos is given by the user)
     changelogrc = wrap("cd %r; git config git-changelog-rc" % repos,
-                       ignore_errlvls=[0,1])
+                       ignore_errlvls=[0,1,255])
 
     if not changelogrc:
         changelogrc = CONFIG_FILENAME
