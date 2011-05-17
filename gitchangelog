@@ -136,7 +136,7 @@ def wrap(command, quiet=True, exit_on_error=False, ignore_errlvls=[0]):
     >>> wrap('/tmp/lsdjflkjf') # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     Traceback (most recent call last):
     ...
-    Exception: Wrapped command '/tmp/lsdjflkjf' exited with errorlevel 127.
+    ShellError: Wrapped command '/tmp/lsdjflkjf' exited with errorlevel 127.
       stderr:
       | /bin/sh: /tmp/lsdjflkjf: not found
 
