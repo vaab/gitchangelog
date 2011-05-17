@@ -279,7 +279,7 @@ class GitRepos(object):
                         s += "~" * len(section_label) + "\n\n"
 
                     for entry in entries:
-                        s += entry 
+                        s += entry
 
         return s
 
