@@ -299,7 +299,11 @@ class GitRepos(object):
                 s += "-" * (len(title) - 1) + "\n\n"
 
                 nb_sections = len(sections)
-                for section, entries in sections.iteritems():
+                for section, _ in section_regexps:
+                    entries = sections.get(section)
+                    if entries is None:
+                        continue
+
                     section_label = section if section else "Other"
 
                     if not (section_label == "Other" and nb_sections == 1):
