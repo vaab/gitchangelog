@@ -49,3 +49,4 @@ section_regexps = (
 
 )
 
+body_split_regexp = r'(^|\n)\w+\s*:'

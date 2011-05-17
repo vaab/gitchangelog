@@ -101,6 +101,24 @@ def indent(text, chars="  ", first=None):
     return '\n'.join([chars + line
                       for line in text.split('\n')])
 
+
+def paragraph_wrap(text, regexp="\n\n"):
+    r"""Wrap text by making sure that paragraph are separated correctly
+
+    >>> string = 'This is first paragraph which is quite long don\'t you \
+    ... think ? Well, I think so.\n\nThis is second paragraph\n'
+
+    >>> print paragraph_wrap(string) # doctest: +NORMALIZE_WHITESPACE
+    This is first paragraph which is quite long don't you think ? Well, I
+    think so.
+    This is second paragraph
+
+    Notice that that each paragraph has been wrapped separately.
+
+    """
+    return "\n".join("\n".join(textwrap.wrap(paragraph.strip()))
+                     for paragraph in re.compile(regexp).split(text)).strip()
+
 ## System functions
 
 def cmd(command):
@@ -218,7 +236,9 @@ class GitRepos(object):
     def changelog(self, ignore_regexps=[],
                   replace_regexps={},
                   section_regexps={},
-                  unreleased_version_label="unreleased"):
+                  unreleased_version_label="unreleased",
+                  body_split_regexp="\n\n",
+                  ):
 
         s =  "Changelog\n"
         s += "=========\n\n"
@@ -269,7 +289,8 @@ class GitRepos(object):
                                first="- ").strip() + "\n\n"
 
                 if commit.body:
-                    entry += indent('\n'.join(textwrap.wrap(commit.body))) + "\n\n"
+                    entry += indent(paragraph_wrap(commit.body,
+                                                   regexp=body_split_regexp)) + "\n\n"
 
                 sections[matched_section].append(entry)
 
@@ -340,4 +361,5 @@ if __name__ == "__main__":
         replace_regexps=config['replace_regexps'],
         section_regexps=config['section_regexps'],
         unreleased_version_label=config['unreleased_version_label'],
+        body_split_regexp=config['body_split_regexp'],
     )
