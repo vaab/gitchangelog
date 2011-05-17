@@ -69,6 +69,8 @@ def ucfirst(msg):
 
 
 def final_dot(msg):
+    if len(msg) == 0:
+        return "No commit message."
     if msg[-1] == ".":
         return msg
     else:
