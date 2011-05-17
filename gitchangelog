@@ -211,7 +211,8 @@ class GitRepos(object):
         tags = wrap('git tag -l').strip().split("\n")
 	if '' in tags:
             tags.remove('')
-        return [GitCommit(tag, self) for tag in tags]
+        return sorted([GitCommit(tag, self) for tag in tags],
+                      key=lambda x: int(x.committer_date_timestamp))
 
 
     def changelog(self, ignore_regexps=[],
