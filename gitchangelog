@@ -246,7 +246,9 @@ class GitRepos(object):
                 ## Put message in sections if possible
 
                 def first_matching(replace_regexps, string):
-                    for section, regexps in section_regexps.iteritems():
+                    for section, regexps in section_regexps:
+                        if regexps is None:
+                            return section
                         for regexp in regexps:
                             if re.match(regexp, commit.subject) is not None:
                                 return section

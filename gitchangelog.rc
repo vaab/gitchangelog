@@ -1,5 +1,5 @@
 
-CURRENT_FORMAT =  r'^(chg|fix|new)\s*:\s*(dev|usr|pkg)\s*:\s*([^\n]*)$'
+CURRENT_FORMAT =  r'^([cC]hg|[fF]ix|[nN]ew)\s*:\s*(dev|use?r|pkg)\s*:\s*([^\n]*)$'
 OLD_FORMAT =      r'^\[[^\]]+\]\s*([^\n]*)$'
 VERY_OLD_FORMAT = r'^[A-Z]+\s*:\s*([^\n]*)$'
 
@@ -33,15 +33,19 @@ replace_regexps = {
 }
 
 
-section_regexps = {
-    'New': [
-        r'^new\s*:\s*(dev|usr|pkg)\s*:\s*([^\n]*)$',
-    ],
-    'Changes': [
-        r'^chg\s*:\s*(dev|usr|pkg)\s*:\s*([^\n]*)$',
-    ],
-    'Fix': [
-        r'^fix\s*:\s*(dev|usr|pkg)\s*:\s*([^\n]*)$',
-    ],
-}
+section_regexps = (
+    ('New', [
+	r'^[nN]ew\s*:\s*(dev|use?r|pkg)\s*:\s*([^\n]*)$',
+     ]),
+    ('Changes', [
+        r'^[cC]hg\s*:\s*(dev|use?r|pkg)\s*:\s*([^\n]*)$',
+     ]),
+    ('Fix', [
+        r'^[fF]ix\s*:\s*(dev|use?r|pkg)\s*:\s*([^\n]*)$',
+     ]),
+
+    ('Other', None ## Match all lines
+     ),
+
+)
 
