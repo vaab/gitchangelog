@@ -28,9 +28,10 @@ stdout.
 
 Config file path can be set to be local to a git repository by using:
 
-  $ git config git-changelog-rc <MY-LOCAL-PATH>
+  $ git config git-changelog.rc-path <MY-LOCAL-PATH>
 
 If this value is not set, %(CONFIG_FILENAME)r is used.
+
 """
 
 
@@ -320,7 +321,7 @@ if __name__ == "__main__":
         die('usage: %s [REPOS]\n' % basename)
 
     ## warning: not safe (repos is given by the user)
-    changelogrc = wrap("cd %r; git config git-changelog-rc" % repos,
+    changelogrc = wrap("cd %r; git config git-changelog.rc-path" % repos,
                        ignore_errlvls=[0,1,255])
 
     if not changelogrc:
