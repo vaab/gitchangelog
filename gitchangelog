@@ -334,6 +334,10 @@ if __name__ == "__main__":
     import sys
     import os.path
 
+    # import doctest
+    # doctest.testmod()
+    # sys.exit(1)
+
     basename = os.path.basename(sys.argv[0])
 
     if len(sys.argv) == 1:
