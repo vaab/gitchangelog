@@ -176,6 +176,9 @@ class GitCommit(object):
         self.repos = repos
         self.identifier = identifier
 
+        if identifier is "LAST":
+            identifier = wrap("git log --format=%H | tail -n 1").strip()
+
         attrs = {'sha1': "%h",
                  'subject': "%s",
                  'author_name': "%an",
@@ -206,8 +209,7 @@ class GitCommit(object):
         if self.sha1 == value.sha1:
             return []
         commits = wrap('git rev-list %s..%s'
-                                   % (self.identifier,
-                                      value.identifier)).strip()
+                       % (value.sha1, self.sha1)).strip()
         if not commits:
             raise ValueError('Seems that %r is earlier than %r'
                              % (self.identifier, value.identifier))
