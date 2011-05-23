@@ -242,74 +242,22 @@ class GitRepos(object):
         return sorted([GitCommit(tag, self) for tag in tags],
                       key=lambda x: int(x.committer_date_timestamp))
 
-
     def changelog(self, ignore_regexps=[],
                   replace_regexps={},
                   section_regexps={},
                   unreleased_version_label="unreleased",
+                  tag_filter_regexp=r"\d+\.\d+(\.\d+)?",
                   body_split_regexp="\n\n",
                   ):
 
-        s =  "Changelog\n"
-        s += "=========\n\n"
-        tags = list(reversed(self.tags))
-        nb_tags = len(tags)
-
-        for i, tag in enumerate(tags):
-            if i == 0:
-                title = unreleased_version_label + "\n"
-                previous_tag = GitCommit("HEAD", self)
-            else:
-                previous_tag = tags[i - 1]
-                title = "%s (%s)\n" % (previous_tag.identifier, tag.date)
-
-            sections = collections.defaultdict(list)
-
-            for commit in reversed(self[previous_tag, tag]):
-
-                ## Ignore some commit subject
-
-                if any([re.match(pattern, commit.subject) is not None
-                        for pattern in ignore_regexps]):
-                    continue
-
-                ## Put message in sections if possible
-
-                def first_matching(replace_regexps, string):
-                    for section, regexps in section_regexps:
-                        if regexps is None:
-                            return section
-                        for regexp in regexps:
-                            if re.match(regexp, commit.subject) is not None:
-                                return section
-
-                matched_section = first_matching(replace_regexps, commit.subject)
-
-                ## Replace content in commit subject
-
-                subject = commit.subject
-                for regexp, replacement in replace_regexps.iteritems():
-                    subject = re.sub(regexp, replacement, subject)
-
-                ## Finaly print out the commit
-
-                subject = final_dot(subject)
-                subject += " [%s]" % (commit.author_name, )
-                entry = indent('\n'.join(textwrap.wrap(ucfirst(subject))),
-                               first="- ").strip() + "\n\n"
-
-                if commit.body:
-                    entry += indent(paragraph_wrap(commit.body,
-                                                   regexp=body_split_regexp)) + "\n\n"
-
-                sections[matched_section].append(entry)
-
+        def make_section_string(title, section, section_label_order):
+            s = ""
             if len(sections) != 0:
                 s += title
                 s += "-" * (len(title) - 1) + "\n\n"
 
                 nb_sections = len(sections)
-                for section, _ in section_regexps:
+                for section in section_label_order:
                     entries = sections.get(section)
                     if entries is None:
                         continue
@@ -322,7 +270,74 @@ class GitRepos(object):
 
                     for entry in entries:
                         s += entry
+            return s
 
+
+        s =  "Changelog\n"
+        s += "=========\n\n"
+
+
+        tags = [tag
+                for tag in list(reversed(self.tags))
+                if re.match(tag_filter_regexp, tag.identifier)]
+
+        section_order = [k for k, v in section_regexps]
+
+
+        title = unreleased_version_label + "\n"
+        sections = collections.defaultdict(list)
+
+        for commit in reversed(self[:]):
+
+            tags_of_commit = [tag for tag in tags
+                             if tag == commit]
+            if len(tags_of_commit) > 0:
+                tag = tags_of_commit[0]
+                ## End of sections, let's flush current one.
+                s += make_section_string(title, sections, section_order)
+
+                title = "%s (%s)\n" % (tag.identifier, commit.date)
+                sections = collections.defaultdict(list)
+
+            ## Ignore some commit subject
+
+            if any([re.match(pattern, commit.subject) is not None
+                    for pattern in ignore_regexps]):
+                continue
+
+            ## Put message in sections if possible
+
+            def first_matching(replace_regexps, string):
+                for section, regexps in section_regexps:
+                    if regexps is None:
+                        return section
+                    for regexp in regexps:
+                        if re.match(regexp, commit.subject) is not None:
+                            return section
+
+            matched_section = first_matching(replace_regexps, commit.subject)
+
+            ## Replace content in commit subject
+
+            subject = commit.subject
+            for regexp, replacement in replace_regexps.iteritems():
+                subject = re.sub(regexp, replacement, subject)
+
+            ## Finaly print out the commit
+
+            subject = final_dot(subject)
+            subject += " [%s]" % (commit.author_name, )
+            entry = indent('\n'.join(textwrap.wrap(ucfirst(subject))),
+                           first="- ").strip() + "\n\n"
+
+            if commit.body:
+                entry += indent(paragraph_wrap(commit.body,
+                                               regexp=body_split_regexp)) + "\n\n"
+
+            sections[matched_section].append(entry)
+
+
+        s += make_section_string(title, sections, section_order)
         return s
 
     def __getitem__(self, key):
@@ -330,16 +345,17 @@ class GitRepos(object):
         if isinstance(key, basestring):
             return GitCommit(key, self)
 
-        start, stop = key
+        if isinstance(key, slice):
+            start, stop = key.start, key.stop
 
-        if start is None:
-            raise NotImplementedError(
-                "Could not get a slice from start for now")
+            if start is None:
+                start = GitCommit('LAST', self)
 
-        if stop is None:
-            stop = GitCommit('HEAD', self)
+            if stop is None:
+                stop = GitCommit('HEAD', self)
 
-        return stop - start
+            return stop - start
+        raise NotImplemented("Unsupported getitem %r object." % key)
 
 ## MAIN CODE
 
@@ -379,5 +395,6 @@ if __name__ == "__main__":
         replace_regexps=config['replace_regexps'],
         section_regexps=config['section_regexps'],
         unreleased_version_label=config['unreleased_version_label'],
+        tag_filter_regexp=config['tag_filter_regexp'],
         body_split_regexp=config['body_split_regexp'],
     )
