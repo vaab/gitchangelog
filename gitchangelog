@@ -203,6 +203,14 @@ class GitCommit(object):
         d = datetime.datetime.utcfromtimestamp(float(self.committer_date_timestamp))
         return d.strftime('%Y-%m-%d')
 
+    def __eq__(self, value):
+        if not isinstance(value, GitCommit):
+            return False
+        return self.sha1 == value.sha1
+
+    def __hash__(self):
+        return hash(self.sha1)
+
     def __sub__(self, value):
         if not isinstance(value, GitCommit):
             raise TypeError("Invalid type for %r in operation" % value)
