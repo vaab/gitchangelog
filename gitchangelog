@@ -116,8 +116,9 @@ def paragraph_wrap(text, regexp="\n\n"):
     Notice that that each paragraph has been wrapped separately.
 
     """
+    regexp = re.compile(regexp, re.MULTILINE)
     return "\n".join("\n".join(textwrap.wrap(paragraph.strip()))
-                     for paragraph in re.compile(regexp).split(text)).strip()
+                     for paragraph in regexp.split(text)).strip()
 
 ## System functions
 
