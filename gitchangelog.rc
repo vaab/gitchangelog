@@ -48,6 +48,6 @@ section_regexps = (
 
 )
 
-body_split_regexp = r'^\w+\s*:'
+body_split_regexp = r'\n(?=\w+\s*:)'
 
 tag_filter_regexp = r'^[0-9]+\.[0-9]+(\.[0-9]+)?$'
