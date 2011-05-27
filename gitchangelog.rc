@@ -13,7 +13,7 @@ ignore_regexps = [r'^Back to development',
                   r'.*[cC]osmetic',
                   r'.*[cC]leanup',
                   r'.*[vV]arious',
-                  r'.*[mM][aA][nN][iI][fF][eE][sS][tT].in',
+                  r'.*(?i)manifest.in',
                   ]
 
 

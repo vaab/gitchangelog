@@ -235,7 +235,7 @@ class GitRepos(object):
     @property
     def tags(self):
         tags = wrap('git tag -l').strip().split("\n")
-	if '' in tags:
+	while '' in tags:
             tags.remove('')
         return sorted([GitCommit(tag, self) for tag in tags],
                       key=lambda x: int(x.committer_date_timestamp))
@@ -251,13 +251,13 @@ class GitRepos(object):
         def make_section_string(title, section, section_label_order):
             s = ""
             if len(sections) != 0:
-                s += title
-                s += "-" * (len(title) - 1) + "\n\n"
+                title = title.strip()
+                s += title + "\n"
+                s += "-" * len(title) + "\n\n"
 
                 nb_sections = len(sections)
                 for section in section_label_order:
-                    entries = sections.get(section)
-                    if entries is None:
+                    if section not in sections:
                         continue
 
                     section_label = section if section else "Other"
@@ -266,7 +266,7 @@ class GitRepos(object):
                         s += section_label + "\n"
                         s += "~" * len(section_label) + "\n\n"
 
-                    for entry in entries:
+                    for entry in sections[section]:
                         s += entry
             return s
 
@@ -276,7 +276,7 @@ class GitRepos(object):
 
 
         tags = [tag
-                for tag in list(reversed(self.tags))
+                for tag in reversed(self.tags)
                 if re.match(tag_filter_regexp, tag.identifier)]
 
         section_order = [k for k, v in section_regexps]
