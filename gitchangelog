@@ -127,8 +127,8 @@ def cmd(command):
     p = Popen(command, shell=True,
               stdin=PIPE, stdout=PIPE, stderr=PIPE,
               close_fds=True)
-    p.wait()
-    return p.stdin, p.stdout, p.stderr, p.returncode
+    stdout, stderr = p.communicate()
+    return p.stdin, stdout, stderr, p.returncode
 
 
 def wrap(command, quiet=True, exit_on_error=False, ignore_errlvls=[0]):
@@ -151,9 +151,6 @@ def wrap(command, quiet=True, exit_on_error=False, ignore_errlvls=[0]):
 
     if errlvl not in ignore_errlvls:
 
-        err = err.read()
-        out = out.read()
-
         formatted = []
         if out:
             if out.endswith('\n'):
@@ -167,7 +164,7 @@ def wrap(command, quiet=True, exit_on_error=False, ignore_errlvls=[0]):
 
         raise ShellError("Wrapped command %r exited with errorlevel %d.\n%s"
                         % (command, errlvl, indent(formatted, chars="  ")))
-    return out.read()
+    return out
 
 ## git information access
 
