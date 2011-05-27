@@ -128,7 +128,7 @@ def cmd(command):
               stdin=PIPE, stdout=PIPE, stderr=PIPE,
               close_fds=True)
     stdout, stderr = p.communicate()
-    return p.stdin, stdout, stderr, p.returncode
+    return stdout, stderr, p.returncode
 
 
 def wrap(command, quiet=True, exit_on_error=False, ignore_errlvls=[0]):
@@ -147,7 +147,7 @@ def wrap(command, quiet=True, exit_on_error=False, ignore_errlvls=[0]):
 
     """
 
-    _, out, err, errlvl = cmd(command)
+    out, err, errlvl = cmd(command)
 
     if errlvl not in ignore_errlvls:
 
