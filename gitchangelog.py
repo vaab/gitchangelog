@@ -73,10 +73,9 @@ def ucfirst(msg):
 def final_dot(msg):
     if len(msg) == 0:
         return "No commit message."
-    if msg[-1] == ".":
-        return msg
-    else:
+    if msg[-1].isalnum():
         return msg + "."
+    return msg
 
 
 def indent(text, chars="  ", first=None):
@@ -156,11 +155,11 @@ def wrap(command, quiet=True, exit_on_error=False, ignore_errlvls=[0]):
         formatted = []
         if out:
             if out.endswith('\n'):
-                out = out[0:-1]
+                out = out[:-1]
             formatted.append("stdout:\n%s" % indent(out, "| "))
         if err:
             if err.endswith('\n'):
-                err = err[0:-1]
+                err = err[:-1]
             formatted.append("stderr:\n%s" % indent(err, "| "))
         formatted = '\n'.join(formatted)
 
