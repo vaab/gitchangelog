@@ -9,6 +9,7 @@
 
 import re
 import os
+import os.path
 import sys
 import textwrap
 import datetime
@@ -355,16 +356,8 @@ class GitRepos(object):
             return stop - start
         raise NotImplemented("Unsupported getitem %r object." % key)
 
-## MAIN CODE
 
-if __name__ == "__main__":
-
-    import sys
-    import os.path
-
-    # import doctest
-    # doctest.testmod()
-    # sys.exit(1)
+def main():
 
     basename = os.path.basename(sys.argv[0])
 
@@ -396,3 +389,13 @@ if __name__ == "__main__":
         tag_filter_regexp=config['tag_filter_regexp'],
         body_split_regexp=config['body_split_regexp'],
     )
+
+
+## MAIN CODE
+if __name__ == "__main__":
+
+    # import doctest
+    # doctest.testmod()
+    # sys.exit(1)
+
+    main()
