@@ -20,6 +20,7 @@ sample configuration file provided in the github repository
 http://github.com/securactive/gitchangelog/blob/master/gitchangelog.rc.sample
 
 The changelog of gitchangelog is generated with himself and with the sample
-configuration file. Please have a look and enjoy.
+configuration file. You'll see the changelog in the PyPI page http://pypi.python.org/pypi/gitchangelog.
 
+Please have a look and enjoy.
 
