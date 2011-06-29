@@ -5,7 +5,7 @@ git-changelog
 Translate ``git log`` output to a configurable changelog.
 
 Feature
--------
+=======
 
   - ignore commit message based on regexp matching
   - refactor commit message displayed on the fly with replace regexp
@@ -13,7 +13,7 @@ Feature
   - filter out tags by regexps
 
 Usage
------
+=====
 
 As documentation is really scarse for the moment, please take a look at this
 sample configuration file provided in the github repository
