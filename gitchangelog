@@ -17,7 +17,8 @@ import collections
 
 from subprocess import Popen, PIPE
 
-CONFIG_FILENAME = '~/.git-changelog.rc'
+CONFIG_FILENAME = os.environ.get('GITCHANGELOG_CONFIG_FILENAME',
+                                 '~/.git-changelog.rc')
 
 help="""usage: %(exname)s
 
@@ -58,7 +59,7 @@ def load_config_file(filename, fail_if_not_present=True):
                 'Line %i offset %i\n' % (filename, e.lineno, e.offset))
     else:
         if fail_if_not_present:
-            die('%r is not found and is required.' % (filename, ))
+            die('%r config file is not found and is required.' % (filename, ))
 
     return config
 
