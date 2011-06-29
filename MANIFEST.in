@@ -1,0 +1,2 @@
+include gitchangelog.py
+include *.rst
