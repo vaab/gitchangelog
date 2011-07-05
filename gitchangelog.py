@@ -18,7 +18,7 @@ import collections
 from subprocess import Popen, PIPE
 
 CONFIG_FILENAME = os.environ.get('GITCHANGELOG_CONFIG_FILENAME',
-                                 '~/.git-changelog.rc')
+                                 '~/.gitchangelog.rc')
 
 help="""usage: %(exname)s
 
@@ -30,7 +30,7 @@ stdout.
 
 Config file path can be set to be local to a git repository by using:
 
-  $ git config git-changelog.rc-path <MY-LOCAL-PATH>
+  $ git config gitchangelog.rc-path <MY-LOCAL-PATH>
 
 If this value is not set, %(CONFIG_FILENAME)r is used.
 
@@ -373,7 +373,7 @@ def main():
         die('usage: %s [REPOS]\n' % basename)
 
     ## warning: not safe (repos is given by the user)
-    changelogrc = wrap("cd %r; git config git-changelog.rc-path" % repos,
+    changelogrc = wrap("cd %r; git config gitchangelog.rc-path" % repos,
                        ignore_errlvls=[0,1,255])
 
     if not changelogrc:
