@@ -300,8 +300,7 @@ class GitRepos(object):
                 sections = collections.defaultdict(list)
 
             ## Ignore some commit subject
-
-            if any([re.match(pattern, commit.subject) is not None
+            if any([re.search(pattern, commit.subject) is not None
                     for pattern in ignore_regexps]):
                 continue
 
