@@ -182,6 +182,7 @@ class GitCommit(object):
                  'subject': "%s",
                  'author_name': "%an",
                  'author_date': "%ad",
+                 'author_date_timestamp': "%at",
                  'committer_name': "%cn",
                  'committer_date_timestamp': "%ct",
                  'raw_body': "%B",
@@ -199,7 +200,7 @@ class GitCommit(object):
 
     @property
     def date(self):
-        d = datetime.datetime.utcfromtimestamp(float(self.committer_date_timestamp))
+        d = datetime.datetime.utcfromtimestamp(float(self.author_date_timestamp))
         return d.strftime('%Y-%m-%d')
 
     def __eq__(self, value):
