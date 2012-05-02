@@ -69,7 +69,7 @@ ignore_regexps = [
 replace_regexps = {
     ## current format (ie: 'chg: dev: my commit msg @tag1 @tag2')
 
-    r'^([cC]hg|[fF]ix|[nN]ew)\s*:\s*((dev|use?r|pkg|test)\s*:\s*)?([^\n@]*)(@[a-z]+\s+)*$':
+    r'^([cC]hg|[fF]ix|[nN]ew)\s*:\s*((dev|use?r|pkg|test|doc)\s*:\s*)?([^\n@]*)(@[a-z]+\s+)*$':
 	r'\4',
 }
 
@@ -83,13 +83,13 @@ replace_regexps = {
 ##
 section_regexps = [
     ('New', [
-	r'^[nN]ew\s*:\s*((dev|use?r|pkg)\s*:\s*)?([^\n]*)$',
+	r'^[nN]ew\s*:\s*((dev|use?r|pkg|test|doc)\s*:\s*)?([^\n]*)$',
      ]),
     ('Changes', [
-        r'^[cC]hg\s*:\s*((dev|use?r|pkg)\s*:\s*)?([^\n]*)$',
+        r'^[cC]hg\s*:\s*((dev|use?r|pkg|test|doc)\s*:\s*)?([^\n]*)$',
      ]),
     ('Fix', [
-        r'^[fF]ix\s*:\s*((dev|use?r|pkg)\s*:\s*)?([^\n]*)$',
+        r'^[fF]ix\s*:\s*((dev|use?r|pkg|test|doc)\s*:\s*)?([^\n]*)$',
      ]),
 
     ('Other', None ## Match all lines
