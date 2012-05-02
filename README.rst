@@ -17,7 +17,7 @@ Usage
 
 As documentation is really scarse for the moment, please take a look at this
 sample configuration file provided in the github repository
-http://github.com/securactive/gitchangelog/blob/master/gitchangelog.rc.sample
+http://github.com/vaab/gitchangelog/blob/master/gitchangelog.rc.sample
 
 The changelog of gitchangelog is generated with himself and with the sample
 configuration file. You'll see the changelog in the PyPI page http://pypi.python.org/pypi/gitchangelog.
