@@ -144,7 +144,7 @@ def cmd(command):
     return stdout, stderr, p.returncode
 
 
-def wrap(command, quiet=True, exit_on_error=False, ignore_errlvls=[0]):
+def wrap(command, quiet=True, ignore_errlvls=[0]):
     """Wraps a shell command and casts an exception on unexpected errlvl
 
     >>> wrap('/tmp/lsdjflkjf') # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -319,15 +319,15 @@ class GitRepos(object):
 
             ## Put message in sections if possible
 
-            def first_matching(replace_regexps, string):
+            def first_matching(section_regexps, string):
                 for section, regexps in section_regexps:
                     if regexps is None:
                         return section
                     for regexp in regexps:
-                        if re.match(regexp, commit.subject) is not None:
+                        if re.search(regexp, string) is not None:
                             return section
 
-            matched_section = first_matching(replace_regexps, commit.subject)
+            matched_section = first_matching(section_regexps, commit.subject)
 
             ## Replace content in commit subject
 
