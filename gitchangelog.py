@@ -179,6 +179,12 @@ def wrap(command, quiet=True, ignore_errlvls=[0]):
     return out
 
 
+def swrap(command, **kwargs):
+    """Same as ``wrap(...)`` but strips the output."""
+
+    return wrap(command, **kwargs).strip()
+
+
 ##
 ## git information access
 ##
@@ -191,7 +197,7 @@ class GitCommit(object):
         self.identifier = identifier
 
         if identifier is "LAST":
-            identifier = wrap("git log --format=%H | tail -n 1").strip()
+            identifier = self.swrap("git log --format=%H | tail -n 1")
 
         attrs = {'sha1': "%h",
                  'subject': "%s",
@@ -205,13 +211,18 @@ class GitCommit(object):
                  }
         aformat = "%x00".join(attrs.values())
         try:
-            ret = wrap("git show -s %r --pretty=format:%s" % (identifier, aformat))
+            ret = self.swrap("git show -s %r --pretty=format:%s"
+                       % (identifier, aformat))
         except ShellError:
             raise ValueError("Given commit identifier %r doesn't exists"
                              % identifier)
         attr_values = ret.split("\x00")
         for attr, value in zip(attrs.keys(), attr_values):
             setattr(self, attr, value.strip())
+
+    def swrap(self, *args, **kwargs):
+        """Simple delegation to ``repos`` original method."""
+        return self.repos.swrap(*args, **kwargs)
 
     @property
     def date(self):
@@ -232,8 +243,8 @@ class GitCommit(object):
             raise TypeError("Invalid type for %r in operation" % value)
         if self.sha1 == value.sha1:
             return []
-        commits = wrap('git rev-list %s..%s'
-                       % (value.sha1, self.sha1)).strip()
+        commits = self.swrap('git rev-list %s..%s'
+                             % (value.sha1, self.sha1))
         if not commits:
             raise ValueError('Seems that %r is earlier than %r'
                              % (self.identifier, value.identifier))
@@ -248,12 +259,20 @@ class GitRepos(object):
 
     def __init__(self, path):
 
-        self.path = path
+        ## Saving this original path to ensure all future git commands
+        ## will be done from this location.
+        self._orig_path = os.path.abspath(path)
+
+    def swrap(self, command, **kwargs):
+        """Essential force the CWD of the command to be in self._orig_path"""
+
+        command = "cd %s; %s" % (self._orig_path, command)
+        return swrap(command, **kwargs)
 
     @property
     def tags(self):
-        tags = wrap('git tag -l').strip().split("\n")
-	while '' in tags:
+        tags = self.swrap('git tag -l').split("\n")
+        while '' in tags:
             tags.remove('')
         return sorted([GitCommit(tag, self) for tag in tags],
                       key=lambda x: int(x.committer_date_timestamp))
