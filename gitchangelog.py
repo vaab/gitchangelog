@@ -37,14 +37,19 @@ If this value is not set, %(CONFIG_FILENAME)r is used.
 """
 
 
-class ShellError(Exception): pass
+class ShellError(Exception):
+    pass
+
 
 def die(msg=None):
-    if msg: sys.stderr.write(msg + "\n")
+    if msg:
+        sys.stderr.write(msg + "\n")
     sys.exit(1)
 
-
+##
 ## config file functions
+##
+
 
 def load_config_file(filename, fail_if_not_present=True):
     """Loads data from a config file."""
@@ -64,7 +69,10 @@ def load_config_file(filename, fail_if_not_present=True):
     return config
 
 
+##
 ## Text functions
+##
+
 
 def ucfirst(msg):
     return msg[0].upper() + msg[1:]
@@ -121,7 +129,11 @@ def paragraph_wrap(text, regexp="\n\n"):
     return "\n".join("\n".join(textwrap.wrap(paragraph.strip()))
                      for paragraph in regexp.split(text)).strip()
 
+
+##
 ## System functions
+##
+
 
 def cmd(command):
 
@@ -145,7 +157,6 @@ def wrap(command, quiet=True, exit_on_error=False, ignore_errlvls=[0]):
     >>> wrap('echo hello') # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     'hello\\n'
 
-
     """
 
     out, err, errlvl = cmd(command)
@@ -167,7 +178,11 @@ def wrap(command, quiet=True, exit_on_error=False, ignore_errlvls=[0]):
                         % (command, errlvl, indent(formatted, chars="  ")))
     return out
 
+
+##
 ## git information access
+##
+
 
 class GitCommit(object):
 
@@ -200,7 +215,8 @@ class GitCommit(object):
 
     @property
     def date(self):
-        d = datetime.datetime.utcfromtimestamp(float(self.author_date_timestamp))
+        d = datetime.datetime.utcfromtimestamp(
+            float(self.author_date_timestamp))
         return d.strftime('%Y-%m-%d')
 
     def __eq__(self, value):
@@ -272,17 +288,14 @@ class GitRepos(object):
                         s += entry
             return s
 
-
-        s =  "Changelog\n"
+        s = "Changelog\n"
         s += "=========\n\n"
-
 
         tags = [tag
                 for tag in reversed(self.tags)
                 if re.match(tag_filter_regexp, tag.identifier)]
 
-        section_order = [k for k, v in section_regexps]
-
+        section_order = [k for k, _v in section_regexps]
 
         title = unreleased_version_label + "\n"
         sections = collections.defaultdict(list)
@@ -331,10 +344,10 @@ class GitRepos(object):
 
             if commit.body:
                 entry += indent(paragraph_wrap(commit.body,
-                                               regexp=body_split_regexp)) + "\n\n"
+                                               regexp=body_split_regexp))
+                entry += "\n\n"
 
             sections[matched_section].append(entry)
-
 
         s += make_section_string(title, sections, section_order)
         return s
@@ -354,7 +367,7 @@ class GitRepos(object):
                 stop = GitCommit('HEAD', self)
 
             return stop - start
-        raise NotImplemented("Unsupported getitem %r object." % key)
+        raise NotImplementedError("Unsupported getitem %r object." % key)
 
 
 def main():
@@ -374,7 +387,7 @@ def main():
 
     ## warning: not safe (repos is given by the user)
     changelogrc = wrap("cd %r; git config gitchangelog.rc-path" % repos,
-                       ignore_errlvls=[0,1,255])
+                       ignore_errlvls=[0, 1, 255])
 
     if not changelogrc:
         changelogrc = CONFIG_FILENAME
@@ -390,8 +403,11 @@ def main():
         body_split_regexp=config['body_split_regexp'],
     )
 
+##
+## Launch program
+##
 
-## MAIN CODE
+
 if __name__ == "__main__":
 
     # import doctest
