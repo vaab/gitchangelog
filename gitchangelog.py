@@ -269,6 +269,19 @@ class GitRepos(object):
         ## will be done from this location.
         self._orig_path = os.path.abspath(path)
 
+        self.bare = self.swrap("git rev-parse --is-bare-repository") == "true"
+        self.toplevel = None if self.bare else \
+                        self.swrap("git rev-parse --show-toplevel")
+        self.gitdir = os.path.normpath(
+            os.path.join(self._orig_path,
+                         self.swrap("git rev-parse --git-dir")))
+
+    @property
+    def config(self):
+        all_options = self.swrap("git config -l")
+        dct_options = dict(l.split("=", 1) for l in all_options.split('\n'))
+        return inflate_dict(dct_options)
+
     def swrap(self, command, **kwargs):
         """Essential force the CWD of the command to be in self._orig_path"""
 
