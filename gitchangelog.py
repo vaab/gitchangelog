@@ -189,11 +189,21 @@ def swrap(command, **kwargs):
 ## git information access
 ##
 
+class SubGitObjectMixin(object):
 
-class GitCommit(object):
+    def __init__(self, repos):
+        self._repos = repos
+
+    def swrap(self, *args, **kwargs):
+        """Simple delegation to ``repos`` original method."""
+        return self._repos.swrap(*args, **kwargs)
+
+
+class GitCommit(SubGitObjectMixin):
 
     def __init__(self, identifier, repos):
-        self.repos = repos
+        super(GitCommit, self).__init__(repos)
+
         self.identifier = identifier
 
         if identifier is "LAST":
@@ -220,10 +230,6 @@ class GitCommit(object):
         for attr, value in zip(attrs.keys(), attr_values):
             setattr(self, attr, value.strip())
 
-    def swrap(self, *args, **kwargs):
-        """Simple delegation to ``repos`` original method."""
-        return self.repos.swrap(*args, **kwargs)
-
     @property
     def date(self):
         d = datetime.datetime.utcfromtimestamp(
@@ -248,7 +254,7 @@ class GitCommit(object):
         if not commits:
             raise ValueError('Seems that %r is earlier than %r'
                              % (self.identifier, value.identifier))
-        return [GitCommit(commit, self.repos)
+        return [GitCommit(commit, self._repos)
                 for commit in reversed(commits.split('\n'))]
 
     def __repr__(self):
