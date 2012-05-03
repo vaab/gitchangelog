@@ -17,22 +17,21 @@ import collections
 
 from subprocess import Popen, PIPE
 
-CONFIG_FILENAME = os.environ.get('GITCHANGELOG_CONFIG_FILENAME',
-                                 '~/.gitchangelog.rc')
 
-help="""usage: %(exname)s
+usage_msg = """usage: %(exname)s [REPOS]
 
-Run this command somewhere in a git repository to get a ReST changelog in
-stdout.
+Run this command in a git repository to get a ReST changelog in stdout.
 
-%(exname)s uses a config file to remove some commit or do some regexp-replace
- in commit messages thanks to a config file.
+%(exname)s uses a config file to filter meaningfull commit or do some
+ formatting in commit messages thanks to a config file.
 
-Config file path can be set to be local to a git repository by using:
+Config file location will be resolved in this order:
 
-  $ git config gitchangelog.rc-path <MY-LOCAL-PATH>
-
-If this value is not set, %(CONFIG_FILENAME)r is used.
+  - in shell environment variable GITCHANGELOG_CONFIG_FILENAME
+  - in git configuration: ``git config gitchangelog.rc-patch``
+  - as '.%(exname)s.rc' in the root of the current git repository
+  - as '~/.%(exname)s.rc'
+  - as '/etc/%(exname)s'
 
 """
 
@@ -67,6 +66,75 @@ def load_config_file(filename, fail_if_not_present=True):
             die('%r config file is not found and is required.' % (filename, ))
 
     return config
+
+
+##
+## Common functions
+##
+
+def inflate_dict(dct, sep=".", deep=-1):
+    """Inflates a flattened dict.
+
+    Will look in simple dict of string key with string values to
+    create a dict containing sub dicts as values.
+
+    Samples are better than explanation:
+
+        >>> from pprint import pprint as pp
+        >>> pp(inflate_dict({'a.x': 3, 'a.y': 2}))
+        {'a': {'x': 3, 'y': 2}}
+
+    The keyword argument ``sep`` allows to change the separator used
+    to get subpart of keys:
+
+        >>> pp(inflate_dict({'etc/group': 'geek', 'etc/user': 'bob'}, "/"))
+        {'etc': {'group': 'geek', 'user': 'bob'}}
+
+    Warning: you cannot associate a value to a section:
+
+        >>> inflate_dict({'section.key': 3, 'section': 'bad'})
+        Traceback (most recent call last):
+        ...
+        TypeError: 'str' object does not support item assignment
+
+    Of course, dict containing only keys that doesn't use separator will be
+    returned without changes:
+
+        >>> inflate_dict({})
+        {}
+        >>> inflate_dict({'a': 1})
+        {'a': 1}
+
+    Argument ``deep``, is the level of deepness allowed to inflate dict:
+
+        >>> pp(inflate_dict({'a.b.c': 3, 'a.d': 4}, deep=1))
+        {'a': {'b.c': 3, 'd': 4}}
+
+    Of course, a deepness of 0 won't do anychanges, whereas deepness of -1 is
+    the default value and means infinite deepness:
+
+        >>> pp(inflate_dict({'a.b.c': 3, 'a.d': 4}, deep=0))
+        {'a.b.c': 3, 'a.d': 4}
+
+    """
+
+    def mset(dct, k, v, sep=".", deep=-1):
+        if deep == 0 or sep not in k:
+            dct[k] = v
+        else:
+            khead, ktail = k.split(sep, 1)
+            if khead not in dct:
+                dct[khead] = {}
+            mset(dct[khead], ktail, v,
+                 sep=sep,
+                 deep=-1 if deep < 0 else deep - 1)
+
+    res = {}
+    ## sorting keys ensures that colliding values if any will be string
+    ## first set first so mset will crash with a TypeError Exception.
+    for k in sorted(dct.keys()):
+        mset(res, k, dct[k], sep, deep)
+    return res
 
 
 ##
@@ -261,6 +329,17 @@ class GitCommit(SubGitObjectMixin):
         return "<%s %r>" % (self.__class__.__name__, self.identifier)
 
 
+def normpath(path, cwd=None):
+    """path can be absolute or relative, if relative it uses the cwd given as
+    param.
+
+    """
+    if os.path.isabs(path):
+        return path
+    cwd = cwd if cwd else os.getcwd()
+    return os.path.normpath(os.path.join(cwd, path))
+
+
 class GitRepos(object):
 
     def __init__(self, path):
@@ -424,26 +503,48 @@ def changelog(repository,
 def main():
 
     basename = os.path.basename(sys.argv[0])
+    if basename.endswith(".py"):
+        basename = basename[:-3]
 
     if len(sys.argv) == 1:
         repos = "."
     elif len(sys.argv) == 2:
         if sys.argv[1] == "--help":
-            print help % {'exname': basename,
-                          'CONFIG_FILENAME': CONFIG_FILENAME}
+            print usage_msg % {'exname': basename}
             sys.exit(0)
         repos = sys.argv[1]
     else:
         die('usage: %s [REPOS]\n' % basename)
 
+    ## warning: not safe (repos is given by the user)
     repository = GitRepos(repos)
 
-    ## warning: not safe (repos is given by the user)
-    changelogrc = wrap("cd %r; git config gitchangelog.rc-path" % repos,
-                       ignore_errlvls=[0, 1, 255])
+    gc_rc = repository.config.get("gitchangelog", {}).get('rc-path')
+    gc_rc = normpath(gc_rc, cwd=repository.toplevel) if gc_rc else None
 
-    if not changelogrc:
-        changelogrc = CONFIG_FILENAME
+    ## config file lookup resolution
+    for enforce_file_existence, fun in [
+        (True, lambda: os.environ.get('GITCHANGELOG_CONFIG_FILENAME')),
+        (True, lambda: gc_rc),
+        (False, lambda: ('%s/.%s.rc' % (repository.toplevel, basename)) \
+                 if not repository.bare else None),
+        (False, lambda: os.path.expanduser('~/.%s.rc' % basename)),
+        (False, lambda: '/etc/%s.rc' % basename),
+        ]:
+        changelogrc = fun()
+        if changelogrc:
+            if not os.path.exists(changelogrc):
+                if enforce_file_existence:
+                    print "File %r does not exists." % changelogrc
+                    sys.exit(1)
+                else:
+                    continue  ## changelogrc valued, but file does not exists
+            else:
+                break
+
+    if not changelogrc or not os.path.exists(changelogrc):
+        print "Not %s config file found anywhere." % basename
+        sys.exit(1)
 
     config = load_config_file(os.path.expanduser(changelogrc))
 
