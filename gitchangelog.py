@@ -535,16 +535,14 @@ def main():
         if changelogrc:
             if not os.path.exists(changelogrc):
                 if enforce_file_existence:
-                    print "File %r does not exists." % changelogrc
-                    sys.exit(1)
+                    die("File %r does not exists." % changelogrc)
                 else:
                     continue  ## changelogrc valued, but file does not exists
             else:
                 break
 
     if not changelogrc or not os.path.exists(changelogrc):
-        print "Not %s config file found anywhere." % basename
-        sys.exit(1)
+        die("Not %s config file found anywhere." % basename)
 
     config = load_config_file(os.path.expanduser(changelogrc))
 
