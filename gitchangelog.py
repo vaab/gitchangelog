@@ -14,6 +14,9 @@ import sys
 import textwrap
 import datetime
 import collections
+import pystache
+import json
+import glob
 
 from subprocess import Popen, PIPE
 
@@ -392,35 +395,6 @@ class GitRepos(object):
             return stop - start
         raise NotImplementedError("Unsupported getitem %r object." % key)
 
-
-##
-## The actual changelog code
-##
-
-
-def make_section_string(title, sections, section_label_order):
-    s = ""
-    if len(sections) != 0:
-        title = title.strip()
-        s += title + "\n"
-        s += "-" * len(title) + "\n\n"
-
-        nb_sections = len(sections)
-        for section in section_label_order:
-            if section not in sections:
-                continue
-
-            section_label = section if section else "Other"
-
-            if not (section_label == "Other" and nb_sections == 1):
-                s += section_label + "\n"
-                s += "~" * len(section_label) + "\n\n"
-
-            for entry in sections[section]:
-                s += entry
-    return s
-
-
 def first_matching(section_regexps, string):
     for section, regexps in section_regexps:
         if regexps is None:
@@ -429,18 +403,44 @@ def first_matching(section_regexps, string):
             if re.search(regexp, string) is not None:
                 return section
 
+def creating_new_version(tag, date) :
+    current_version = dict()
+    current_version["version_title"] = tag + " ("+ date + ")"
+    params = dict()
+    params["tag"] = tag
+    params["date"] = date
+    current_version["params"] = params
+    current_version["version_under"] = get_length(current_version["version_title"])
+    #adding sections
+    sections = list()
+    current_version["sections"] = sections
+
+    return current_version
+
+def get_length(text) :
+    characters = list()
+    for index in range(0,len(text)) :
+        characters.append("-")
+    return characters
 
 def changelog(repository,
               ignore_regexps=[],
               replace_regexps={},
               section_regexps={},
-              unreleased_version_label="unreleased",
               tag_filter_regexp=r"\d+\.\d+(\.\d+)?",
               body_split_regexp="\n\n",
+              unreleased_version_tag="%%version%%",
+              unreleased_version_date="unreleased",
+              template_format="markdown",
               ):
-
-    s = "Changelog\n"
-    s += "=========\n\n"
+    # setting main container of changelog elements
+    data = dict()
+    # setting title of changelog
+    data["title"] = "Changelog"
+    data["title_under"] = get_length(data["title"])
+    # definition of the list containing all the versions
+    versions = list()
+    data["versions"] = versions
 
     tags = [tag
             for tag in reversed(repository.tags)
@@ -448,29 +448,78 @@ def changelog(repository,
 
     section_order = [k for k, _v in section_regexps]
 
-    title = unreleased_version_label + "\n"
-    sections = collections.defaultdict(list)
-
+    # let's explore the commits !
     for commit in reversed(repository[:]):
 
-        tags_of_commit = [tag for tag in tags
-                         if tag == commit]
-        if len(tags_of_commit) > 0:
-            tag = tags_of_commit[0]
-            ## End of sections, let's flush current one.
-            s += make_section_string(title, sections, section_order)
-
-            title = "%s (%s)\n" % (tag.identifier, commit.date)
-            sections = collections.defaultdict(list)
-
+        # first things first, let's put aside empty commit message
         ## Ignore some commit subject
         if any([re.search(pattern, commit.subject) is not None
                 for pattern in ignore_regexps]):
             continue
 
+        # now searching for commit related to tags
+        current_version = None
+        tags_of_commit = [tag for tag in tags
+                         if tag == commit]
+        # is this commit associated with some existing tags ?
+        if len(tags_of_commit) > 0:
+            # apparently yes !
+            # so, let's start a new section
+            tag = tags_of_commit[0]
+
+            # searching for corresponding version tag in versions
+            found = False
+            for version in versions :
+                if version["params"]["tag"] == tag :
+                    # a version has been found.
+                    # using it as the current version
+                    current_version = version
+                    found = True
+            if not found :
+                # no version found.
+                # creating a new one to hold the commits associated to it
+                current_version = creating_new_version(tag.identifier, commit.date)
+                versions.append(current_version)
+        else :
+            # apparently this commit belongs to the unreleased version.
+            # checking if this version has been created
+            # TODO
+            found = False
+            for version in versions :
+                # searching for the unreleased version
+                if version["params"]["tag"] == unreleased_version_tag :
+                    found = True
+                    current_version = version
+                    # this version exists
+                    # using it as the current_version
+            if not found :
+                # no version found
+                # creating a new one to hold the commits associated to it
+                current_version = creating_new_version(unreleased_version_tag, unreleased_version_date)
+                versions.append(current_version)
+
         ## Put message in sections if possible
 
         matched_section = first_matching(section_regexps, commit.subject)
+
+        # checking if matched_section exists
+        section_found = False
+        current_section = None
+        for section in current_version["sections"] :
+            if section["type"] == matched_section :
+                section_found = True
+                # section found
+                current_section = section
+        # checking if the section was not found
+        if not section_found :
+            # indeed. so we are creating one
+            current_section = dict()
+            commits = list()
+            current_section["commits"] = commits
+            current_section["type"] = matched_section
+            current_section["section_title"] = matched_section + " :"
+            current_section["section_under"] = get_length(current_section["section_title"])
+            current_version["sections"].append(current_section)
 
         ## Replace content in commit subject
 
@@ -478,30 +527,41 @@ def changelog(repository,
         for regexp, replacement in replace_regexps.iteritems():
             subject = re.sub(regexp, replacement, subject)
 
-        ## Finaly print out the commit
+        ## Finally printing out the commit
 
         subject = final_dot(subject)
-        subject += " [%s]" % (commit.author_name, )
-        entry = indent('\n'.join(textwrap.wrap(ucfirst(subject))),
-                       first="- ").strip() + "\n\n"
 
+        has_body = False
+        current_body = ""
         if commit.body:
-            entry += indent(paragraph_wrap(commit.body,
-                                           regexp=body_split_regexp))
-            entry += "\n\n"
+            current_body = indent(paragraph_wrap(commit.body,regexp=body_split_regexp))
+            has_body = True
 
-        sections[matched_section].append(entry)
+        current_commit = dict()
+        current_commit["author"] = commit.author_name
+        current_commit["content"] = subject
+        current_commit["body"] = current_body
+        current_commit["has_body"] = has_body
 
-    s += make_section_string(title, sections, section_order)
-    return s
+        current_section["commits"].append(current_commit)
+
+    template_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"share/templates/template." + template_format)
+    template = open(template_path).read()
+    output = pystache.render(template,data)
+    return output
+
+def get_available_templates() :
+    path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"share/templates")
+    template_files = glob.glob(os.path.join(path, "template.*"))
+    templates = list()
+    for fichier in template_files :
+        templates.append(os.path.basename(fichier).split(".")[-1])
+    return templates
 
 ##
 ## Main
 ##
-
-
 def main():
-
     basename = os.path.basename(sys.argv[0])
     if basename.endswith(".py"):
         basename = basename[:-3]
@@ -548,13 +608,29 @@ def main():
 
     config = load_config_file(os.path.expanduser(changelogrc))
 
+    # Getting template format
+    template_format=config['template_format']
+
+    # Getting available templates
+    available_templates = get_available_templates()
+
+    # Checking if the requested template exists
+    if not template_format in available_templates:
+        print "Template format : %s not available!" % template_format
+        print "Available template formats:"
+        for template in available_templates :
+            print " - " + template
+        sys.exit(1)
+
     print changelog(repository,
         ignore_regexps=config['ignore_regexps'],
         replace_regexps=config['replace_regexps'],
         section_regexps=config['section_regexps'],
-        unreleased_version_label=config['unreleased_version_label'],
         tag_filter_regexp=config['tag_filter_regexp'],
         body_split_regexp=config['body_split_regexp'],
+        unreleased_version_tag=config['unreleased_version_tag'],
+        unreleased_version_date=config['unreleased_version_date'],
+        template_format=config['template_format'],
     )
 
 ##
