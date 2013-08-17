@@ -122,7 +122,7 @@ unreleased_version_tag = "%%version%%"
 ##
 ## This date will be used as the date corresponding to the last set
 ## of changes
-unreleased_version_date = "(unreleased)"
+unreleased_version_date = "unreleased"
 
 ## ``template_format`` is a string
 ##
