@@ -18,6 +18,8 @@ Feature
 
   - ignore non-changelog tags by regexps
 
+  - templates for different types of output (markdown, ReST, etc)
+
 
 Sample
 ======
@@ -45,7 +47,7 @@ Current ``git log`` output so you can get an idea of the log history::
   * 0c66d59 Valentin Lab fix: dev: Fixed case where exception was thrown if two tags are on the same commit.
   * d2fae0d Valentin Lab new: usr: added a succint ``--help`` support.
 
-And here is the ``gitchangelog`` output::
+And here is the ``gitchangelog`` output (in ReST format)::
 
   0.1.2 (2011-05-17)
   ------------------
@@ -128,9 +130,222 @@ configuration file. You'll see the output in the `changelog of the PyPI page`_.
 
 
 
-What is not (yet) configurable
-==============================
+Templating system
+=================
 
-The output is in ReSTructured text, and this is not configurable. This could be
-easily implemented by using a template driven content generation.
+The output can be provided in different format. For the moment Markdown
+and ReSTructured text are supported.
 
+The templates are located in `share/templates`_ are are implemented thanks to
+`pystache`_ the python implementation of the mustache specifications.
+
+gitchangelog is constructing a data tree holding the elements that will be used
+to render the changelog using the provided templates.
+
+If you want more information about mustache & pystache::
+
+.. _mustache web site: http://mustache.github.io/
+
+.. _mustache(5) man page: http://mustache.github.io/mustache.5.html
+
+.. _pystache web site: https://pypi.python.org/pypi/pystache
+
+
+Changelog data tree
+-------------------
+
+To render the template, gitchangelog is generating a data tree that
+will then be used with the template to create the changelog.
+
+Here is the structure of the changelog data tree::
+
+  {
+      "title": "Changelog",
+      "title_under": [
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-"
+      ],
+      "versions": [
+          {
+              "params": {
+                  "date": "(unreleased)",
+                  "tag": "%%version%%"
+              },
+              "sections": [
+                  {
+                      "commits": [
+                          {
+                              "author": "John doe",
+                              "body": "",
+                              "content": "Adding some extra values.",
+                              "has_body": false
+                          },
+                          {
+                              "author": "John Doe",
+                              "body": "",
+                              "content": "Some more changes",
+                              "has_body": false
+                          }
+                      ],
+                      "section_title": "Changes :",
+                      "section_under": [
+                          "-",
+                          "-",
+                          "-",
+                          "-",
+                          "-",
+                          "-",
+                          "-",
+                          "-",
+                          "-"
+                      ],
+                      "type": "Changes"
+                  },
+                  {
+                      "commits": [
+                          {
+                              "author": "Jim Foo",
+                              "body": "",
+                              "content": "classic modification",
+                              "has_body": false
+                          },
+                          {
+                              "author": "Jane Done",
+                              "body": "",
+                              "content": "Adding some stuff to do.",
+                              "has_body": false
+                          }
+                      ],
+                      "section_title": "Other :",
+                      "section_under": [
+                          "-",
+                          "-",
+                          "-",
+                          "-",
+                          "-",
+                          "-",
+                          "-"
+                      ],
+                      "type": "Other"
+                  }
+              ],
+              "version_title": "%%version%% (unreleased)",
+              "version_under": [
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-"
+              ]
+          },
+          {
+              "params": {
+                  "date": "2013-08-06",
+                  "tag": "v0.2.5"
+              },
+              "sections": [
+                  {
+                      "commits": [
+                          {
+                              "author": "John Doe",
+                              "body": "",
+                              "content": "Updating Changelog installation.",
+                              "has_body": false
+                          }
+                      ],
+                      "section_title": "Changes :",
+                      "section_under": [
+                          "-",
+                          "-",
+                          "-",
+                          "-",
+                          "-",
+                          "-",
+                          "-",
+                          "-",
+                          "-"
+                      ],
+                      "type": "Changes"
+                  }
+              ],
+              "version_title": "v0.2.5 (2013-08-06)",
+              "version_under": [
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-",
+                  "-"
+              ]
+          }
+      ]
+  }
+
+Using the ReSTructured text template, the generate template will be :
+
+  Changelog
+  =========
+
+  %%version%% (unreleased)
+  ------------------------
+
+  Changes :
+  ~~~~~~~~~
+
+  - Adding some extra values. [John doe]
+
+  - Some more changes [John Doe]
+
+  Other :
+  ~~~~~~~
+
+  - classic modification [Jim Foo]
+
+  - Adding some stuff to do. [Jane Done]
+
+  v0.2.5 (2013-08-06)
+  -------------------
+
+  Changes :
+  ~~~~~~~~~
+
+  - Updating Changelog installation. [John Doe]
