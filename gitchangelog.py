@@ -404,6 +404,13 @@ def first_matching(section_regexps, string):
                 return section
 
 def creating_new_version(tag, date) :
+    """
+    Function used to create a new version in the changelof data tree based on
+    a tag and a date
+
+    This function returns a dictionnary corresponding to an empty version
+    to be added in the changelog data tree
+    """
     current_version = dict()
     current_version["version_title"] = tag + " ("+ date + ")"
     params = dict()
@@ -418,6 +425,12 @@ def creating_new_version(tag, date) :
     return current_version
 
 def get_length(text) :
+    """
+    Function used to generate lines of characters under the title/section/tag, etc
+
+    This function returns a list containing the number of characters needed for the
+    generation of the character lines in the rendered changelog
+    """
     characters = list()
     for index in range(0,len(text)) :
         characters.append("-")
@@ -433,6 +446,26 @@ def changelog(repository,
               unreleased_version_date="unreleased",
               template_format="markdown",
               ):
+
+    """
+    Main function for the generation of the changelog.
+    (see gitchangelog.rc(sample) file for more info)
+
+    repository : the git repository
+    ignore_regexps : regexps identifying ignored commit messages
+    replace_regexps : regexps used to replace elements in commit messages
+    section_regexps : regexps identifying sections
+    tag_filter_regexp : the tags that will be used to separate version have to match
+    this regexp
+    body_split_regexp : regexp identifying the body of a commit message
+    unreleased_version_tag : temporary tag used for unreleased version
+    unreleased_version_date : temporary date used for unreleased version
+    template_format : format of template to generate the changelog
+
+    This function returns a string corresponding to the template rendered with
+    the changelog data tree
+    """
+
     # setting main container of changelog elements
     data = dict()
     # setting title of changelog
@@ -551,6 +584,16 @@ def changelog(repository,
     return output
 
 def get_available_templates() :
+    """
+    This function returns a list containing the different types of templates
+    available to the users.
+
+    The templates are located in ``share/templates`` and the files have a
+    name of the following form : ``template.format`` with:
+
+     * template : a fix basename
+     * format : the format of the template (``markdown``, ``restructuredtext``)
+    """
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"share/templates")
     template_files = glob.glob(os.path.join(path, "template.*"))
     templates = list()
@@ -562,6 +605,10 @@ def get_available_templates() :
 ## Main
 ##
 def main():
+
+    """
+    Main entry point of gitchangelog
+    """
     basename = os.path.basename(sys.argv[0])
     if basename.endswith(".py"):
         basename = basename[:-3]
