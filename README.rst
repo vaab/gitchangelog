@@ -117,10 +117,9 @@ And the rendered full result is directly used to generate the HTML webpage of th
 Usage
 -----
 
-The `sample configuration
-file <http://github.com/vaab/gitchangelog/blob/master/gitchangelog.rc.sample>`__ is quite heavily commented and is quite simple. You should be able to use it as required.
+The `sample configuration file <http://github.com/vaab/gitchangelog/blob/master/gitchangelog.rc.sample>`__ is quite heavily commented and is quite simple. You should be able to use it as required.
 
-The changelog of gitchangelog is generated with himself and with the sample configuration file. You'll see the output in the `changelog of the PyPI page <http://pypi.python.org/pypi/gitchangelog>`__.
+The changelog of ``gitchangelog`` is generated with himself and with the sample configuration file. You'll see the output in the `changelog of the PyPI page <http://pypi.python.org/pypi/gitchangelog>`__.
 
 Templating system
 -----------------
@@ -129,7 +128,7 @@ The output can be provided in different format. For the moment Markdown and ReST
 
 The templates are located in ``share/templates`` are implemented thanks to ```pystache`` <https://pypi.python.org/pypi/pystache>`__ the python implementation of the `mustache <http://mustache.github.io/>`__ specifications.
 
-gitchangelog is constructing a data tree holding the elements that will be used to render the changelog using the provided templates.
+``gitchangelog`` is constructing a data tree holding the elements that will be used to render the changelog using the provided templates.
 
 If you want more information about mustache & pystache:
 
@@ -140,7 +139,7 @@ If you want more information about mustache & pystache:
 Changelog data tree
 ~~~~~~~~~~~~~~~~~~~
 
-To render the template, gitchangelog is generating a data tree that will then be used with the template to create the changelog.
+To render the template, ``gitchangelog`` is generating a data tree that will then be used with the template to create the changelog.
 
 Here is the structure of the changelog data tree:
 
