@@ -311,25 +311,30 @@ Using the ReSTructured text template, the generate template will be :
 ::
 
     Changelog
-    ---------
+    =========
 
-    ### %%version%% (unreleased)
+    %%version%% (unreleased)
+    ------------------------
 
-    #### Changes :
+    Changes :
+    ~~~~~~~~~
 
     -   Adding some extra values. [John doe]
 
     -   Some more changes [John Doe]
 
-    #### Other :
+    Other :
+    ~~~~~~~
 
     -   classic modification [Jim Foo]
 
     -   Adding some stuff to do. [Jane Done]
 
-    ### v0.2.5 (2013-08-06)
+    v0.2.5 (2013-08-06)
+    -------------------
 
-    #### Changes :
+    Changes :
+    ~~~~~~~~~
 
     -   Updating Changelog installation. [John Doe]
 
