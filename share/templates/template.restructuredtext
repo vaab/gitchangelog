@@ -1,0 +1,20 @@
+{{title}}
+{{#title_under}}={{/title_under}}
+
+{{#versions}}
+{{version_title}}
+{{#version_under}}-{{/version_under}}
+
+{{#sections}}
+{{section_title}}
+{{#section_under}}~{{/section_under}}
+
+{{#commits}}
+- {{content}} [{{author}}]
+{{#has_body}}
+{{body}}
+{{/has_body}}
+
+{{/commits}}
+{{/sections}}
+{{/versions}}

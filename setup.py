@@ -1,5 +1,8 @@
 from setuptools import setup, find_packages
 
+import glob
+
+print glob.glob("share/templates/*")
 
 long_description = '\n\n'.join([open('README.rst').read(),
                                 open('CHANGELOG.rst').read(),
@@ -11,6 +14,9 @@ setup(
     version='%%version%%',
     description='gitchangelog generates a changelog thanks to git log.',
     long_description=long_description,
+    data_files=[
+          ('share/templates', glob.glob("share/templates/*")),
+          ],
     # Get more strings from http://www.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
         "Programming Language :: Python",
@@ -32,6 +38,7 @@ setup(
     zip_safe=False,
     install_requires=[
         'setuptools',
+        'pystache'
         # -*- Extra requirements: -*-
     ],
     entry_points="""

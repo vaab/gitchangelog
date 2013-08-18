@@ -112,8 +112,21 @@ body_split_regexp = r'\n(?=\w+\s*:)'
 tag_filter_regexp = r'^[0-9]+\.[0-9]+(\.[0-9]+)?$'
 
 
-## ``unreleased_version_label`` is a string
+## ``unreleased_version_tag`` is a string
 ##
-## This label will be used as the changelog Title of the last set of changes
+## This tag will be used as the tag version of the last set of changes
 ## between last valid tag and HEAD if any.
-unreleased_version_label = "%%version%% (unreleased)"
+unreleased_version_tag = "%%version%%"
+
+## ``unreleased_version_date`` is a string
+##
+## This date will be used as the date corresponding to the last set
+## of changes
+unreleased_version_date = "unreleased"
+
+## ``template_format`` is a string
+##
+## This is the target format for the generated changelog file
+## Available template files are located in share/templates
+## For the moment, only markdown and restructuredtext are available
+template_format = "restructuredtext"
