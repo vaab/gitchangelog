@@ -126,7 +126,7 @@ Templating system
 
 The output can be provided in different format. For the moment Markdown and ReSTructured text are supported.
 
-The templates are located in ``share/templates`` are implemented thanks to ```pystache`` <https://pypi.python.org/pypi/pystache>`__ the python implementation of the `mustache <http://mustache.github.io/>`__ specifications.
+The templates are located in ``share/templates`` are implemented thanks to `pystache <https://pypi.python.org/pypi/pystache>`__ the python implementation of the `mustache <http://mustache.github.io/>`__ specifications.
 
 ``gitchangelog`` is constructing a data tree holding the elements that will be used to render the changelog using the provided templates.
 
