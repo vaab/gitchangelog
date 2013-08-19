@@ -509,7 +509,8 @@ def changelog(repository,
     for commit in reversed(repository[:]):
 
         tags_of_commit = [tag for tag in tags
-                         if tag == commit]
+                          if tag == commit]
+
         if len(tags_of_commit) > 0:
             tag = tags_of_commit[0]
 
@@ -522,12 +523,9 @@ def changelog(repository,
             current_version = new_version(tag.identifier, commit.date, opts)
             sections = collections.defaultdict(list)
 
-        ## Ignore some commit subject
-        if any([re.search(pattern, commit.subject) is not None
-                for pattern in ignore_regexps]):
+        if any(re.search(pattern, commit.subject) is not None
+               for pattern in ignore_regexps):
             continue
-
-        ## Put message in sections if possible
 
         matched_section = first_matching(section_regexps, commit.subject)
 
@@ -537,7 +535,7 @@ def changelog(repository,
         for regexp, replacement in replace_regexps.iteritems():
             subject = re.sub(regexp, replacement, subject)
 
-        ## Finaly print out the commit
+        ## Finally storing the commit in the matching section
 
         subject = final_dot(subject)
 
@@ -603,7 +601,7 @@ def main():
                 break
 
     if not changelogrc or not os.path.exists(changelogrc):
-        die("Not %s config file found anywhere." % basename)
+        die("No %s config file found anywhere." % basename)
 
     config = load_config_file(os.path.expanduser(changelogrc))
 

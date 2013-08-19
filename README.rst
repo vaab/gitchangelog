@@ -4,6 +4,7 @@ git-changelog
 
 Translate commit message history to a changelog.
 
+
 Feature
 =======
 
