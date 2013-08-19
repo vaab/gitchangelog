@@ -144,10 +144,11 @@ function set_version_setup_py() {
 GITCHANGELOG_CONFIG_FILENAME=./gitchangelog.rc.sample "$gitchangelog" > CHANGELOG.rst
 
 if [ "$?" != 0 ]; then
-    print_error "Error while generating changelog."
+    (echo -n "Changelog NOT generated. "
+     echo "An error occured while running \`\`gitchangelog\`\`." )>&2
+else
+    echo "Changelog generated."
 fi
-echo "Changelog generated."
-
 
 set_version_setup_py
 if [ "$?" != 0 ]; then
