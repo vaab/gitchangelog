@@ -11,11 +11,17 @@ import re
 import os
 import os.path
 import sys
+import glob
 import textwrap
 import datetime
 import collections
-
 from subprocess import Popen, PIPE
+
+try:
+    import pystache
+except ImportError:
+    pystache = None
+
 
 
 usage_msg = """usage: %(exname)s [REPOS]
@@ -50,10 +56,18 @@ def die(msg=None):
 ##
 
 
+_config_env = {}
+
+
+def available_in_config(f):
+    _config_env[f.__name__] = f
+    return f
+
+
 def load_config_file(filename, fail_if_not_present=True):
     """Loads data from a config file."""
 
-    config = {}
+    config = _config_env.copy()
 
     if os.path.exists(filename):
         try:
@@ -401,7 +415,11 @@ def first_matching(section_regexps, string):
             if re.search(regexp, string) is not None:
                 return section
 
+##
+## Output Engines
+##
 
+@available_in_config
 def rest_py(data, opts={}):
     """Returns ReStructured Text changelog content from data"""
 
@@ -445,6 +463,67 @@ def rest_py(data, opts={}):
                     for version in data["versions"]
                     if len(version["sections"]) > 0))
 
+## formatter engines
+
+if pystache:
+
+    @available_in_config
+    def mustache(template_name):
+        """Return a callable that will render a changelog data structure
+
+        returned callable must take 2 arguments ``data`` and ``opts``.
+
+        """
+        template_dir = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            "templates", "mustache")
+
+        template_path = os.path.join(template_dir, "%s.tpl" % template_name)
+
+        if not os.path.exists(template_path):
+            templates = glob.glob(os.path.join(template_dir, "*.tpl"))
+            if len(templates) > 0:
+                msg = "Available mustache templates:\n - " + \
+                      " - ".join(os.path.basename(f).split(".")[-1]
+                                 for f in templates)
+            else:
+                msg = "No available mustache templates found in %r." \
+                      % template_dir
+            die("%s\n" % msg +
+                "Invalid mustache template name %s." % template_name)
+
+        with open(template_path) as f:
+            template = f.read()
+
+        def renderer(data, opts):
+
+            ## mustache is very simple so we need to add some intermediate
+            ## values
+            data["title_chars"] = list(data["title"])
+            for version in data["versions"]:
+                version["label_chars"] = list(version["label"])
+                for section in version["sections"]:
+                    section["label_chars"] = list(section["label"])
+                    for commit in section["commits"]:
+                        commit["body_indented"] = indent(
+                            paragraph_wrap(commit["body"],
+                                           regexp=opts["body_split_regexp"]),
+                            chars="    ")
+
+            return pystache.render(template, data)
+
+        return renderer
+
+else:
+
+    @available_in_config
+    def mustache(template_name):
+        die("Required 'pystache' python module not found.")
+
+
+##
+## Data Structure
+##
 
 def changelog(repository,
               ignore_regexps=[],
@@ -612,7 +691,7 @@ def main():
         unreleased_version_label=config['unreleased_version_label'],
         tag_filter_regexp=config['tag_filter_regexp'],
         body_split_regexp=config['body_split_regexp'],
-        output_engine=rest_py,
+        output_engine=config.get("output_engine", rest_py),
     )
 
 ##

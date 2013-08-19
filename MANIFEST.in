@@ -1,2 +1,3 @@
 include gitchangelog.py
 include *.rst
+recursive-include templates *.tpl

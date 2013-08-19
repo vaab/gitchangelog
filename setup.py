@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
 
+import glob
 
 long_description = '\n\n'.join([open('README.rst').read(),
                                 open('CHANGELOG.rst').read(),
@@ -10,6 +11,9 @@ setup(
     name='gitchangelog',
     version='%%version%%',
     description='gitchangelog generates a changelog thanks to git log.',
+    data_files=[
+      ('templates/mustache', glob.glob("templates/mustache/*.tpl")),
+    ],
     long_description=long_description,
     # Get more strings from http://www.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
@@ -32,8 +36,10 @@ setup(
     zip_safe=False,
     install_requires=[
         'setuptools',
-        # -*- Extra requirements: -*-
     ],
+    extras_require = {
+        'Mustache':  ["pystache"],
+    },
     entry_points="""
     [console_scripts]
     gitchangelog = gitchangelog:main

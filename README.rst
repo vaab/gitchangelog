@@ -19,12 +19,13 @@ Feature
 
   - ignore non-changelog tags by regexps
 
+  - templating system for easy tailoring your output (markdown, ReST, etc)
+
 
 Sample
 ======
 
-The output is currently fixed to ReSTructured text, but it should be readable
-is ASCII.
+The default output is ReSTructured text, so it should be readable in ASCII.
 
 Here is a small sample of the ``git-changelog`` changelog at work.
 
@@ -128,10 +129,68 @@ configuration file. You'll see the output in the `changelog of the PyPI page`_.
 .. _changelog of the PyPI page: http://pypi.python.org/pypi/gitchangelog
 
 
+Output Engines
+--------------
 
-What is not (yet) configurable
-==============================
+At the end of the configuration file, you'll notice a variable called
+``output_engine``. If the current ReSTructured Text output format seats your
+needs, you won't need to fiddle with this option.
 
-The output is in ReSTructured text, and this is not configurable. This could be
-easily implemented by using a template driven content generation.
+To render the template, ``gitchangelog`` will generate a data structure that
+will then be rendered thanks to the output engine. This should help you get
+the exact output that you need.
+
+As people might have different needs and knowledge, a templating system using
+``mustache`` (mako templating will soon be available) is available to render
+both `ReSTructured Text` or `markdown` formats. If you know ``mustache``
+templating, then you could easily add or modify existing templates.
+
+
+Mustache
+~~~~~~~~
+
+The ``mustache``  output engine uses `mustache templates`_.
+
+The `mustache`_ templates for ``gitchangelog`` are located in
+``templates/mustache`` and are powered via `pystache`_ the python
+implementation of the `mustache`_ specifications. So `mustache`_ output engine
+will only be available if you have `pystache`_ module available in your python
+environment.
+
+.. _mustache: http://mustache.github.io
+.. _pystache: https://pypi.python.org/pypi/pystache
+.. _mustache templates: http://mustache.github.io/mustache.5.html
+
+
+Changelog data tree
+~~~~~~~~~~~~~~~~~~~
+
+Here is a sample to show the current structure of the changelog data structure
+that will be provided to output engine::
+
+  {'title': 'Changelog',
+   'versions': [{'label': '%%version%% (unreleased)',
+                 'date': None,
+                 'tag': None
+                 'sections': [{'label': 'Changes',
+                               'commits': [{'author': 'John doe',
+                                            'body': '',
+                                            'subject': 'Adding some extra values.'},
+                                           {'author': 'John Doe',
+                                            'body': '',
+                                            'subject': 'Some more changes'}]},
+                              {'label': 'Other',
+                               'commits': [{'author': 'Jim Foo',
+                                            'body': '',
+                                            'subject': 'classic modification'},
+                                           {'author': 'Jane Done',
+                                            'body': '',
+                                            'subject': 'Adding some stuff to do.'}]}]},
+                {'label': 'v0.2.5 (2013-08-06)',
+                 'date': '2013-08-06',
+                 'tag': 'v0.2.5'
+                 'sections': [{'commits': [{'author': 'John Doe',
+                                            'body': '',
+                                            'subject': 'Updating Changelog installation.'}],
+                               'label': 'Changes'}]}]}
 
