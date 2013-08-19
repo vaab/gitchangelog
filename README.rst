@@ -114,9 +114,30 @@ And the rendered full result is directly used to generate the HTML webpage of
 the `changelog of the PyPI page`_.
 
 
-
 Usage
 =====
+
+You need to place a ``gitchangelog.rc`` file somewhere, these are the location
+checked in the given order (first match will prevail):
+
+  - in the path given thanks to the environment variable
+    ``GITCHANGELOG_CONFIG_FILENAME``
+
+  - in the path stored in git config's entry "gitchangelog.rc-path" (which
+    could be stored in system location or per repository)
+
+  - in the root of the current git repository with the name ``.gitchangelog.rc``
+
+  - in your home : ``~/.gitchangelog.rc``
+
+  - system wide, in ``/etc/gitchangelog.rc``
+
+Then, you'll be able to call ``gitchangelog`` in a GIT repository and it'll
+print changelog as its standard output.
+
+
+Configuration file format
+-------------------------
 
 The `sample configuration file`_ is quite heavily commented and is quite
 simple.  You should be able to use it as required.
