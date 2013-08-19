@@ -393,34 +393,6 @@ class GitRepos(object):
         raise NotImplementedError("Unsupported getitem %r object." % key)
 
 
-##
-## The actual changelog code
-##
-
-
-def make_section_string(title, sections, section_label_order):
-    s = ""
-    if len(sections) != 0:
-        title = title.strip()
-        s += title + "\n"
-        s += "-" * len(title) + "\n\n"
-
-        nb_sections = len(sections)
-        for section in section_label_order:
-            if section not in sections:
-                continue
-
-            section_label = section if section else "Other"
-
-            if not (section_label == "Other" and nb_sections == 1):
-                s += section_label + "\n"
-                s += "~" * len(section_label) + "\n\n"
-
-            for entry in sections[section]:
-                s += entry
-    return s
-
-
 def first_matching(section_regexps, string):
     for section, regexps in section_regexps:
         if regexps is None:
@@ -430,6 +402,50 @@ def first_matching(section_regexps, string):
                 return section
 
 
+def rest_py(data, opts={}):
+    """Returns ReStructured Text changelog content from data"""
+
+    def rest_title(label, char="="):
+        return (label.strip() + "\n") + (char * len(label) + "\n")
+
+    def render_version(title, sections):
+        s = rest_title(title, char="-") + "\n"
+
+        nb_sections = len(sections)
+        for section in sections:
+
+            section_label = section["label"] if section.get("label", None) \
+                            else "Other"
+
+            if not (section_label == "Other" and nb_sections == 1):
+                s += rest_title(section_label, "~") + "\n"
+
+            for commit in section["commits"]:
+                s += render_commit(commit)
+        return s
+
+    def render_commit(commit, opts=opts):
+        subject = commit["subject"]
+        subject += " [%s]" % (commit["author"], )
+
+        entry = indent('\n'.join(textwrap.wrap(ucfirst(subject))),
+                       first="- ").strip() + "\n\n"
+
+        if commit["body"]:
+            entry += indent(paragraph_wrap(commit["body"],
+                                           regexp=opts["body_split_regexp"]))
+            entry += "\n\n"
+
+        return entry
+
+
+    return (rest_title(data["title"], char="=") + "\n" +
+            "".join(render_version(title=version["label"],
+                                   sections=version["sections"])
+                    for version in data["versions"]
+                    if len(version["sections"]) > 0))
+
+
 def changelog(repository,
               ignore_regexps=[],
               replace_regexps={},
@@ -437,10 +453,52 @@ def changelog(repository,
               unreleased_version_label="unreleased",
               tag_filter_regexp=r"\d+\.\d+(\.\d+)?",
               body_split_regexp="\n\n",
+              output_engine=rest_py,
               ):
+    """Returns a string containing the changelog of given repository
 
-    s = "Changelog\n"
-    s += "=========\n\n"
+    This function returns a string corresponding to the template rendered with
+    the changelog data tree.
+
+    (see ``gitchangelog.rc.sample`` file for more info)
+
+    :param repository: target ``GitRepos`` object
+    :param ignore_regexps: list of regexp identifying ignored commit messages
+    :param replace_regexps: regexps used to replace elements in commit messages
+    :param section_regexps: regexps identifying sections
+    :param tag_filter_regexp: regexp to match tags used as version
+    :param body_split_regexp: regexp identifying the body of a commit message
+    :param unreleased_version_label: version label for untagged commits
+    :param template_format: format of template to generate the changelog
+
+    :returns: content of changelog
+
+    """
+
+    def new_version(tag, date, opts) :
+        title = "%s (%s)" % (tag, date) if tag else \
+                opts["unreleased_version_label"]
+        return {"label": title,
+                "tag": tag,
+                "date": date,
+                }
+
+    opts = {
+        'unreleased_version_label': unreleased_version_label,
+        'body_split_regexp': body_split_regexp,
+        }
+
+    # setting main container of changelog elements
+    title = "Changelog"
+    changelog = {"title": title,
+                 "versions": []}
+
+    ## Hash to speedup lookups
+    versions_done = {}
+
+    ## Create unreleased version
+    current_version = new_version(tag=None, date=None, opts=opts)
+    sections = collections.defaultdict(list)
 
     tags = [tag
             for tag in reversed(repository.tags)
@@ -448,19 +506,20 @@ def changelog(repository,
 
     section_order = [k for k, _v in section_regexps]
 
-    title = unreleased_version_label + "\n"
-    sections = collections.defaultdict(list)
-
     for commit in reversed(repository[:]):
 
         tags_of_commit = [tag for tag in tags
                          if tag == commit]
         if len(tags_of_commit) > 0:
             tag = tags_of_commit[0]
-            ## End of sections, let's flush current one.
-            s += make_section_string(title, sections, section_order)
 
-            title = "%s (%s)\n" % (tag.identifier, commit.date)
+            ## End of current version, let's flush current one.
+            current_version["sections"] = [{"label": k, "commits": sections[k]}
+                                           for k in section_order
+                                           if k in sections]
+            changelog["versions"].append(current_version)
+            versions_done[tag] = current_version
+            current_version = new_version(tag.identifier, commit.date, opts)
             sections = collections.defaultdict(list)
 
         ## Ignore some commit subject
@@ -481,19 +540,21 @@ def changelog(repository,
         ## Finaly print out the commit
 
         subject = final_dot(subject)
-        subject += " [%s]" % (commit.author_name, )
-        entry = indent('\n'.join(textwrap.wrap(ucfirst(subject))),
-                       first="- ").strip() + "\n\n"
 
-        if commit.body:
-            entry += indent(paragraph_wrap(commit.body,
-                                           regexp=body_split_regexp))
-            entry += "\n\n"
+        sections[matched_section].append({
+            "author": commit.author_name,
+            "subject": subject,
+            "body": commit.body
+            })
 
-        sections[matched_section].append(entry)
+    ## Don't forget last commits:
+    current_version["sections"] = [{"label": k, "commits": sections[k]}
+                                   for k in section_order
+                                   if k in sections]
+    changelog["versions"].append(current_version)
 
-    s += make_section_string(title, sections, section_order)
-    return s
+    return output_engine(data=changelog, opts=opts)
+
 
 ##
 ## Main
@@ -553,6 +614,7 @@ def main():
         unreleased_version_label=config['unreleased_version_label'],
         tag_filter_regexp=config['tag_filter_regexp'],
         body_split_regexp=config['body_split_regexp'],
+        output_engine=rest_py,
     )
 
 ##
