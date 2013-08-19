@@ -166,6 +166,10 @@ As people might have different needs and knowledge, a templating system using
 both `ReSTructured Text` or `markdown` formats. If you know ``mustache``
 templating, then you could easily add or modify existing templates.
 
+A ``mako`` templating engine is also provided with the same ReSTructured Text
+output than the legacy one for reference and further tweak if you would rather
+use mako templating.
+
 
 Mustache
 ~~~~~~~~
@@ -181,6 +185,18 @@ environment.
 .. _mustache: http://mustache.github.io
 .. _pystache: https://pypi.python.org/pypi/pystache
 .. _mustache templates: http://mustache.github.io/mustache.5.html
+
+
+Mako
+~~~~~~~~
+
+The ``makotemplate`` output engine templates for ``gitchangelog`` are located in
+``templates/mako`` and are powered via `mako`_ a python templating system. So
+`mako`_ output engine will only be available if you have `mako`_ module
+available in your python environment.
+
+.. _mako: http://www.makotemplates.org
+.. _mako: http://www.makotemplates.org
 
 
 Changelog data tree

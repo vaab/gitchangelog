@@ -13,6 +13,7 @@ setup(
     description='gitchangelog generates a changelog thanks to git log.',
     data_files=[
       ('templates/mustache', glob.glob("templates/mustache/*.tpl")),
+      ('templates/mako', glob.glob("templates/mako/*.tpl")),
     ],
     long_description=long_description,
     # Get more strings from http://www.python.org/pypi?%3Aaction=list_classifiers
@@ -39,6 +40,7 @@ setup(
     ],
     extras_require = {
         'Mustache':  ["pystache"],
+        'Mako': ["mako"],
     },
     entry_points="""
     [console_scripts]

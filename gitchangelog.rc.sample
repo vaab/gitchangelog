@@ -138,6 +138,15 @@ unreleased_version_label = "%%version%% (unreleased)"
 ##           - mustache("markdown")
 ##           - mustache("restructuredtext")
 ##
+##   - makotemplate(<template_name>)
+##
+##        Template name could be any of the available templates in
+##        ``templates/mako/*.tpl``.
+##        Requires python package ``mako``.
+##        Examples:
+##           - makotemplate("restructuredtext")
+##
 output_engine = rest_py
 #output_engine = mustache("restructuredtext")
 #output_engine = mustache("markdown")
+#output_engine = makotemplate("restructuredtext")

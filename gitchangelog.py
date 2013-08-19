@@ -22,6 +22,11 @@ try:
 except ImportError:
     pystache = None
 
+try:
+    import mako
+except ImportError:
+    mako = None
+
 
 
 usage_msg = """usage: %(exname)s [REPOS]
@@ -519,6 +524,49 @@ else:
     @available_in_config
     def mustache(template_name):
         die("Required 'pystache' python module not found.")
+
+
+if mako:
+
+    import mako.template
+
+    mako_env = dict((f.__name__, f) for f in (ucfirst, indent, textwrap,
+                                              paragraph_wrap))
+
+    @available_in_config
+    def makotemplate(template_name):
+        """Return a callable that will render a changelog data structure
+
+        returned callable must take 2 arguments ``data`` and ``opts``.
+
+        """
+        template_dir = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            "templates", "mako")
+
+        template_path = os.path.join(template_dir, "%s.tpl" % template_name)
+
+        if not os.path.exists(template_path):
+            print "Available mako templates:\n - " + \
+                  " - ".join(os.path.basename(f).split(".")[-1]
+                             for f in glob.glob(os.path.join(template_dir,
+                                                             "*.tpl")))
+            die("No %r a valid mako template name." % template_name)
+
+        template = mako.template.Template(filename=template_path)
+        def renderer(data, opts):
+            kwargs = mako_env.copy()
+            kwargs.update({"data": data,
+                           "opts": opts})
+            return template.render(**kwargs)
+
+        return renderer
+
+else:
+
+    @available_in_config
+    def makotemplate(template_name):
+        die("Required 'mako' python module not found.")
 
 
 ##
