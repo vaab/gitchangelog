@@ -46,6 +46,7 @@
 ##   tags, and other rules only applies to the summary.  The body of the commit
 ##   message will be displayed in the changelog with minor reformating.
 
+
 ##
 ## ``ignore_regexps`` is a line of regexps
 ##
@@ -101,6 +102,7 @@ section_regexps = [
 
 ]
 
+
 ## ``body_split_regexp`` is a regexp
 ##
 ## Commit message body (not the summary) if existing will be split
@@ -121,6 +123,7 @@ tag_filter_regexp = r'^[0-9]+\.[0-9]+(\.[0-9]+)?$'
 ## This label will be used as the changelog Title of the last set of changes
 ## between last valid tag and HEAD if any.
 unreleased_version_label = "%%version%% (unreleased)"
+
 
 ## ``output_engine`` is a callable
 ##
