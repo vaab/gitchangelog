@@ -81,7 +81,31 @@ function die() {
 ## Code
 ##
 
-depends git sed grep date
+depends git grep date
+
+## BSD / GNU sed compatibility layer
+if (type -p sed && sed --version) >/dev/null 2>&1; then
+    sed="$(type -p sed)"
+else
+    if (type -p gsed && gsed --version) >/dev/null 2>&1; then
+        sed="$(type -p gsed)"
+    else
+        print_error "$exname: required GNU sed not found"
+    fi
+fi
+
+## BSD / GNU date compatibility layer
+if (type -p date && date --version) >/dev/null 2>&1 ; then
+    date="$(type -p date)"
+else
+    if (type -p gdate && gdate --version) >/dev/null 2>&1; then
+        date="$(type -p gdate)"
+    else
+        print_error "$exname: required GNU date not found"
+    fi
+fi
+
+
 gitchangelog=./gitchangelog.py
 
 if ! test -e "setup.py" >/dev/null 2>&1; then
