@@ -705,7 +705,15 @@ def main():
     ## warning: not safe (repos is given by the user)
     repository = GitRepos(repos)
 
-    gc_rc = repository.config.get("gitchangelog", {}).get('rc-path')
+    try:
+        gc_rc = repository.config.get("gitchangelog", {}).get('rc-path')
+    except Exception, e:
+        sys.stderr.write(
+            "Error parsing git configs: %s."
+            " Won't be able to read 'rc-path' if defined.\n" % (str(e))
+        )
+        gc_rc = None
+
     gc_rc = normpath(gc_rc, cwd=repository.toplevel) if gc_rc else None
 
     ## config file lookup resolution
