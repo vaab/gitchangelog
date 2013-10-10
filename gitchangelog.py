@@ -48,7 +48,13 @@ Config file location will be resolved in this order:
 
 
 class ShellError(Exception):
-    pass
+
+    def __init__(self, msg, errlvl=None, command=None, out=None, err=None):
+        self.errlvl = errlvl
+        self.command = command
+        self.out = out
+        self.err = err
+        super(ShellError, self).__init__(msg)
 
 
 def die(msg=None):
@@ -262,7 +268,8 @@ def wrap(command, quiet=True, ignore_errlvls=[0]):
         formatted = '\n'.join(formatted)
 
         raise ShellError("Wrapped command %r exited with errorlevel %d.\n%s"
-                        % (command, errlvl, indent(formatted, chars="  ")))
+                         % (command, errlvl, indent(formatted, chars="  ")),
+                         errlvl=errlvl, command=command, out=out, err=err)
     return out
 
 
