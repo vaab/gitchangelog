@@ -154,7 +154,7 @@ Output Engines
 --------------
 
 At the end of the configuration file, you'll notice a variable called
-``output_engine``. If the current ReSTructured Text output format seats your
+``output_engine``. If the current ReSTructured Text output format fits your
 needs, you won't need to fiddle with this option.
 
 To render the template, ``gitchangelog`` will generate a data structure that
