@@ -78,8 +78,8 @@ setup(
     install_requires=[
     ],
     extras_require = {
-        'Mustache':  ["pystache"],
-        'Mako': ["mako"],
+        'Mustache':  ["pystache", ],
+        'Mako': ["mako", ],
         'test': ["minimock", ]
     },
     entry_points="""

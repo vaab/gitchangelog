@@ -1,12 +1,5 @@
 #!/usr/bin/env python
 
-##
-## TODO:
-##
-##  - use an external template to format changelog
-##
-
-
 import re
 import os
 import os.path
@@ -168,7 +161,7 @@ def cmd(command):
     return stdout, stderr, p.returncode
 
 
-def wrap(command, quiet=True, ignore_errlvls=[0]):
+def wrap(command, ignore_errlvls=[0]):
     """Wraps a shell command and casts an exception on unexpected errlvl
 
     >>> wrap('/tmp/lsdjflkjf') # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -176,7 +169,7 @@ def wrap(command, quiet=True, ignore_errlvls=[0]):
     ...
     ShellError: Wrapped command '/tmp/lsdjflkjf' exited with errorlevel 127.
       stderr:
-      | /bin/sh: /tmp/lsdjflkjf: not found
+      | /bin/sh: .../tmp/lsdjflkjf: not found
 
     >>> wrap('echo hello') # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     'hello\\n'
