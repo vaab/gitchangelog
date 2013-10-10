@@ -94,75 +94,6 @@ def load_config_file(filename, fail_if_not_present=True):
 
 
 ##
-## Common functions
-##
-
-def inflate_dict(dct, sep=".", deep=-1):
-    """Inflates a flattened dict.
-
-    Will look in simple dict of string key with string values to
-    create a dict containing sub dicts as values.
-
-    Samples are better than explanation:
-
-        >>> from pprint import pprint as pp
-        >>> pp(inflate_dict({'a.x': 3, 'a.y': 2}))
-        {'a': {'x': 3, 'y': 2}}
-
-    The keyword argument ``sep`` allows to change the separator used
-    to get subpart of keys:
-
-        >>> pp(inflate_dict({'etc/group': 'geek', 'etc/user': 'bob'}, "/"))
-        {'etc': {'group': 'geek', 'user': 'bob'}}
-
-    Warning: you cannot associate a value to a section:
-
-        >>> inflate_dict({'section.key': 3, 'section': 'bad'})
-        Traceback (most recent call last):
-        ...
-        TypeError: 'str' object does not support item assignment
-
-    Of course, dict containing only keys that doesn't use separator will be
-    returned without changes:
-
-        >>> inflate_dict({})
-        {}
-        >>> inflate_dict({'a': 1})
-        {'a': 1}
-
-    Argument ``deep``, is the level of deepness allowed to inflate dict:
-
-        >>> pp(inflate_dict({'a.b.c': 3, 'a.d': 4}, deep=1))
-        {'a': {'b.c': 3, 'd': 4}}
-
-    Of course, a deepness of 0 won't do anychanges, whereas deepness of -1 is
-    the default value and means infinite deepness:
-
-        >>> pp(inflate_dict({'a.b.c': 3, 'a.d': 4}, deep=0))
-        {'a.b.c': 3, 'a.d': 4}
-
-    """
-
-    def mset(dct, k, v, sep=".", deep=-1):
-        if deep == 0 or sep not in k:
-            dct[k] = v
-        else:
-            khead, ktail = k.split(sep, 1)
-            if khead not in dct:
-                dct[khead] = {}
-            mset(dct[khead], ktail, v,
-                 sep=sep,
-                 deep=-1 if deep < 0 else deep - 1)
-
-    res = {}
-    ## sorting keys ensures that colliding values if any will be string
-    ## first set first so mset will crash with a TypeError Exception.
-    for k in sorted(dct.keys()):
-        mset(res, k, dct[k], sep, deep)
-    return res
-
-
-##
 ## Text functions
 ##
 
@@ -366,6 +297,101 @@ def normpath(path, cwd=None):
     return os.path.normpath(os.path.join(cwd, path))
 
 
+class GitConfig(SubGitObjectMixin):
+    """Interface to config values of git
+
+    Let's create a fake GitRepos:
+
+        >>> from minimock import Mock
+        >>> repos = Mock("gitRepos")
+
+    Initialization:
+
+        >>> cfg = GitConfig(repos)
+
+    Query, by attributes or items:
+
+        >>> repos.swrap.mock_returns = "bar"
+        >>> cfg.foo
+        Called gitRepos.swrap("git config 'foo'")
+        'bar'
+        >>> cfg["foo"]
+        Called gitRepos.swrap("git config 'foo'")
+        'bar'
+        >>> cfg.get("foo")
+        Called gitRepos.swrap("git config 'foo'")
+        'bar'
+        >>> cfg["foo.wiz"]
+        Called gitRepos.swrap("git config 'foo.wiz'")
+        'bar'
+
+    Notice that you can't use attribute search in subsection as ``cfg.foo.wiz``
+    That's because in git config files, you can have a value attached to
+    an element, and this element can also be a section.
+
+    Nevertheless, you can do:
+
+        >>> getattr(cfg, "foo.wiz")
+        Called gitRepos.swrap("git config 'foo.wiz'")
+        'bar'
+
+    Default values
+    --------------
+
+    get item, and getattr default values can be used:
+
+        >>> del repos.swrap.mock_returns
+        >>> repos.swrap.mock_raises = ShellError('Key not found',
+        ...                                      errlvl=1, out="", err="")
+
+        >>> getattr(cfg, "foo", "default")
+        Called gitRepos.swrap("git config 'foo'")
+        'default'
+
+        >>> cfg["foo"]  ## doctest: +ELLIPSIS
+        Traceback (most recent call last):
+        ...
+        KeyError: 'foo'
+
+        >>> getattr(cfg, "foo")  ## doctest: +ELLIPSIS
+        Traceback (most recent call last):
+        ...
+        AttributeError...
+
+        >>> cfg.get("foo", "default")
+        Called gitRepos.swrap("git config 'foo'")
+        'default'
+
+        >>> print "%r" % cfg.get("foo")
+        Called gitRepos.swrap("git config 'foo'")
+        None
+
+    """
+
+    def __init__(self, repos):
+        super(GitConfig, self).__init__(repos)
+
+    def __getattr__(self, label):
+        cmd = "git config %r" % str(label)
+        try:
+            res = self.swrap(cmd)
+        except ShellError, e:
+            if e.errlvl == 1 and e.out == "" and e.err == "":
+                raise AttributeError("key %r is not found in git config."
+                                     % label)
+            raise
+        return res
+
+    def get(self, label, default=None):
+        return getattr(self, label, default)
+
+    def __getitem__(self, label):
+        try:
+            return getattr(self, label)
+        except AttributeError:
+            raise KeyError(label)
+
+
 class GitRepos(object):
 
     def __init__(self, path):
@@ -383,9 +409,7 @@ class GitRepos(object):
 
     @property
     def config(self):
-        all_options = self.swrap("git config -l")
-        dct_options = dict(l.split("=", 1) for l in all_options.split('\n'))
-        return inflate_dict(dct_options)
+        return GitConfig(self)
 
     def swrap(self, command, **kwargs):
         """Essential force the CWD of the command to be in self._orig_path"""
@@ -713,8 +737,8 @@ def main():
     repository = GitRepos(repos)
 
     try:
-        gc_rc = repository.config.get("gitchangelog", {}).get('rc-path')
-    except Exception, e:
+        gc_rc = repository.config.get("gitchangelog.rc-path")
+    except ShellError, e:
         sys.stderr.write(
             "Error parsing git configs: %s."
             " Won't be able to read 'rc-path' if defined.\n" % (str(e))
