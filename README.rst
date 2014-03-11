@@ -154,21 +154,25 @@ Output Engines
 --------------
 
 At the end of the configuration file, you'll notice a variable called
-``output_engine``. If the current ReSTructured Text output format fits your
-needs, you won't need to fiddle with this option.
+``output_engine``. By default, it's set to ``rest_py``, which is the
+legacy python engine to produce the `ReSTructured Text` output format
+that is shown in above samples. If this engine fits your needs, you
+won't need to fiddle with this option.
 
 To render the template, ``gitchangelog`` will generate a data structure that
 will then be rendered thanks to the output engine. This should help you get
 the exact output that you need.
 
-As people might have different needs and knowledge, a templating system using
-``mustache`` (mako templating will soon be available) is available to render
-both `ReSTructured Text` or `markdown` formats. If you know ``mustache``
-templating, then you could easily add or modify existing templates.
+As people might have different needs and knowledge, a templating
+system using ``mustache`` is available. ``mustache`` templates are
+provided to render both `ReSTructured Text` or `markdown` formats. If
+you know ``mustache`` templating, then you could easily add or modify
+these existing templates.
 
-A ``mako`` templating engine is also provided with the same ReSTructured Text
-output than the legacy one for reference and further tweak if you would rather
-use mako templating.
+A ``mako`` templating engine is also provided. You'll find also a ``mako``
+template producing the same `ReSTructured Text` output than the legacy one.
+It's provided for reference and/or further tweak if you would rather use `mako
+templates`_.
 
 
 Mustache
@@ -188,22 +192,20 @@ environment.
 
 
 Mako
-~~~~~~~~
+~~~~
 
 The ``makotemplate`` output engine templates for ``gitchangelog`` are located in
-``templates/mako`` and are powered via `mako`_ a python templating system. So
+``templates/mako`` and are powered via `mako`_ python templating system. So
 `mako`_ output engine will only be available if you have `mako`_ module
 available in your python environment.
 
-.. _mako: http://www.makotemplates.org
 .. _mako: http://www.makotemplates.org
 
 
 Changelog data tree
 ~~~~~~~~~~~~~~~~~~~
 
-Here is a sample to show the current structure of the changelog data structure
-that will be provided to output engine::
+This is a sample of the current data structure sent to output engines::
 
   {'title': 'Changelog',
    'versions': [{'label': '%%version%% (unreleased)',
