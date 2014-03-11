@@ -225,7 +225,8 @@ class GitCommit(SubGitObjectMixin):
         self.identifier = identifier
 
         if identifier is "LAST":
-            identifier = self.swrap("git log --format=%H | tail -n 1")
+            identifier = self.swrap(
+                "git rev-list --first-parent --max-parents=0 HEAD")
 
         attrs = {'sha1': "%h",
                  'subject': "%s",
