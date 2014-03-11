@@ -1,6 +1,6 @@
-=============
-git-changelog
-=============
+============
+gitchangelog
+============
 
 Translate commit message history to a changelog.
 
@@ -27,19 +27,19 @@ Sample
 
 The default output is ReSTructured text, so it should be readable in ASCII.
 
-Here is a small sample of the ``git-changelog`` changelog at work.
+Here is a small sample of the ``gitchangelog`` changelog at work.
 
 Current ``git log`` output so you can get an idea of the log history::
 
-  * 59f902a Valentin Lab new: dev: sections in changelog are now in the order given in ``git-changelog.rc`` in the ``section_regexps`` option.  (0.1.2)
+  * 59f902a Valentin Lab new: dev: sections in changelog are now in the order given in ``gitchangelog.rc`` in the ``section_regexps`` option.  (0.1.2)
   * c6f72cc Valentin Lab chg: dev: commented code to toggle doctest mode.
   * a9c38f3 Valentin Lab fix: dev: doctests were failing on this.
   * 59524e6 Valentin Lab new: usr: added ``body_split_regexp`` option to attempts to format correctly body of commit.
   * 5883f07 Valentin Lab new: usr: use a list of tuple instead of a dict for ``section_regexps`` to be able to manage order between section on find match.
-  * 7c1d480 Valentin Lab new: dev: new ``unreleased_version_label`` option in ``git-changelog.rc`` to change label of not yet released code.
+  * 7c1d480 Valentin Lab new: dev: new ``unreleased_version_label`` option in ``gitchangelog.rc`` to change label of not yet released code.
   * cf29c9c Valentin Lab fix: dev: bad sorting of tags (alphanumerical). Changed to commit date sort.
   * 61d8f80 Valentin Lab fix: dev: support of empty commit message.
-  * eeca31b Valentin Lab new: dev: use ``git-changelog`` section in ``git config`` world appropriately.
+  * eeca31b Valentin Lab new: dev: use ``gitchangelog`` section in ``git config`` world appropriately.
   * 6142b71 Valentin Lab chg: dev: cosmetic removal of trailing whitespaces
   * 3c3edd5 Valentin Lab fix: usr: ``git`` in later versions seems to fail on ``git config <key>`` with errlvl 255, that was not supported.
   * 3f9617d Valentin Lab fix: usr: removed Traceback when there were no tags at all in the current git repository.
@@ -64,10 +64,10 @@ And here is the ``gitchangelog`` output::
   - Use a list of tuple instead of a dict for ``section_regexps`` to be
     able to manage order between section on find match. [Valentin Lab]
 
-  - New ``unreleased_version_label`` option in ``git-changelog.rc`` to
+  - New ``unreleased_version_label`` option in ``gitchangelog.rc`` to
     change label of not yet released code. [Valentin Lab]
 
-  - Use ``git-changelog`` section in ``git config`` world appropriately.
+  - Use ``gitchangelog`` section in ``git config`` world appropriately.
     [Valentin Lab]
 
   Changes
