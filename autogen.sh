@@ -165,7 +165,7 @@ function set_version_setup_py() {
 }
 
 
-GITCHANGELOG_CONFIG_FILENAME=./gitchangelog.rc.sample "$gitchangelog" > CHANGELOG.rst
+GITCHANGELOG_CONFIG_FILENAME=./gitchangelog.rc.reference "$gitchangelog" > CHANGELOG.rst
 
 if [ "$?" != 0 ]; then
     (echo -n "Changelog NOT generated. "

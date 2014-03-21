@@ -68,20 +68,22 @@ def available_in_config(f):
     return f
 
 
-def load_config_file(filename, fail_if_not_present=True):
+def load_config_file(filename, default_filename=None,
+                     fail_if_not_present=True):
     """Loads data from a config file."""
 
     config = _config_env.copy()
-
-    if os.path.exists(filename):
-        try:
-            execfile(filename, config)
-        except SyntaxError, e:
-            die('Syntax error in config file: %s\n'
-                'Line %i offset %i\n' % (filename, e.lineno, e.offset))
-    else:
-        if fail_if_not_present:
-            die('%r config file is not found and is required.' % (filename, ))
+    for fname in [default_filename, filename]:
+        if fname and os.path.exists(fname):
+            try:
+                execfile(fname, config)
+            except SyntaxError, e:
+                die('Syntax error in config file: %s\n'
+                    'Line %i offset %i\n'
+                    % (fname, e.lineno, e.offset))
+        else:
+            if fail_if_not_present:
+                die('%r config file is not found and is required.' % (filename, ))
 
     return config
 
@@ -759,11 +761,12 @@ def main():
             else:
                 break
 
-    if not changelogrc or not os.path.exists(changelogrc):
-        die("No %s config file found anywhere !\n"
-            "Perhaps you should consult 'gitchangelog --help'." % basename)
-
-    config = load_config_file(os.path.expanduser(changelogrc))
+    config = load_config_file(
+        os.path.expanduser(changelogrc),
+        default_filename=os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            "gitchangelog.rc.reference"),
+        fail_if_not_present=False)
 
     print changelog(repository,
         ignore_regexps=config['ignore_regexps'],

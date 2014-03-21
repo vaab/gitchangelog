@@ -43,6 +43,11 @@ class ExtendedTestCase(unittest.TestCase):
             msg = "%r should contain %r." % (haystack, needle)
         self.assertTrue(needle in haystack, msg)
 
+    def assertNotContains(self, haystack, needle, msg=None):
+        if not msg:
+            msg = "%r should not contain %r." % (haystack, needle)
+        self.assertTrue(needle not in haystack, msg)
+
 
 class BaseTmpDirTest(ExtendedTestCase):
 
@@ -75,14 +80,30 @@ class BaseGitReposTest(BaseTmpDirTest):
             ## Adding first file
             echo 'Hello' > a
             git add a
-            git commit -m 'first commit'
+            git commit -m 'new: first commit'
             git tag 0.0.1
 
             ## Adding second file
             echo 'Second file' > b
             git add b
-            git commit -m 'new: added file \`\`b\`\`'
+            git commit -m 'new: add file ``b``'
             git tag 0.0.2
+
+            ## Adding more files
+            echo 'Third file' > c
+            git add c
+            git commit -m 'new: add file ``c``'
+            echo 'Fourth file' > d
+            echo 'With a modification' >> b
+            git add d b
+            git commit -m 'new: add file ``e``, modified ``b``'
+            echo 'minor addition 1' >> b
+            git commit -am 'chg: modified ``b`` !minor'
+            git tag 0.0.3
+
+            ## Add untagged commits
+            echo 'addition' >> b
+            git commit -am 'chg: modified ``b`` XXX'
 
             """)
         os.chdir("repos")

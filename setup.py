@@ -52,6 +52,7 @@ setup(
     version='%%version%%',
     description='gitchangelog generates a changelog thanks to git log.',
     data_files=[
+      ('gitchangelog.rc.reference', ['gitchangelog.rc.reference', ]),
       ('templates/mustache', glob.glob("templates/mustache/*.tpl")),
       ('templates/mako', glob.glob("templates/mako/*.tpl")),
     ],
