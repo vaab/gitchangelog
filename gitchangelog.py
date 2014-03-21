@@ -22,9 +22,8 @@ except ImportError:
     mako = None
 
 
-
 usage_msg = """usage: %(exname)s"""
-help_msg = """Run this command in a git repository to get a ReST changelog in stdout.
+help_msg = """Run this command in a git repository to output a formatted changelog
 
 %(exname)s uses a config file to filter meaningfull commit or do some
  formatting in commit messages thanks to a config file.
