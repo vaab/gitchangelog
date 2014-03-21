@@ -23,7 +23,7 @@ except ImportError:
 
 
 
-usage_msg = """usage: %(exname)s [REPOS]"""
+usage_msg = """usage: %(exname)s"""
 help_msg = """Run this command in a git repository to get a ReST changelog in stdout.
 
 %(exname)s uses a config file to filter meaningfull commit or do some
@@ -717,18 +717,13 @@ def main():
     if basename.endswith(".py"):
         basename = basename[:-3]
 
-    if len(sys.argv) == 1:
-        repos = "."
-    elif len(sys.argv) == 2:
-        if sys.argv[1] == "--help":
-            print full_help_msg % {'exname': basename}
-            sys.exit(0)
-        repos = sys.argv[1]
-    else:
+    if len(sys.argv) == 2 and sys.argv[1] == "--help":
+        print full_help_msg % {'exname': basename}
+        sys.exit(0)
+    elif len(sys.argv) > 1:
         die(usage_msg % {'exname': basename})
 
-    ## warning: not safe (repos is given by the user)
-    repository = GitRepos(repos)
+    repository = GitRepos(".")
 
     try:
         gc_rc = repository.config.get("gitchangelog.rc-path")
