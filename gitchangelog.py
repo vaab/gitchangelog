@@ -269,13 +269,13 @@ class GitCommit(SubGitObjectMixin):
             raise TypeError("Invalid type for %r in operation" % value)
         if self.sha1 == value.sha1:
             return []
-        commits = self.swrap('git rev-list %s..%s'
+        commits = self.swrap('git rev-list --reverse %s..%s'
                              % (value.sha1, self.sha1))
         if not commits:
             raise ValueError('Seems that %r is earlier than %r'
                              % (self.identifier, value.identifier))
         return [GitCommit(commit, self._repos)
-                for commit in reversed(commits.split('\n'))]
+                for commit in commits.split('\n')]
 
     def __repr__(self):
         return "<%s %r>" % (self.__class__.__name__, self.identifier)
