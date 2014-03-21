@@ -8,6 +8,7 @@ import glob
 import textwrap
 import datetime
 import collections
+
 from subprocess import Popen, PIPE
 
 try:
@@ -241,7 +242,7 @@ class GitCommit(SubGitObjectMixin):
         aformat = "%x00".join(attrs.values())
         try:
             ret = self.swrap("git show -s %r --pretty=format:%s"
-                       % (identifier, aformat))
+                             % (identifier, aformat))
         except ShellError:
             raise ValueError("Given commit identifier %r doesn't exists"
                              % identifier)
@@ -627,7 +628,7 @@ def changelog(repository,
 
     """
 
-    def new_version(tag, date, opts) :
+    def new_version(tag, date, opts):
         title = "%s (%s)" % (tag, date) if tag else \
                 opts["unreleased_version_label"]
         return {"label": title,
@@ -694,7 +695,7 @@ def changelog(repository,
         sections[matched_section].append({
             "author": commit.author_name,
             "subject": subject,
-            "body": commit.body
+            "body": commit.body,
             })
 
     ## Don't forget last commits:
@@ -705,11 +706,9 @@ def changelog(repository,
 
     return output_engine(data=changelog, opts=opts)
 
-
 ##
 ## Main
 ##
-
 
 def main():
 
@@ -735,8 +734,8 @@ def main():
     except ShellError, e:
         sys.stderr.write(
             "Error parsing git configs: %s."
-            " Won't be able to read 'rc-path' if defined.\n" % (str(e))
-        )
+            " Won't be able to read 'rc-path' if defined.\n"
+            % (str(e)))
         gc_rc = None
 
     gc_rc = normpath(gc_rc, cwd=repository.toplevel) if gc_rc else None
@@ -778,7 +777,6 @@ def main():
 ##
 ## Launch program
 ##
-
 
 if __name__ == "__main__":
 
