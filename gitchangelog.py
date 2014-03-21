@@ -34,8 +34,6 @@ Config file location will be resolved in this order:
   - in shell environment variable GITCHANGELOG_CONFIG_FILENAME
   - in git configuration: ``git config gitchangelog.rc-path``
   - as '.%(exname)s.rc' in the root of the current git repository
-  - as '~/.%(exname)s.rc'
-  - as '/etc/%(exname)s'
 
 """
 
@@ -154,16 +152,16 @@ def paragraph_wrap(text, regexp="\n\n"):
 ##
 
 
-def cmd(command):
 
+def cmd(command, env=None):
     p = Popen(command, shell=True,
               stdin=PIPE, stdout=PIPE, stderr=PIPE,
-              close_fds=True)
+              close_fds=True, env=env)
     stdout, stderr = p.communicate()
     return stdout, stderr, p.returncode
 
 
-def wrap(command, ignore_errlvls=[0]):
+def wrap(command, ignore_errlvls=[0], env=None):
     """Wraps a shell command and casts an exception on unexpected errlvl
 
     >>> wrap('/tmp/lsdjflkjf') # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -178,7 +176,7 @@ def wrap(command, ignore_errlvls=[0]):
 
     """
 
-    out, err, errlvl = cmd(command)
+    out, err, errlvl = cmd(command, env=env)
 
     if errlvl not in ignore_errlvls:
 
@@ -747,8 +745,9 @@ def main():
         (True, lambda: gc_rc),
         (False, lambda: ('%s/.%s.rc' % (repository.toplevel, basename)) \
                  if not repository.bare else None),
-        (False, lambda: os.path.expanduser('~/.%s.rc' % basename)),
-        (False, lambda: '/etc/%s.rc' % basename),
+        ## Removed to enforce per-repository gitchangelog file.
+        # (False, lambda: os.path.expanduser('~/.%s.rc' % basename)),
+        # (False, lambda: '/etc/%s.rc' % basename),
         ]:
         changelogrc = fun()
         if changelogrc:
