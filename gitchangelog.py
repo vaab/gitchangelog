@@ -33,7 +33,7 @@ Run this command in a git repository to get a ReST changelog in stdout.
 Config file location will be resolved in this order:
 
   - in shell environment variable GITCHANGELOG_CONFIG_FILENAME
-  - in git configuration: ``git config gitchangelog.rc-patch``
+  - in git configuration: ``git config gitchangelog.rc-path``
   - as '.%(exname)s.rc' in the root of the current git repository
   - as '~/.%(exname)s.rc'
   - as '/etc/%(exname)s'
@@ -733,7 +733,7 @@ def main():
         gc_rc = repository.config.get("gitchangelog.rc-path")
     except ShellError, e:
         sys.stderr.write(
-            "Error parsing git configs: %s."
+            "Error parsing git config: %s."
             " Won't be able to read 'rc-path' if defined.\n"
             % (str(e)))
         gc_rc = None
@@ -760,7 +760,8 @@ def main():
                 break
 
     if not changelogrc or not os.path.exists(changelogrc):
-        die("No %s config file found anywhere." % basename)
+        die("No %s config file found anywhere !\n"
+            "Perhaps you should consult 'gitchangelog --help'." % basename)
 
     config = load_config_file(os.path.expanduser(changelogrc))
 
