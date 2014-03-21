@@ -23,9 +23,8 @@ except ImportError:
 
 
 
-usage_msg = """usage: %(exname)s [REPOS]
-
-Run this command in a git repository to get a ReST changelog in stdout.
+usage_msg = """usage: %(exname)s [REPOS]"""
+help_msg = """Run this command in a git repository to get a ReST changelog in stdout.
 
 %(exname)s uses a config file to filter meaningfull commit or do some
  formatting in commit messages thanks to a config file.
@@ -39,6 +38,8 @@ Config file location will be resolved in this order:
   - as '/etc/%(exname)s'
 
 """
+
+full_help_msg = "%s\n\n%s" % (usage_msg, help_msg)
 
 
 class ShellError(Exception):
@@ -720,11 +721,11 @@ def main():
         repos = "."
     elif len(sys.argv) == 2:
         if sys.argv[1] == "--help":
-            print usage_msg % {'exname': basename}
+            print full_help_msg % {'exname': basename}
             sys.exit(0)
         repos = sys.argv[1]
     else:
-        die('usage: %s [REPOS]\n' % basename)
+        die(usage_msg % {'exname': basename})
 
     ## warning: not safe (repos is given by the user)
     repository = GitRepos(repos)
