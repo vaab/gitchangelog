@@ -270,8 +270,8 @@ class GitCommit(SubGitObjectMixin):
             raise TypeError("Invalid type for %r in operation" % value)
         if self.sha1 == value.sha1:
             return []
-        commits = self.swrap('git rev-list --reverse %s..%s'
-                             % (value.sha1, self.sha1))
+        commits = self.swrap('git rev-list %s..%s'
+                             % (self.sha1, value.sha1))
         if not commits:
             raise ValueError('Seems that %r is earlier than %r'
                              % (self.identifier, value.identifier))
@@ -445,10 +445,10 @@ class GitRepos(object):
             start, stop = key.start, key.stop
 
             if start is None:
-                start = GitCommit('LAST', self)
+                start = GitCommit('HEAD', self)
 
             if stop is None:
-                stop = GitCommit('HEAD', self)
+                stop = GitCommit('LAST', self)
 
             return stop - start
         raise NotImplementedError("Unsupported getitem %r object." % key)
@@ -675,7 +675,7 @@ def changelog(repository,
 
     section_order = [k for k, _v in section_regexps]
 
-    for commit in reversed(repository[:]):
+    for commit in repository[:]:
 
         tags_of_commit = [tag for tag in tags
                           if tag == commit]
