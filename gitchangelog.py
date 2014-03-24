@@ -395,6 +395,21 @@ class GitRepos(object):
         ## will be done from this location.
         self._orig_path = os.path.abspath(path)
 
+        ## verify ``git`` command is accessible:
+        try:
+            self._git_version = self.swrap("git version")
+        except ShellError, _e:
+            raise EnvironmentError(
+                "Required ``git`` command not found or broken in $PATH. "
+                "(calling ``git version`` failed.)")
+
+        ## verify that we are in a git repository
+        try:
+            self.swrap("git remote")
+        except ShellError, _e:
+            raise EnvironmentError("Not in a git repository. "
+                "(calling ``git remote`` failed.)")
+
         self.bare = self.swrap("git rev-parse --is-bare-repository") == "true"
         self.toplevel = None if self.bare else \
                         self.swrap("git rev-parse --show-toplevel")
@@ -712,17 +727,39 @@ def changelog(repository,
 
 def main():
 
+    reference_config = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            "gitchangelog.rc.reference")
+
     basename = os.path.basename(sys.argv[0])
     if basename.endswith(".py"):
         basename = basename[:-3]
 
-    if len(sys.argv) == 2 and sys.argv[1] == "--help":
+    if "-h" in sys.argv or "--help" in sys.argv:
         print full_help_msg % {'exname': basename}
         sys.exit(0)
-    elif len(sys.argv) > 1:
+
+    if len(sys.argv) > 1 and sys.argv[1] != "init":
         die(usage_msg % {'exname': basename})
 
-    repository = GitRepos(".")
+    try:
+        repository = GitRepos(".")
+    except EnvironmentError, e:
+        die(e.message)
+
+    repository_config = '%s/.%s.rc' % (repository.toplevel, basename) \
+                        if not repository.bare else None
+
+    if len(sys.argv) == 2 and sys.argv[1] == "init":
+        import shutil
+        if repository_config is None:
+            die("``init`` of bare repository not supported.")
+        if os.path.exists(repository_config):
+            die("File %r already exists." % repository_config)
+        shutil.copyfile(reference_config,
+                        repository_config)
+        print("File %r created.")
+        sys.exit(0)
 
     try:
         gc_rc = repository.config.get("gitchangelog.rc-path")
@@ -757,9 +794,7 @@ def main():
 
     config = load_config_file(
         os.path.expanduser(changelogrc),
-        default_filename=os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            "gitchangelog.rc.reference"),
+        default_filename=reference_config,
         fail_if_not_present=False)
 
     print changelog(repository,

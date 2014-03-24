@@ -1,3 +1,6 @@
+
+import os.path
+
 from common import GitChangelogTestCase, w, cmd
 
 
@@ -61,3 +64,98 @@ EOF
             changelog, "!minor",
             msg="Shouldn't contain !minor tagged commit neither... "
             "content of changelog:\n%s" % changelog)
+
+
+class TestInitArgument(GitChangelogTestCase):
+
+    def test_init_file(self):
+
+        out, err, errlvl = cmd('$tprog init')
+        self.assertEqual(
+            errlvl, 0,
+            msg="Should not fail to init on simple git repository")
+        self.assertEqual(
+            err, "",
+            msg="There should be no standard error outputed. "
+            "Current stdout:\n%r" % out)
+        self.assertContains(
+            out, "created",
+            msg="Output message should mention that the file was created... "
+            "Current stdout:\n%s" % out)
+        self.assertTrue(
+            os.path.exists('.gitchangelog.rc'),
+            msg="File must have been created.")
+
+    def test_init_file_already_exists(self):
+
+        w("touch .gitchangelog.rc")
+        out, err, errlvl = cmd('$tprog init')
+        self.assertEqual(
+            errlvl, 1,
+            msg="Should fail to init on simple git repository")
+        self.assertContains(
+            err, "exists",
+            msg="There should be a error msg mentioning the file exists. "
+            "Current stderr:\n%r" % err)
+        self.assertEqual(
+            out, "",
+            msg="No standard output message expected in case of error "
+            "Current stdout:\n%s" % out)
+
+    def test_outside_git_repository(self):
+
+        out, err, errlvl = cmd('cd .. ; $tprog init')
+        self.assertEqual(
+            errlvl, 1,
+            msg="Should fail to init outside a git repository.")
+        self.assertContains(
+            err, "repository",
+            msg="There should be a error msg mentioning 'repository'. "
+            "Current stderr:\n%r" % err)
+        self.assertEqual(
+            out, "",
+            msg="No standard output message expected. "
+            "Current stdout:\n%s" % out)
+
+    def test_in_bare_repository(self):
+        w("""
+
+            cd ..
+            git clone --bare repos test_bare
+
+        """)
+        out, err, errlvl = cmd('cd ../test_bare && $tprog init')
+        self.assertEqual(
+            errlvl, 1,
+            msg="Should fail to init outside a git repository.")
+        self.assertContains(
+            err, "bare",
+            msg="There should be a error msg mentioning 'bare'. "
+            "Current stderr:\n%r" % err)
+        self.assertEqual(
+            out, "",
+            msg="No standard output message expected. "
+            "Current stdout:\n%s" % out)
+
+    def test_in_sub_repository(self):
+        w("""
+
+            mkdir subdir
+            cd subdir
+
+        """)
+        out, err, errlvl = cmd('$tprog init')
+        self.assertEqual(
+            errlvl, 0,
+            msg="Should not fail in sub directory.")
+        self.assertContains(
+            out, "created",
+            msg="There should  msg mentioning the file was 'created'. "
+            "Current stdout:\n%r" % out)
+        self.assertEqual(
+            err, "",
+            msg="No error message expected. "
+            "Current stderr:\n%s" % err)
+        self.assertTrue(
+            os.path.exists('.gitchangelog.rc'),
+            msg="File must have been created.")
