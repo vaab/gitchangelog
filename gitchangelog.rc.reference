@@ -60,6 +60,7 @@ ignore_regexps = [
         r'@wip', r'!wip',
         r'^([cC]hg|[fF]ix|[nN]ew)\s*:\s*[p|P]kg:',
         r'^([cC]hg|[fF]ix|[nN]ew)\s*:\s*[d|D]ev:',
+        r'^(.{3,3}\s*:)?\s*[fF]irst commit.?\s*$',
   ]
 
 

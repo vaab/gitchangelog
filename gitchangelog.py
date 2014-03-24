@@ -220,7 +220,7 @@ class SubGitObjectMixin(object):
 
 
 GIT_FORMAT_KEYS = {
-    'sha1': "%h",
+    'sha1': "%H",
     'subject': "%s",
     'author_name': "%an",
     'author_date': "%ad",
@@ -277,19 +277,6 @@ class GitCommit(SubGitObjectMixin):
 
     def __hash__(self):
         return hash(self.sha1)
-
-    def __sub__(self, value):
-        if not isinstance(value, GitCommit):
-            raise TypeError("Invalid type for %r in operation" % value)
-        if self.sha1 == value.sha1:
-            return []
-        commits = self.swrap('git rev-list %s..%s'
-                             % (self.sha1, value.sha1))
-        if not commits:
-            raise ValueError('Seems that %r is earlier than %r'
-                             % (self.identifier, value.identifier))
-        return [GitCommit(commit, self._repos)
-                for commit in commits.split('\n')]
 
     def __repr__(self):
         return "<%s %r>" % (self.__class__.__name__, self.identifier)
@@ -447,22 +434,28 @@ class GitRepos(object):
         return sorted([GitCommit(tag, self) for tag in tags if tag != ''],
                       key=lambda x: int(x.committer_date_timestamp))
 
-    def __getitem__(self, key):
+    def log(self, start="HEAD"):
 
-        if isinstance(key, basestring):
-            return GitCommit(key, self)
+        aformat = "%x00".join(GIT_FORMAT_KEYS.values())
+        try:
+            ret = self.swrap(
+                "git log %r -z --first-parent --pretty=format:%s"
+                % (start, aformat))
+        except ShellError:
+            raise ValueError("Given commit identifier %r doesn't exists"
+                             % start)
 
-        if isinstance(key, slice):
-            start, stop = key.start, key.stop
+        def mk_commit(dct):
+            """Creates an already set commit from a dct"""
+            c = GitCommit(dct["sha1"], self)
+            for k, v in dct.iteritems():
+                setattr(c, k, v)
+            return c
 
-            if start is None:
-                start = GitCommit('HEAD', self)
-
-            if stop is None:
-                stop = GitCommit('LAST', self)
-
-            return stop - start
-        raise NotImplementedError("Unsupported getitem %r object." % key)
+        values = iter(ret.split('\x00'))
+        while True: ## values.next() will eventualy raise a StopIteration
+            yield mk_commit(dict([(key, values.next())
+                                  for key in GIT_FORMAT_KEYS]))
 
 
 def first_matching(section_regexps, string):
@@ -686,7 +679,7 @@ def changelog(repository,
 
     section_order = [k for k, _v in section_regexps]
 
-    for commit in repository[:]:
+    for commit in repository.log():
 
         tags_of_commit = [tag for tag in tags
                           if tag == commit]
