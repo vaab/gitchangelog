@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+
+import locale
 import re
 import os
 import os.path
@@ -76,8 +79,10 @@ def load_config_file(filename, default_filename=None,
     for fname in [default_filename, filename]:
         if fname and os.path.exists(fname):
             try:
-                execfile(fname, config)
-            except SyntaxError, e:
+                with open(fname) as f:
+                    code = compile(f.read(), fname, 'exec')
+                    exec(code, config)
+            except SyntaxError as e:
                 die('Syntax error in config file: %s\n'
                     'Line %i offset %i\n'
                     % (fname, e.lineno, e.offset))
@@ -110,12 +115,12 @@ def indent(text, chars="  ", first=None):
 
     >>> string = 'This is first line.\\nThis is second line\\n'
 
-    >>> print indent(string, chars="| ") # doctest: +NORMALIZE_WHITESPACE
+    >>> print(indent(string, chars="| "))  # doctest: +NORMALIZE_WHITESPACE
     | This is first line.
     | This is second line
     |
 
-    >>> print indent(string, first="- ") # doctest: +NORMALIZE_WHITESPACE
+    >>> print(indent(string, first="- "))  # doctest: +NORMALIZE_WHITESPACE
     - This is first line.
       This is second line
 
@@ -136,7 +141,7 @@ def paragraph_wrap(text, regexp="\n\n"):
     >>> string = 'This is first paragraph which is quite long don\'t you \
     ... think ? Well, I think so.\n\nThis is second paragraph\n'
 
-    >>> print paragraph_wrap(string) # doctest: +NORMALIZE_WHITESPACE
+    >>> print(paragraph_wrap(string)) # doctest: +NORMALIZE_WHITESPACE
     This is first paragraph which is quite long don't you think ? Well, I
     think so.
     This is second paragraph
@@ -158,23 +163,26 @@ def paragraph_wrap(text, regexp="\n\n"):
 def cmd(command, env=None):
     p = Popen(command, shell=True,
               stdin=PIPE, stdout=PIPE, stderr=PIPE,
-              close_fds=True, env=env)
+              close_fds=True, env=env,
+              universal_newlines=False)
     stdout, stderr = p.communicate()
-    return stdout, stderr, p.returncode
+    return (stdout.decode(locale.getpreferredencoding()),
+            stderr.decode(locale.getpreferredencoding()),
+            p.returncode)
 
 
 def wrap(command, ignore_errlvls=[0], env=None):
     """Wraps a shell command and casts an exception on unexpected errlvl
 
-    >>> wrap('/tmp/lsdjflkjf') # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    >>> wrap('/tmp/lsdjflkjf') # doctest: +ELLIPSIS +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
     ...
     ShellError: Wrapped command '/tmp/lsdjflkjf' exited with errorlevel 127.
       stderr:
       | /bin/sh: .../tmp/lsdjflkjf: not found
 
-    >>> wrap('echo hello') # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    'hello\\n'
+    >>> print(wrap('echo hello'),  end='')
+    hello
 
     """
 
@@ -254,10 +262,10 @@ class GitCommit(SubGitObjectMixin):
         aformat = "%x00".join(GIT_FORMAT_KEYS[l]
                               for l in missing_attrs)
         try:
-            ret = self.swrap("git show -s %r --pretty=format:%s"
+            ret = self.swrap("git show -s %s --pretty=format:%s"
                              % (identifier, aformat))
         except ShellError:
-            raise ValueError("Given commit identifier %r doesn't exists"
+            raise ValueError("Given commit identifier %s doesn't exists"
                              % self.identifier)
         attr_values = ret.split("\x00")
         for attr, value in zip(missing_attrs, attr_values):
@@ -358,7 +366,7 @@ class GitConfig(SubGitObjectMixin):
         Called gitRepos.swrap("git config 'foo'")
         'default'
 
-        >>> print "%r" % cfg.get("foo")
+        >>> print("%r" % cfg.get("foo"))
         Called gitRepos.swrap("git config 'foo'")
         None
 
@@ -371,7 +379,7 @@ class GitConfig(SubGitObjectMixin):
         cmd = "git config %r" % str(label)
         try:
             res = self.swrap(cmd)
-        except ShellError, e:
+        except ShellError as e:
             if e.errlvl == 1 and e.out == "" and e.err == "":
                 raise AttributeError("key %r is not found in git config."
                                      % label)
@@ -399,7 +407,7 @@ class GitRepos(object):
         ## verify ``git`` command is accessible:
         try:
             self._git_version = self.swrap("git version")
-        except ShellError, _e:
+        except ShellError:
             raise EnvironmentError(
                 "Required ``git`` command not found or broken in $PATH. "
                 "(calling ``git version`` failed.)")
@@ -407,7 +415,7 @@ class GitRepos(object):
         ## verify that we are in a git repository
         try:
             self.swrap("git remote")
-        except ShellError, _e:
+        except ShellError:
             raise EnvironmentError("Not in a git repository. "
                 "(calling ``git remote`` failed.)")
 
@@ -448,13 +456,13 @@ class GitRepos(object):
         def mk_commit(dct):
             """Creates an already set commit from a dct"""
             c = GitCommit(dct["sha1"], self)
-            for k, v in dct.iteritems():
+            for k, v in dct.items():
                 setattr(c, k, v)
             return c
 
         values = iter(ret.split('\x00'))
         while True: ## values.next() will eventualy raise a StopIteration
-            yield mk_commit(dict([(key, values.next())
+            yield mk_commit(dict([(key, next(values))
                                   for key in GIT_FORMAT_KEYS]))
 
 
@@ -593,10 +601,10 @@ if mako:
         template_path = os.path.join(template_dir, "%s.tpl" % template_name)
 
         if not os.path.exists(template_path):
-            print "Available mako templates:\n - " + \
+            print("Available mako templates:\n - " +
                   " - ".join(os.path.basename(f).split(".")[-1]
                              for f in glob.glob(os.path.join(template_dir,
-                                                             "*.tpl")))
+                                                             "*.tpl"))))
             die("No %r a valid mako template name." % template_name)
 
         template = mako.template.Template(filename=template_path)
@@ -705,7 +713,7 @@ def changelog(repository,
         ## Replace content in commit subject
 
         subject = commit.subject
-        for regexp, replacement in replace_regexps.iteritems():
+        for regexp, replacement in replace_regexps.items():
             subject = re.sub(regexp, replacement, subject)
 
         ## Finally storing the commit in the matching section
@@ -741,7 +749,7 @@ def main():
         basename = basename[:-3]
 
     if "-h" in sys.argv or "--help" in sys.argv:
-        print full_help_msg % {'exname': basename}
+        print(full_help_msg % {'exname': basename})
         sys.exit(0)
 
     if len(sys.argv) > 1 and sys.argv[1] != "init":
@@ -749,7 +757,7 @@ def main():
 
     try:
         repository = GitRepos(".")
-    except EnvironmentError, e:
+    except EnvironmentError as e:
         die(e.message)
 
     repository_config = '%s/.%s.rc' % (repository.toplevel, basename) \
@@ -768,7 +776,7 @@ def main():
 
     try:
         gc_rc = repository.config.get("gitchangelog.rc-path")
-    except ShellError, e:
+    except ShellError as e:
         sys.stderr.write(
             "Error parsing git config: %s."
             " Won't be able to read 'rc-path' if defined.\n"
@@ -802,7 +810,7 @@ def main():
         default_filename=reference_config,
         fail_if_not_present=False)
 
-    print changelog(repository,
+    print(changelog(repository,
         ignore_regexps=config['ignore_regexps'],
         replace_regexps=config['replace_regexps'],
         section_regexps=config['section_regexps'],
@@ -810,7 +818,7 @@ def main():
         tag_filter_regexp=config['tag_filter_regexp'],
         body_split_regexp=config['body_split_regexp'],
         output_engine=config.get("output_engine", rest_py),
-    )
+    ))
 
 ##
 ## Launch program
