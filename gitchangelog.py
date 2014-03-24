@@ -236,23 +236,33 @@ class GitCommit(SubGitObjectMixin):
 
     def __init__(self, identifier, repos):
         super(GitCommit, self).__init__(repos)
-
         self.identifier = identifier
 
-        if identifier is "LAST":
+    def __getattr__(self, label):
+        """Completes commits attributes upon request."""
+        attrs = GIT_FORMAT_KEYS.keys()
+        if label not in attrs:
+            return super(GitCommit, self).__getattr__(label)
+
+        identifier = self.identifier
+        if identifier == "LAST":
             identifier = self.swrap(
                 "git rev-list --first-parent --max-parents=0 HEAD")
 
-        aformat = "%x00".join(GIT_FORMAT_KEYS.values())
+        ## Compute only missing information
+        missing_attrs = [l for l in attrs if not l in self.__dict__]
+        aformat = "%x00".join(GIT_FORMAT_KEYS[l]
+                              for l in missing_attrs)
         try:
             ret = self.swrap("git show -s %r --pretty=format:%s"
                              % (identifier, aformat))
         except ShellError:
             raise ValueError("Given commit identifier %r doesn't exists"
-                             % identifier)
+                             % self.identifier)
         attr_values = ret.split("\x00")
-        for attr, value in zip(GIT_FORMAT_KEYS.keys(), attr_values):
+        for attr, value in zip(missing_attrs, attr_values):
             setattr(self, attr, value.strip())
+        return getattr(self, label)
 
     @property
     def date(self):
