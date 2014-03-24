@@ -2,6 +2,13 @@
 gitchangelog
 ============
 
+.. image:: https://pypip.in/v/gitchangelog/badge.png
+    :target: https://pypi.python.org/pypi/gitchangelog
+
+.. image:: https://secure.travis-ci.org/vaab/gitchangelog.png?branch=master
+    :target: http://travis-ci.org/vaab/gitchangelog
+
+
 Translate commit message history to a changelog.
 
 
@@ -20,6 +27,16 @@ Feature
   - ignore non-changelog tags by regexps
 
   - templating system for easy tailoring your output (markdown, ReST, etc)
+
+
+Requirements
+============
+
+Each commit are tested regularly on Python 2.7 and Python 3.2.
+
+It should work on Linux/BSD/MacOSX and it should work under cygwin on Windows.
+
+Please submit an issue if you encounter incompatibilies.
 
 
 Sample

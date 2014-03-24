@@ -1,0 +1,7 @@
+language: python
+python:
+  - "3.3"
+  - "3.2"
+  - "2.7"
+install: ./autogen.sh && python setup.py install && python setup.py develop easy_install gitchangelog[test]
+script: python -m unittest discover -fv -s test && python -m doctest -d gitchangelog.py

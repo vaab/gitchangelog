@@ -112,7 +112,7 @@ if ! test -e "setup.py" >/dev/null 2>&1; then
     die "No 'setup.py'... this script is meant to work with a python project"
 fi
 
-if ! "$git" describe >/dev/null 2>&1; then
+if ! "$git" describe --tags >/dev/null 2>&1; then
     die "Didn't find a git repository. autogen.sh uses git to create changelog \
          and version information."
 fi
