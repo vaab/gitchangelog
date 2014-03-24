@@ -219,6 +219,19 @@ class SubGitObjectMixin(object):
         return self._repos.swrap(*args, **kwargs)
 
 
+GIT_FORMAT_KEYS = {
+    'sha1': "%h",
+    'subject': "%s",
+    'author_name': "%an",
+    'author_date': "%ad",
+    'author_date_timestamp': "%at",
+    'committer_name': "%cn",
+    'committer_date_timestamp': "%ct",
+    'raw_body': "%B",
+    'body': "%b",
+}
+
+
 class GitCommit(SubGitObjectMixin):
 
     def __init__(self, identifier, repos):
@@ -230,17 +243,7 @@ class GitCommit(SubGitObjectMixin):
             identifier = self.swrap(
                 "git rev-list --first-parent --max-parents=0 HEAD")
 
-        attrs = {'sha1': "%h",
-                 'subject': "%s",
-                 'author_name': "%an",
-                 'author_date': "%ad",
-                 'author_date_timestamp': "%at",
-                 'committer_name': "%cn",
-                 'committer_date_timestamp': "%ct",
-                 'raw_body': "%B",
-                 'body': "%b",
-                 }
-        aformat = "%x00".join(attrs.values())
+        aformat = "%x00".join(GIT_FORMAT_KEYS.values())
         try:
             ret = self.swrap("git show -s %r --pretty=format:%s"
                              % (identifier, aformat))
@@ -248,7 +251,7 @@ class GitCommit(SubGitObjectMixin):
             raise ValueError("Given commit identifier %r doesn't exists"
                              % identifier)
         attr_values = ret.split("\x00")
-        for attr, value in zip(attrs.keys(), attr_values):
+        for attr, value in zip(GIT_FORMAT_KEYS.keys(), attr_values):
             setattr(self, attr, value.strip())
 
     @property
