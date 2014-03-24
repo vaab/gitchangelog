@@ -434,9 +434,7 @@ class GitRepos(object):
     @property
     def tags(self):
         tags = self.swrap('git tag -l').split("\n")
-        while '' in tags:
-            tags.remove('')
-        return sorted([GitCommit(tag, self) for tag in tags],
+        return sorted([GitCommit(tag, self) for tag in tags if tag != ''],
                       key=lambda x: int(x.committer_date_timestamp))
 
     def __getitem__(self, key):
