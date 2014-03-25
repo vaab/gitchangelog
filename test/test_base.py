@@ -1,3 +1,6 @@
+# -*- encoding: utf-8 -*-
+
+from __future__ import unicode_literals
 
 import os.path
 import difflib
@@ -36,7 +39,7 @@ New
 New
 ~~~
 
-- Add file ``b`` [Alice]
+- Add ``b`` with non-ascii chars éèàâ§µ. [Alice]
 
 
 """

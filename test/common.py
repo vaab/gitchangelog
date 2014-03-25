@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 """
 
 Each tests should start in an empty directory that will be destroyed at the end.
@@ -94,9 +95,9 @@ class BaseGitReposTest(BaseTmpDirTest):
             git tag 0.0.1
 
             ## Adding second file
-            echo 'Second file' > b
+            echo 'Second file with strange non-ascii char: éèàâ§µ' > b
             git add b
-            git commit -m 'new: add file ``b``' \
+            git commit -m 'new: add ``b`` with non-ascii chars éèàâ§µ' \
                 --author 'Alice <alice@example.com>' \
                 --date '2000-01-02 11:00:00'
             git tag 0.0.2

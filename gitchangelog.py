@@ -25,6 +25,7 @@ try:
 except ImportError:
     mako = None
 
+PY3 = sys.version_info[0] >= 3
 
 usage_msg = """usage: %(exname)s"""
 help_msg = """Run this command in a git repository to output a formatted changelog
@@ -810,7 +811,7 @@ def main():
         default_filename=reference_config,
         fail_if_not_present=False)
 
-    print(changelog(repository,
+    content = changelog(repository,
         ignore_regexps=config['ignore_regexps'],
         replace_regexps=config['replace_regexps'],
         section_regexps=config['section_regexps'],
@@ -818,7 +819,12 @@ def main():
         tag_filter_regexp=config['tag_filter_regexp'],
         body_split_regexp=config['body_split_regexp'],
         output_engine=config.get("output_engine", rest_py),
-    ))
+    )
+
+    if PY3:
+        print(content)
+    else:
+        print(content.encode(locale.getpreferredencoding()))
 
 ##
 ## Launch program
