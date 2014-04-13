@@ -188,8 +188,8 @@ these existing templates.
 
 A ``mako`` templating engine is also provided. You'll find also a ``mako``
 template producing the same `ReSTructured Text` output than the legacy one.
-It's provided for reference and/or further tweak if you would rather use `mako
-templates`_.
+It's provided for reference and/or further tweak if you would rather use `mako`_
+templates.
 
 
 Mustache
