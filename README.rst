@@ -145,10 +145,6 @@ checked in the given order (first match will prevail):
 
   - in the root of the current git repository with the name ``.gitchangelog.rc``
 
-  - in your home : ``~/.gitchangelog.rc``
-
-  - system wide, in ``/etc/gitchangelog.rc``
-
 Then, you'll be able to call ``gitchangelog`` in a GIT repository and it'll
 print changelog as its standard output.
 
@@ -249,4 +245,3 @@ This is a sample of the current data structure sent to output engines::
                                             'body': '',
                                             'subject': 'Updating Changelog installation.'}],
                                'label': 'Changes'}]}]}
-
