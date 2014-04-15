@@ -263,7 +263,7 @@ class GitCommit(SubGitObjectMixin):
         aformat = "%x00".join(GIT_FORMAT_KEYS[l]
                               for l in missing_attrs)
         try:
-            ret = self.swrap("git show -s %s --pretty=format:%s"
+            ret = self.swrap("git show -s %s --pretty=format:%s --"
                              % (identifier, aformat))
         except ShellError:
             raise ValueError("Given commit identifier %s doesn't exists"
@@ -448,7 +448,7 @@ class GitRepos(object):
         aformat = "%x00".join(GIT_FORMAT_KEYS.values())
         try:
             ret = self.swrap(
-                "git log %r -z --first-parent --pretty=format:%s"
+                "git log %r -z --first-parent --pretty=format:%s --"
                 % (start, aformat))
         except ShellError:
             raise ValueError("Given commit identifier %r doesn't exists"

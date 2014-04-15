@@ -176,3 +176,25 @@ class TestInitArgument(GitChangelogTestCase):
         self.assertTrue(
             os.path.exists('.gitchangelog.rc'),
             msg="File must have been created.")
+
+    def test_with_filename_same_as_tag(self):
+        w("""
+
+            touch 0.0.1
+
+        """)
+        out, err, errlvl = cmd('$tprog')
+        self.assertEqual(
+            errlvl, 0,
+            msg="Should not fail even if filename same as tag name.")
+        self.assertEqual(
+            err, "",
+            msg="No error message expected. "
+            "Current stderr:\n%s" % err)
+        self.assertEqual(
+            out, self.REFERENCE,
+            msg="Should match our reference output... "
+            "diff of changelogs:\n%s"
+            % '\n'.join(difflib.unified_diff(out.split("\n"),
+                                             self.REFERENCE.split("\n"),
+                                             lineterm="")))
