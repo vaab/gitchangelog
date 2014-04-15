@@ -12,44 +12,13 @@ class TestBase(GitChangelogTestCase):
 
     def test_simple_run(self):
         changelog = w('$tprog')
-        reference = r"""Changelog
-=========
-
-%%version%% (unreleased)
-------------------------
-
-Changes
-~~~~~~~
-
-- Modified ``b`` XXX. [Alice]
-
-0.0.3 (2000-01-05)
-------------------
-
-New
-~~~
-
-- Add file ``e``, modified ``b`` [Bob]
-
-- Add file ``c`` [Charly]
-
-0.0.2 (2000-01-02)
-------------------
-
-New
-~~~
-
-- Add ``b`` with non-ascii chars éèàâ§µ. [Alice]
-
-
-"""
         self.assertEqual(
-            changelog, reference,
+            changelog, self.REFERENCE,
             msg="Should match our reference output... "
             "diff of changelogs:\n%s"
             % '\n'.join(difflib.unified_diff(changelog.split("\n"),
-                                           reference.split("\n"),
-                                           lineterm="")))
+                                             self.REFERENCE.split("\n"),
+                                             lineterm="")))
 
 
 class TestConfiguration(GitChangelogTestCase):
