@@ -79,6 +79,9 @@ def load_config_file(filename, default_filename=None,
     config = _config_env.copy()
     for fname in [default_filename, filename]:
         if fname and os.path.exists(fname):
+            if not os.path.isfile(fname):
+                die("config file path '%s' exists but is not a file !"
+                    % (fname, ))
             try:
                 with open(fname) as f:
                     code = compile(f.read(), fname, 'exec')
@@ -89,7 +92,7 @@ def load_config_file(filename, default_filename=None,
                     % (fname, e.lineno, e.offset))
         else:
             if fail_if_not_present:
-                die('%r config file is not found and is required.' % (filename, ))
+                die('%s config file is not found and is required.' % (fname, ))
 
     return config
 
