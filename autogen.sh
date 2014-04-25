@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 exname="$(basename "$0")"
 
@@ -6,51 +6,42 @@ exname="$(basename "$0")"
 ## Functions
 ##
 
-function get_path() {
-    local type
-
-    type="$(type -t "$1")"
-    case $type in
-	("file")
-	    type -p "$1"
-	    return 0
-	    ;;
-	("function" | "builtin" )
-	    echo "$1"
-	    return 0
-	    ;;
-    esac
+get_path() { (
+    IFS=:
+    for d in $PATH; do
+        filename="$d/$1"
+        if test -x "$filename"; then echo "$d/$1"; return 0; fi
+    done
     return 1
-}
+) }
 
-function print_exit() {
+print_exit() {
     echo $@
     exit 1
 }
 
-function print_syntax_error() {
+print_syntax_error() {
     [ "$*" ] ||	print_syntax_error "$FUNCNAME: no arguments"
     print_exit "${ERROR}script error:${NORMAL} $@" >&2
 }
 
-function print_syntax_warning() {
+print_syntax_warning() {
     [ "$*" ] || print_syntax_error "$FUNCNAME: no arguments."
     [ "$exname" ] || print_syntax_error "$FUNCNAME: 'exname' var is null or not defined."
     echo "$exname: ${WARNING}script warning:${NORMAL} $@" >&2
 }
 
-function print_error() {
+print_error() {
     [ "$*" ] || print_syntax_warning "$FUNCNAME: no arguments."
     [ "$exname" ] || print_exit "$FUNCNAME: 'exname' var is null or not defined." >&2
     print_exit "$exname: ${ERROR}error:${NORMAL} $@" >&2
 }
 
-function depends() {
+depends() {
 
     local i tr path
 
-    tr=$(get_path "tr")
-    test "$tr" ||
+    tr=$(get_path "tr") ||
 	print_error "dependency check : couldn't find 'tr' command."
 
     for i in $@ ; do
@@ -71,7 +62,7 @@ function depends() {
     done
 }
 
-function die() {
+die() {
     [ "$*" ] || print_syntax_warning "$FUNCNAME: no arguments."
     [ "$exname" ] || print_exit "$FUNCNAME: 'exname' var is null or not defined." >&2
     print_exit "$exname: ${ERROR}error:${NORMAL} $@" >&2
@@ -81,27 +72,39 @@ function die() {
 ## Code
 ##
 
-depends git grep date
+depends git grep
 
 ## BSD / GNU sed compatibility layer
-if (type -p sed && sed --version) >/dev/null 2>&1; then
-    sed="$(type -p sed)"
+if get_path sed >/dev/null; then
+    if sed --version >/dev/null 2>&1; then  ## GNU
+        compat_sed() { sed -r "$@"; }
+        compat_sed_i() { sed -r -i "$@"; }
+    else                                    ## BSD
+        compat_sed() { sed -E "$@"; }
+        compat_sed_i() { sed -E -i "" "$@"; }
+    fi
 else
-    if (type -p gsed && gsed --version) >/dev/null 2>&1; then
-        sed="$(type -p gsed)"
+    ## Look for ``gsed``
+    if (get_path gsed && gsed --version) >/dev/null 2>&1; then
+        compat_sed() { gsed -r "$@"; }
+        compat_sed_i() { gsed -r -i "$@"; }
     else
-        print_error "$exname: required GNU sed not found"
+        print_error "$exname: required GNU or BSD sed not found"
     fi
 fi
 
 ## BSD / GNU date compatibility layer
-if (type -p date && date --version) >/dev/null 2>&1 ; then
-    date="$(type -p date)"
+if get_path date >/dev/null; then
+    if date --version >/dev/null 2>&1 ; then  ## GNU
+        compat_date() { date -d "@$1" "$2"; }
+    else                                      ## BSD
+        compat_date() { date -j -f %s "$1" "$2"; }
+    fi
 else
-    if (type -p gdate && gdate --version) >/dev/null 2>&1; then
-        date="$(type -p gdate)"
+    if (get_path gdate && gdate --version) >/dev/null 2>&1; then
+        compat_date() { gdate -d "@$1" "$2"; }
     else
-        print_error "$exname: required GNU date not found"
+        print_error "$exname: required GNU or BSD date not found"
     fi
 fi
 
@@ -118,7 +121,7 @@ if ! "$git" describe --tags >/dev/null 2>&1; then
 fi
 
 
-function matches() {
+matches() {
    echo "$1" | "$grep" -E "^$2\$" >/dev/null 2>&1
 }
 
@@ -129,38 +132,36 @@ short_tag="[0-9]+\.[0-9]+(\.[0-9]+)?"
 get_short_tag="s/^($short_tag).*\$/\1/g"
 
 
-function get_current_git_date_timestamp() {
+get_current_git_date_timestamp() {
     "$git" show -s --pretty=format:%ct
 }
 
 
-function dev_version_tag() {
-    "$date" -d "@$(get_current_git_date_timestamp)" +%Y%m%d%H%M
+dev_version_tag() {
+    compat_date "$(get_current_git_date_timestamp)" "+%Y%m%d%H%M"
 }
 
 
-function get_current_version() {
+get_current_version() {
 
     version=$("$git" describe --tags)
     if matches "$version" "$short_tag"; then
         echo "$version"
     else
-        version=$(echo "$version" | "$sed" -r "$get_short_tag")
+        version=$(echo "$version" | compat_sed "$get_short_tag")
         echo "${version}.1dev_r$(dev_version_tag)"
     fi
 
 }
 
-function set_version_setup_py() {
+set_version_setup_py() {
 
     version=$(get_current_version)
     short_version=$(echo "$version" | cut -f 1,2,3 -d ".")
 
-    "$sed" -ri "s/%%version%%/$version/g" setup.py \
-                                       CHANGELOG.rst &&
-    "$sed" -ri "s/%%short-version%%/${short_version}/g" \
-                                       setup.py \
-                                       CHANGELOG.rst &&
+    compat_sed_i "s/%%version%%/$version/g;
+                  s/%%short-version%%/${short_version}/g" \
+                      setup.py CHANGELOG.rst
     echo "Version updated to $version."
 }
 
@@ -178,4 +179,3 @@ set_version_setup_py
 if [ "$?" != 0 ]; then
     print_error "Error while updating version information."
 fi
-
