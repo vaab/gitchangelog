@@ -163,7 +163,6 @@ def paragraph_wrap(text, regexp="\n\n"):
 ##
 
 
-
 def cmd(command, env=None):
     p = Popen(command, shell=True,
               stdin=PIPE, stdout=PIPE, stderr=PIPE,
