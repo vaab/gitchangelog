@@ -78,7 +78,7 @@ def load_config_file(filename, default_filename=None,
 
     config = _config_env.copy()
     for fname in [default_filename, filename]:
-        if fname and os.path.exists(fname):
+        if fname and os.path.exists(fname) and os.path.isfile(fname):
             try:
                 with open(fname) as f:
                     code = compile(f.read(), fname, 'exec')
