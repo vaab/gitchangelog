@@ -84,22 +84,26 @@ function die() {
 depends git grep date
 
 ## BSD / GNU sed compatibility layer
-if (type -p sed && sed --version) >/dev/null 2>&1; then
+if (type -p sed) >/dev/null 2>&1; then
     sed="$(type -p sed)"
+    sed_re_opt="-E"
 else
     if (type -p gsed && gsed --version) >/dev/null 2>&1; then
         sed="$(type -p gsed)"
+        sed_re_opt="-r"
     else
         print_error "$exname: required GNU sed not found"
     fi
 fi
 
 ## BSD / GNU date compatibility layer
-if (type -p date && date --version) >/dev/null 2>&1 ; then
+if (type -p date) >/dev/null 2>&1 ; then
     date="$(type -p date)"
+    date_opts="-j -f %s "
 else
     if (type -p gdate && gdate --version) >/dev/null 2>&1; then
         date="$(type -p gdate)"
+        date_opts="-d @"
     else
         print_error "$exname: required GNU date not found"
     fi
@@ -135,7 +139,7 @@ function get_current_git_date_timestamp() {
 
 
 function dev_version_tag() {
-    "$date" -d "@$(get_current_git_date_timestamp)" +%Y%m%d%H%M
+    "$date" ${date_opts}$(get_current_git_date_timestamp) +%Y%m%d%H%M
 }
 
 
@@ -145,7 +149,7 @@ function get_current_version() {
     if matches "$version" "$short_tag"; then
         echo "$version"
     else
-        version=$(echo "$version" | "$sed" -r "$get_short_tag")
+        version=$(echo "$version" | "$sed" "$sed_re_opt" "$get_short_tag")
         echo "${version}.1dev_r$(dev_version_tag)"
     fi
 
@@ -156,9 +160,9 @@ function set_version_setup_py() {
     version=$(get_current_version)
     short_version=$(echo "$version" | cut -f 1,2,3 -d ".")
 
-    "$sed" -ri "s/%%version%%/$version/g" setup.py \
+    "$sed" -i "$sed_re_opt" "s/%%version%%/$version/g" setup.py \
                                        CHANGELOG.rst &&
-    "$sed" -ri "s/%%short-version%%/${short_version}/g" \
+    "$sed" -i "$sed_re_opt" "s/%%short-version%%/${short_version}/g" \
                                        setup.py \
                                        CHANGELOG.rst &&
     echo "Version updated to $version."
