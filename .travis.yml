@@ -4,4 +4,6 @@ python:
   - "3.2"
   - "2.7"
 install: ./autogen.sh && python setup.py install && python setup.py develop easy_install gitchangelog[test]
-script: python -m unittest discover -fv -s test && python -m doctest gitchangelog.py
+script:
+  - python -m unittest discover -fv -s test && python -m doctest gitchangelog.py
+  - ./autogen.sh && python setup.py sdist --formats=gztar && pip install dist/gitchangelog-$(./autogen.sh --get-version | tr "_" "-").tar.gz --upgrade

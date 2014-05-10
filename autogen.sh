@@ -109,17 +109,6 @@ else
 fi
 
 
-gitchangelog=./gitchangelog.py
-
-if ! test -e "setup.py" >/dev/null 2>&1; then
-    die "No 'setup.py'... this script is meant to work with a python project"
-fi
-
-if ! "$git" describe --tags >/dev/null 2>&1; then
-    die "Didn't find a git repository. autogen.sh uses git to create changelog \
-         and version information."
-fi
-
 
 matches() {
    echo "$1" | "$grep" -E "^$2\$" >/dev/null 2>&1
@@ -164,6 +153,22 @@ set_version_setup_py() {
                       setup.py CHANGELOG.rst
     echo "Version updated to $version."
 }
+
+if [ "$1" = "--get-version" ]; then
+    get_current_version
+    exit 0
+fi
+
+gitchangelog=./gitchangelog.py
+
+if ! test -e "setup.py" >/dev/null 2>&1; then
+    die "No 'setup.py'... this script is meant to work with a python project"
+fi
+
+if ! "$git" describe --tags >/dev/null 2>&1; then
+    die "Didn't find a git repository. autogen.sh uses git to create changelog \
+         and version information."
+fi
 
 
 GITCHANGELOG_CONFIG_FILENAME=./gitchangelog.rc.reference "$gitchangelog" > CHANGELOG.rst
