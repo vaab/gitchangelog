@@ -443,18 +443,26 @@ class GitRepos(object):
     def tags(self):
         tags = self.swrap('git tag -l').split("\n")
         return sorted([GitCommit(tag, self) for tag in tags if tag != ''],
-                      key=lambda x: int(x.committer_date_timestamp))
+                      key=lambda x: int(x.author_date_timestamp), reverse=True)
 
-    def log(self, start="HEAD"):
+    def log(self, start="LAST", end="HEAD", include_merges=True):
+
+        ## `end` should be an identifier. If it isn't provided then translate it
+        ##   to the first commit sha
+        if end == "LAST":
+            end = GitCommit(end, self).sha1
+        if start == "LAST":
+            start = GitCommit(start, self).sha1
 
         aformat = "%x00".join(GIT_FORMAT_KEYS.values())
         try:
             ret = self.swrap(
-                "git log %r -z --first-parent --pretty=format:%s --"
-                % (start, aformat))
+                "git log %s..%s -z --first-parent%s --pretty=format:%s --"
+                % (start, end, (' --no-merges' if not include_merges else ''),
+                   aformat))
         except ShellError:
-            raise ValueError("Given commit identifier %r doesn't exists"
-                             % start)
+            raise ValueError("Given commit identifiers %r..%r don't exist"
+                             % (end, start))
 
         def mk_commit(dct):
             """Creates an already set commit from a dct"""
@@ -638,6 +646,7 @@ def changelog(repository,
               tag_filter_regexp=r"\d+\.\d+(\.\d+)?",
               body_split_regexp="\n\n",
               output_engine=rest_py,
+              include_merges=True,
               ):
     """Returns a string containing the changelog of given repository
 
@@ -654,6 +663,7 @@ def changelog(repository,
     :param body_split_regexp: regexp identifying the body of a commit message
     :param unreleased_version_label: version label for untagged commits
     :param template_format: format of template to generate the changelog
+    :param include_merges: whether to include merge commits in the log or not
 
     :returns: content of changelog
 
@@ -672,7 +682,7 @@ def changelog(repository,
         'body_split_regexp': body_split_regexp,
         }
 
-    # setting main container of changelog elements
+    ## Setting main container of changelog elements
     title = "Changelog"
     changelog = {"title": title,
                  "versions": []}
@@ -680,60 +690,58 @@ def changelog(repository,
     ## Hash to speedup lookups
     versions_done = {}
 
-    ## Create unreleased version
-    current_version = new_version(tag=None, date=None, opts=opts)
-    sections = collections.defaultdict(list)
-
     tags = [tag
-            for tag in reversed(repository.tags)
+            for tag in repository.tags
             if re.match(tag_filter_regexp, tag.identifier)]
 
     section_order = [k for k, _v in section_regexps]
 
-    for commit in repository.log():
+    prev_tag = GitCommit("HEAD", repository)
+    tags.append(GitCommit("LAST", repository))
 
-        tags_of_commit = [tag for tag in tags
-                          if tag == commit]
+    ## Get the changes between tags (releases)
+    for idx, tag in enumerate(tags):
 
-        if len(tags_of_commit) > 0:
-            tag = tags_of_commit[0]
+        ## New version
+        current_version = new_version(prev_tag.identifier, prev_tag.date,
+                                      opts) if prev_tag.identifier != "HEAD" \
+            else new_version(None, prev_tag.date, opts)
+        sections = collections.defaultdict(list)
 
-            ## End of current version, let's flush current one.
-            current_version["sections"] = [{"label": k, "commits": sections[k]}
-                                           for k in section_order
-                                           if k in sections]
-            changelog["versions"].append(current_version)
-            versions_done[tag] = current_version
-            current_version = new_version(tag.identifier, commit.date, opts)
-            sections = collections.defaultdict(list)
+        for commit in repository.log(start=tag.identifier,
+                                     end=prev_tag.identifier,
+                                     include_merges=include_merges):
 
-        if any(re.search(pattern, commit.subject) is not None
-               for pattern in ignore_regexps):
-            continue
+            if any(re.search(pattern, commit.subject) is not None
+                   for pattern in ignore_regexps):
+                continue
 
-        matched_section = first_matching(section_regexps, commit.subject)
+            matched_section = first_matching(section_regexps, commit.subject)
 
-        ## Replace content in commit subject
+            ## Replace content in commit subject
 
-        subject = commit.subject
-        for regexp, replacement in replace_regexps.items():
-            subject = re.sub(regexp, replacement, subject)
+            subject = commit.subject
+            for regexp, replacement in replace_regexps.items():
+                subject = re.sub(regexp, replacement, subject)
 
-        ## Finally storing the commit in the matching section
+            ## Finally storing the commit in the matching section
 
-        subject = final_dot(subject)
+            subject = final_dot(subject)
 
-        sections[matched_section].append({
-            "author": commit.author_name,
-            "subject": subject,
-            "body": commit.body,
+            sections[matched_section].append({
+                "author": commit.author_name,
+                "subject": subject,
+                "body": commit.body,
             })
 
-    ## Don't forget last commits:
-    current_version["sections"] = [{"label": k, "commits": sections[k]}
-                                   for k in section_order
-                                   if k in sections]
-    changelog["versions"].append(current_version)
+        ## Flush current version
+        current_version["sections"] = [{"label": k, "commits": sections[k]}
+                                       for k in section_order
+                                       if k in sections]
+        changelog["versions"].append(current_version)
+        versions_done[tag] = current_version
+
+        prev_tag = tag
 
     return output_engine(data=changelog, opts=opts)
 
@@ -821,6 +829,7 @@ def main():
         tag_filter_regexp=config['tag_filter_regexp'],
         body_split_regexp=config['body_split_regexp'],
         output_engine=config.get("output_engine", rest_py),
+        include_merges=config.get("include_merges", True),
     )
 
     if PY3:
