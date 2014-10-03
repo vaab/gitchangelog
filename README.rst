@@ -26,6 +26,8 @@ Feature
 
   - templating system for easy tailoring your output (markdown, ReST, etc)
 
+  - support straight and merging history.
+
 
 Requirements
 ============
@@ -243,3 +245,34 @@ This is a sample of the current data structure sent to output engines::
                                             'body': '',
                                             'subject': 'Updating Changelog installation.'}],
                                'label': 'Changes'}]}]}
+
+
+Merged branches history support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Commit attribution to a specific version could be tricky. Suppose you have
+this typical merge tree (spot the tags!)::
+
+    * new: something  (HEAD, tag: 0.2, develop)
+    *   Merge tag '0.1.1' into develop
+    |\
+    | * fix: out-of-band hotfix  (tag: 0.1.1)
+    * | chg: continued development
+    |/
+    * fix: something  (tag: 0.1)
+    * first commit  (tag: 0.0.1, master)
+
+Here's a minimal draft of gitchangelog to show how commit are
+attributed to versions::
+
+    0.2
+      * new: something.
+      * Merge tag '0.1.1' into develop.
+      * chg: continued development.
+
+    0.1.1
+      * fix: out-of-band hotfix.
+
+    0.1
+      * fix: something.
+

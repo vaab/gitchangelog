@@ -820,60 +820,61 @@ def changelog(repository,
     ## Hash to speedup lookups
     versions_done = {}
 
-    ## Create unreleased version
-    current_version = new_version(tag=None, date=None, opts=opts)
-    sections = collections.defaultdict(list)
-
     tags = [tag
             for tag in reversed(repository.tags)
             if re.match(tag_filter_regexp, tag.identifier)]
 
     section_order = [k for k, _v in section_regexps]
 
-    for commit in repository.log():
+    prev_tag = repository.commit("HEAD")
+    tags.append(repository.commit("LAST"))
 
-        tags_of_commit = [tag for tag in tags
-                          if tag == commit]
+    ## Get the changes between tags (releases)
+    for idx, tag in enumerate(tags):
 
-        if len(tags_of_commit) > 0:
-            tag = tags_of_commit[0]
+        ## New version
+        current_version = new_version(prev_tag.identifier,
+                                      prev_tag.date, opts) \
+            if prev_tag.identifier != "HEAD" else \
+            new_version(None, prev_tag.date, opts)
+        sections = collections.defaultdict(list)
 
-            ## End of current version, let's flush current one.
-            current_version["sections"] = [{"label": k, "commits": sections[k]}
-                                           for k in section_order
-                                           if k in sections]
-            changelog["versions"].append(current_version)
-            versions_done[tag] = current_version
-            current_version = new_version(tag.identifier, commit.date, opts)
-            sections = collections.defaultdict(list)
+        commits = repository.log(
+            includes=[prev_tag],
+            excludes=tags[idx:])
 
-        if any(re.search(pattern, commit.subject) is not None
-               for pattern in ignore_regexps):
-            continue
+        for commit in commits:
+            if any(re.search(pattern, commit.subject) is not None
+                   for pattern in ignore_regexps):
+                continue
 
-        matched_section = first_matching(section_regexps, commit.subject)
+            matched_section = first_matching(section_regexps, commit.subject)
 
-        ## Replace content in commit subject
+            ## Replace content in commit subject
 
-        subject = commit.subject
-        for regexp, replacement in replace_regexps.items():
-            subject = re.sub(regexp, replacement, subject)
+            subject = commit.subject
+            for regexp, replacement in replace_regexps.items():
+                subject = re.sub(regexp, replacement, subject)
 
-        ## Finally storing the commit in the matching section
+            ## Finally storing the commit in the matching section
 
-        subject = final_dot(subject)
+            subject = final_dot(subject)
 
-        sections[matched_section].append({
-            "author": commit.author_name,
-            "subject": subject,
-            "body": commit.body,
+            sections[matched_section].append({
+                "author": commit.author_name,
+                "subject": subject,
+                "body": commit.body,
             })
 
-    ## Don't forget last commits:
-    current_version["sections"] = [{"label": k, "commits": sections[k]}
-                                   for k in section_order
-                                   if k in sections]
-    changelog["versions"].append(current_version)
+        ## Flush current version
+        current_version["sections"] = [{"label": k, "commits": sections[k]}
+                                       for k in section_order
+                                       if k in sections]
+        if len(current_version["sections"]) != 0:
+            changelog["versions"].append(current_version)
+        versions_done[tag] = current_version
+
+        prev_tag = tag
 
     return output_engine(data=changelog, opts=opts)
 
