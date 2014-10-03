@@ -37,7 +37,7 @@ usage_msg = """usage: %(exname)s"""
 help_msg = """\
 Run this command in a git repository to output a formatted changelog
 
-%(exname)s uses a config file to filter meaningfull commit or do some
+%(exname)s uses a config file to filter meaningful commit or do some
  formatting in commit messages thanks to a config file.
 
 Config file location will be resolved in this order:
@@ -528,8 +528,8 @@ class GitRepos(object):
         try:
             self.swrap("git remote")
         except ShellError:
-            raise EnvironmentError("Not in a git repository. "
-                "(calling ``git remote`` failed.)")
+            raise EnvironmentError(
+                "Not in a git repository. (calling ``git remote`` failed.)")
 
         self.bare = self.swrap("git rev-parse --is-bare-repository") == "true"
         self.toplevel = None if self.bare else \
@@ -617,6 +617,7 @@ def first_matching(section_regexps, string):
             if re.search(regexp, string) is not None:
                 return section
 
+
 ##
 ## Output Engines
 ##
@@ -657,7 +658,6 @@ def rest_py(data, opts={}):
             entry += "\n\n"
 
         return entry
-
 
     return (rest_title(data["title"], char="=") + "\n" +
             "".join(render_version(title=version["label"],
@@ -751,6 +751,7 @@ if mako:
             die("No %r a valid mako template name." % template_name)
 
         template = mako.template.Template(filename=template_path)
+
         def renderer(data, opts):
             kwargs = mako_env.copy()
             kwargs.update({"data": data,
@@ -882,15 +883,15 @@ def changelog(repository,
 
     return output_engine(data=changelog, opts=opts)
 
+
 ##
 ## Main
 ##
 
 def main():
-
     reference_config = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            "gitchangelog.rc.reference")
+        os.path.dirname(os.path.realpath(__file__)),
+        "gitchangelog.rc.reference")
 
     basename = os.path.basename(sys.argv[0])
     if basename.endswith(".py"):
@@ -958,7 +959,8 @@ def main():
         default_filename=reference_config,
         fail_if_not_present=False)
 
-    content = changelog(repository,
+    content = changelog(
+        repository,
         ignore_regexps=config['ignore_regexps'],
         replace_regexps=config['replace_regexps'],
         section_regexps=config['section_regexps'],
