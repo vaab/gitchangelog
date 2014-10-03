@@ -30,7 +30,7 @@ PY3 = sys.version_info[0] >= 3
 usage_msg = """usage: %(exname)s"""
 help_msg = """Run this command in a git repository to output a formatted changelog
 
-%(exname)s uses a config file to filter meaningfull commit or do some
+%(exname)s uses a config file to filter meaningful commit or do some
  formatting in commit messages thanks to a config file.
 
 Config file location will be resolved in this order:
@@ -174,7 +174,7 @@ def cmd(command, env=None):
             p.returncode)
 
 
-def wrap(command, ignore_errlvls=[0], env=None):
+def wrap(command, ignore_errlvls=None, env=None):
     """Wraps a shell command and casts an exception on unexpected errlvl
 
     >>> wrap('/tmp/lsdjflkjf') # doctest: +ELLIPSIS +IGNORE_EXCEPTION_DETAIL
@@ -188,6 +188,8 @@ def wrap(command, ignore_errlvls=[0], env=None):
     hello
 
     """
+    if not ignore_errlvls:
+        ignore_errlvls = [0]
 
     out, err, errlvl = cmd(command, env=env)
 
@@ -420,7 +422,7 @@ class GitRepos(object):
             self.swrap("git remote")
         except ShellError:
             raise EnvironmentError("Not in a git repository. "
-                "(calling ``git remote`` failed.)")
+                                   "(calling ``git remote`` failed.)")
 
         self.bare = self.swrap("git rev-parse --is-bare-repository") == "true"
         self.toplevel = None if self.bare else \
@@ -464,7 +466,7 @@ class GitRepos(object):
             return c
 
         values = iter(ret.split('\x00'))
-        while True: ## values.next() will eventualy raise a StopIteration
+        while True:  ## values.next() will eventualy raise a StopIteration
             yield mk_commit(dict([(key, next(values))
                                   for key in GIT_FORMAT_KEYS]))
 
@@ -477,13 +479,16 @@ def first_matching(section_regexps, string):
             if re.search(regexp, string) is not None:
                 return section
 
+
 ##
 ## Output Engines
 ##
 
 @available_in_config
-def rest_py(data, opts={}):
+def rest_py(data, opts=None):
     """Returns ReStructured Text changelog content from data"""
+    if not opts:
+        opts = {}
 
     def rest_title(label, char="="):
         return (label.strip() + "\n") + (char * len(label) + "\n")
@@ -495,7 +500,7 @@ def rest_py(data, opts={}):
         for section in sections:
 
             section_label = section["label"] if section.get("label", None) \
-                            else "Other"
+                else "Other"
 
             if not (section_label == "Other" and nb_sections == 1):
                 s += rest_title(section_label, "~") + "\n"
@@ -517,7 +522,6 @@ def rest_py(data, opts={}):
             entry += "\n\n"
 
         return entry
-
 
     return (rest_title(data["title"], char="=") + "\n" +
             "".join(render_version(title=version["label"],
@@ -611,6 +615,7 @@ if mako:
             die("No %r a valid mako template name." % template_name)
 
         template = mako.template.Template(filename=template_path)
+
         def renderer(data, opts):
             kwargs = mako_env.copy()
             kwargs.update({"data": data,
@@ -630,10 +635,8 @@ else:
 ## Data Structure
 ##
 
-def changelog(repository,
-              ignore_regexps=[],
-              replace_regexps={},
-              section_regexps={},
+def changelog(repository, ignore_regexps=None, replace_regexps=None,
+              section_regexps=None,
               unreleased_version_label="unreleased",
               tag_filter_regexp=r"\d+\.\d+(\.\d+)?",
               body_split_regexp="\n\n",
@@ -658,6 +661,12 @@ def changelog(repository,
     :returns: content of changelog
 
     """
+    if not section_regexps:
+        section_regexps = {}
+    if not replace_regexps:
+        replace_regexps = {}
+    if not ignore_regexps:
+        ignore_regexps = []
 
     def new_version(tag, date, opts):
         title = "%s (%s)" % (tag, date) if tag else \
@@ -670,7 +679,7 @@ def changelog(repository,
     opts = {
         'unreleased_version_label': unreleased_version_label,
         'body_split_regexp': body_split_regexp,
-        }
+    }
 
     # setting main container of changelog elements
     title = "Changelog"
@@ -737,15 +746,15 @@ def changelog(repository,
 
     return output_engine(data=changelog, opts=opts)
 
+
 ##
 ## Main
 ##
 
 def main():
-
     reference_config = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            "gitchangelog.rc.reference")
+        os.path.dirname(os.path.realpath(__file__)),
+        "gitchangelog.rc.reference")
 
     basename = os.path.basename(sys.argv[0])
     if basename.endswith(".py"):
@@ -792,12 +801,12 @@ def main():
     for enforce_file_existence, fun in [
         (True, lambda: os.environ.get('GITCHANGELOG_CONFIG_FILENAME')),
         (True, lambda: gc_rc),
-        (False, lambda: ('%s/.%s.rc' % (repository.toplevel, basename)) \
-                 if not repository.bare else None),
+        (False, lambda: ('%s/.%s.rc' % (repository.toplevel, basename))
+         if not repository.bare else None),
         ## Removed to enforce per-repository gitchangelog file.
         # (False, lambda: os.path.expanduser('~/.%s.rc' % basename)),
         # (False, lambda: '/etc/%s.rc' % basename),
-        ]:
+    ]:
         changelogrc = fun()
         if changelogrc:
             if not os.path.exists(changelogrc):
@@ -817,7 +826,8 @@ def main():
         ignore_regexps=config['ignore_regexps'],
         replace_regexps=config['replace_regexps'],
         section_regexps=config['section_regexps'],
-        unreleased_version_label=config['unreleased_version_label'],
+        unreleased_version_label=config[
+            'unreleased_version_label'],
         tag_filter_regexp=config['tag_filter_regexp'],
         body_split_regexp=config['body_split_regexp'],
         output_engine=config.get("output_engine", rest_py),
