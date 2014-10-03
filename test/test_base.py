@@ -34,7 +34,7 @@ class TestConfiguration(GitChangelogTestCase):
             "Current stderr:\n%r" % err)
         self.assertContains(
             out, "0.0.2",
-            msg="At leat one of the tags should be displayed in stdout... "
+            msg="At least one of the tags should be displayed in stdout... "
             "Current stdout:\n%s" % out)
 
     def test_overriding_options(self):
@@ -55,7 +55,7 @@ EOF
         changelog = w('$tprog')
         self.assertContains(
             changelog, "v8.0",
-            msg="At leat one of the tags should be displayed in changelog... "
+            msg="At least one of the tags should be displayed in changelog... "
             "content of changelog:\n%s" % changelog)
 
     def test_reuse_options(self):
