@@ -567,14 +567,29 @@ class GitRepos(object):
         return sorted([self.commit(tag) for tag in tags if tag != ''],
                       key=lambda x: int(x.committer_date_timestamp))
 
-    def log(self, start="HEAD"):
+    def log(self, includes=["HEAD", ], excludes=[]):
         """Reverse chronological list of git repository's commits
+
+        Note: rev lists can be GitCommit instance list or identifier list.
 
         """
 
+        refs = {'includes': includes,
+                'excludes': excludes}
+        for ref_type in ('includes', 'excludes'):
+            for idx, ref in enumerate(refs[ref_type]):
+                if not isinstance(ref, GitCommit):
+                    refs[ref_type][idx] = self.commit(ref)
+
         ## --topo-order: don't mix commits from separate branches.
-        plog = Proc("git log %s -z --topo-order --pretty=format:%s --"
-                    % (start, GIT_FULL_FORMAT_STRING))
+        plog = Proc("git log --stdin -z --topo-order --pretty=format:%s --"
+                    % (GIT_FULL_FORMAT_STRING, ))
+        for ref in refs["includes"]:
+            plog.stdin.write("%s\n" % ref.sha1)
+
+        for ref in refs["excludes"]:
+            plog.stdin.write("^%s\n" % ref.sha1)
+        plog.stdin.close()
 
         def mk_commit(dct):
             """Creates an already set commit from a dct"""
