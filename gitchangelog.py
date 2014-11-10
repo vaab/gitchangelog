@@ -567,7 +567,7 @@ class GitRepos(object):
         return sorted([self.commit(tag) for tag in tags if tag != ''],
                       key=lambda x: int(x.committer_date_timestamp))
 
-    def log(self, includes=["HEAD", ], excludes=[]):
+    def log(self, includes=["HEAD", ], excludes=[], include_merge=True):
         """Reverse chronological list of git repository's commits
 
         Note: rev lists can be GitCommit instance list or identifier list.
@@ -582,8 +582,9 @@ class GitRepos(object):
                     refs[ref_type][idx] = self.commit(ref)
 
         ## --topo-order: don't mix commits from separate branches.
-        plog = Proc("git log --stdin -z --topo-order --pretty=format:%s --"
-                    % (GIT_FULL_FORMAT_STRING, ))
+        plog = Proc("git log --stdin -z --topo-order --pretty=format:%s %s --"
+                    % (GIT_FULL_FORMAT_STRING,
+                       '--no-merges' if not include_merge else ''))
         for ref in refs["includes"]:
             plog.stdin.write("%s\n" % ref.sha1)
 
@@ -777,6 +778,7 @@ def changelog(repository,
               tag_filter_regexp=r"\d+\.\d+(\.\d+)?",
               body_split_regexp="\n\n",
               output_engine=rest_py,
+              include_merge=True,
               ):
     """Returns a string containing the changelog of given repository
 
@@ -793,6 +795,7 @@ def changelog(repository,
     :param body_split_regexp: regexp identifying the body of a commit message
     :param unreleased_version_label: version label for untagged commits
     :param template_format: format of template to generate the changelog
+    :param include_merge: whether to include merge commits in the log or not
 
     :returns: content of changelog
 
@@ -841,7 +844,8 @@ def changelog(repository,
 
         commits = repository.log(
             includes=[prev_tag],
-            excludes=tags[idx:])
+            excludes=tags[idx:],
+            include_merge=include_merge)
 
         for commit in commits:
             if any(re.search(pattern, commit.subject) is not None
@@ -962,6 +966,7 @@ def main():
         tag_filter_regexp=config['tag_filter_regexp'],
         body_split_regexp=config['body_split_regexp'],
         output_engine=config.get("output_engine", rest_py),
+        include_merge=config.get("include_merge", True),
     )
 
     if PY3:

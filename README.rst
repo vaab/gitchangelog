@@ -276,3 +276,7 @@ attributed to versions::
     0.1
       * fix: something.
 
+
+.. note:: you can remove automatically all merge commit from
+  gitchangelog output by using ``include_merge = False`` in the
+  ``.gitchangelog.rc`` file.

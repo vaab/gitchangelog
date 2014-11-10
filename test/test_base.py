@@ -179,6 +179,28 @@ EOF
                                              self.REFERENCE.split("\n"),
                                              lineterm="")))
 
+    def test_include_merge_options(self):
+        """We must be able to define a small gitchangelog.rc that adjust only
+        one variable of all the builtin defaults."""
+
+        w("""cat <<EOF > .gitchangelog.rc
+
+include_merge = False
+
+EOF
+
+            git checkout -b develop
+            git commit -m "made on develop branch" --allow-empty
+            git checkout master
+            git merge develop --no-ff
+
+        """)
+        changelog = w('$tprog')
+        self.assertNotContains(
+            changelog, "Merge",
+            msg="Should not contain commit with 'Merge' in it... "
+            "content of changelog:\n%s" % changelog)
+
 
 class TestInitArgument(BaseGitReposTest):
 
