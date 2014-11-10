@@ -245,7 +245,7 @@ GIT_FORMAT_KEYS = {
 
 class GitCommit(SubGitObjectMixin):
 
-    def __init__(self, identifier, repos):
+    def __init__(self, repos, identifier):
         super(GitCommit, self).__init__(repos)
         self.identifier = identifier
 
@@ -429,6 +429,9 @@ class GitRepos(object):
             os.path.join(self._orig_path,
                          self.swrap("git rev-parse --git-dir")))
 
+    def commit(self, identifier):
+        return GitCommit(self, identifier)
+
     @property
     def config(self):
         return GitConfig(self)
@@ -442,7 +445,7 @@ class GitRepos(object):
     @property
     def tags(self):
         tags = self.swrap('git tag -l').split("\n")
-        return sorted([GitCommit(tag, self) for tag in tags if tag != ''],
+        return sorted([self.commit(tag) for tag in tags if tag != ''],
                       key=lambda x: int(x.committer_date_timestamp))
 
     def log(self, start="HEAD"):
@@ -458,7 +461,7 @@ class GitRepos(object):
 
         def mk_commit(dct):
             """Creates an already set commit from a dct"""
-            c = GitCommit(dct["sha1"], self)
+            c = self.commit(dct["sha1"])
             for k, v in dct.items():
                 setattr(c, k, v)
             return c
