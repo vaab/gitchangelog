@@ -12,6 +12,7 @@ import glob
 import textwrap
 import datetime
 import collections
+import itertools
 
 from subprocess import Popen, PIPE
 
@@ -26,6 +27,11 @@ except ImportError:
     mako = None
 
 PY3 = sys.version_info[0] >= 3
+
+if PY3:
+    imap = map
+else:
+    imap = itertools.imap
 
 usage_msg = """usage: %(exname)s"""
 help_msg = """\
@@ -162,6 +168,106 @@ def paragraph_wrap(text, regexp="\n\n"):
 ##
 ## System functions
 ##
+
+_preferred_encoding = locale.getpreferredencoding()
+
+
+def itermap(fun):
+
+    def _new(orig_iter_method):
+
+        def new_iter_method(*arg, **kwargs):
+            return imap(
+                fun, orig_iter_method(*arg, **kwargs))
+        return new_iter_method
+    return _new
+
+
+class Phile(object):
+    """File like API to read fields separated by any delimiters
+
+    It'll take care of file decoding to unicode.
+
+    This is an adaptor on a file object.
+
+        >>> if PY3:
+        ...     from io import BytesIO
+        ...     def File(s):
+        ...         _obj = BytesIO()
+        ...         _obj.write(s.encode(_preferred_encoding))
+        ...         _obj.seek(0)
+        ...         return _obj
+        ... else:
+        ...     from cStringIO import StringIO as File
+
+        >>> f = Phile(File("a-b-c-d"))
+
+    Read provides an iterator:
+
+        >>> def show(l):
+        ...     print(", ".join(l))
+        >>> show(f.read(delimiter="-"))
+        a, b, c, d
+
+    You can change the buffersize loaded into memory before outputing
+    your changes. It should not change the iterator output:
+
+        >>> f = Phile(File("é-à-ü-d"), buffersize=3)
+        >>> len(list(f.read(delimiter="-")))
+        4
+
+        >>> f = Phile(File("foo-bang-yummy"), buffersize=3)
+        >>> show(f.read(delimiter="-"))
+        foo, bang, yummy
+
+        >>> f = Phile(File("foo-bang-yummy"), buffersize=1)
+        >>> show(f.read(delimiter="-"))
+        foo, bang, yummy
+
+    """
+
+    def __init__(self, file, buffersize=4096):
+        self._file = file
+        self._buffersize = buffersize
+
+    @itermap(lambda r: r.decode(_preferred_encoding))
+    def read(self, delimiter="\n"):
+        buf = ""
+        if PY3:
+            delimiter = delimiter.encode(_preferred_encoding)
+            buf = buf.encode(_preferred_encoding)
+        while True:
+            chunk = self._file.read(self._buffersize)
+            if not chunk:
+                yield buf
+                raise StopIteration
+            records = chunk.split(delimiter)
+            records[0] = buf + records[0]
+            for record in records[:-1]:
+                yield record
+            buf = records[-1]
+
+    def write(self, buf):
+        if PY3:
+            buf = buf.encode(_preferred_encoding)
+        return self._file.write(buf)
+
+    def close(self):
+        return self._file.close()
+
+
+class Proc(Popen):
+
+    def __init__(self, command, env=None):
+        super(Proc, self).__init__(
+            command, shell=True,
+            stdin=PIPE, stdout=PIPE, stderr=PIPE,
+            close_fds=True, env=env,
+            universal_newlines=False)
+
+        self.stdin = Phile(self.stdin)
+        self.stdout = Phile(self.stdout)
+        self.stderr = Phile(self.stderr)
 
 
 def cmd(command, env=None):
@@ -466,13 +572,9 @@ class GitRepos(object):
 
         """
 
-        ## XXXvlab: this requires the whole log output to be stored in memory
-        ## a piped subprocess should be used and this function turned into an
-        ## iterator to avoid issues with any size of log output.
-
-        ret = self.swrap(
-            "git log %s -z --first-parent --pretty=format:%s --"
-            % (start, GIT_FULL_FORMAT_STRING))
+        ## --topo-order: don't mix commits from separate branches.
+        plog = Proc("git log %s -z --topo-order --pretty=format:%s --"
+                    % (start, GIT_FULL_FORMAT_STRING))
 
         def mk_commit(dct):
             """Creates an already set commit from a dct"""
@@ -481,11 +583,15 @@ class GitRepos(object):
                 setattr(c, k, v)
             return c
 
-        values = iter(ret.split('\x00'))
-        while True:  ## values.next() will eventualy raise a StopIteration
-            yield mk_commit(dict([(key, next(values))
-                                  for key in GIT_FORMAT_KEYS]))
+        values = plog.stdout.read("\x00")
 
+        try:
+            while True:  ## values.next() will eventualy raise a StopIteration
+                yield mk_commit(dict([(key, next(values))
+                                      for key in GIT_FORMAT_KEYS]))
+        finally:
+            plog.stdout.close()
+            plog.stderr.close()
 
 def first_matching(section_regexps, string):
     for section, regexps in section_regexps:
@@ -845,7 +951,7 @@ def main():
     if PY3:
         print(content)
     else:
-        print(content.encode(locale.getpreferredencoding()))
+        print(content.encode(_preferred_encoding))
 
 ##
 ## Launch program
