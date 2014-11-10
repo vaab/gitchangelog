@@ -5,23 +5,91 @@ from __future__ import unicode_literals
 import os.path
 import difflib
 
-from common import GitChangelogTestCase, w, cmd
+from common import BaseGitReposTest, BaseTmpDirTest, w, cmd
 
 
-class TestBase(GitChangelogTestCase):
+class GitChangelogTest(BaseGitReposTest):
+    """Base for all tests needing to start in a new git small repository"""
 
-    def test_simple_run(self):
-        changelog = w('$tprog')
-        self.assertEqual(
-            changelog, self.REFERENCE,
-            msg="Should match our reference output... "
-            "diff of changelogs:\n%s"
-            % '\n'.join(difflib.unified_diff(changelog.split("\n"),
-                                             self.REFERENCE.split("\n"),
-                                             lineterm="")))
+    REFERENCE = r"""Changelog
+=========
+
+%%version%% (unreleased)
+------------------------
+
+Changes
+~~~~~~~
+
+- Modified ``b`` XXX. [Alice]
+
+0.0.3 (2000-01-05)
+------------------
+
+New
+~~~
+
+- Add file ``e``, modified ``b`` [Bob]
+
+- Add file ``c`` [Charly]
+
+0.0.2 (2000-01-02)
+------------------
+
+New
+~~~
+
+- Add ``b`` with non-ascii chars éèàâ§µ. [Alice]
 
 
-class TestConfiguration(GitChangelogTestCase):
+"""
+
+    def setUp(self):
+        super(GitChangelogTest, self).setUp()
+
+        w(r"""
+
+            ## Adding first file
+            echo 'Hello' > a
+            git add a
+            git commit -m 'new: first commit' \
+                --author 'Bob <bob@example.com>' \
+                --date '2000-01-01 10:00:00'
+            git tag 0.0.1
+
+            ## Adding second file
+            echo 'Second file with strange non-ascii char: éèàâ§µ' > b
+            git add b
+            git commit -m 'new: add ``b`` with non-ascii chars éèàâ§µ' \
+                --author 'Alice <alice@example.com>' \
+                --date '2000-01-02 11:00:00'
+            git tag 0.0.2
+
+            ## Adding more files
+            echo 'Third file' > c
+            git add c
+            git commit -m 'new: add file ``c``' \
+                --author 'Charly <charly@example.com>' \
+                --date '2000-01-03 12:00:00'
+            echo 'Fourth file' > d
+            echo 'With a modification' >> b
+            git add d b
+            git commit -m 'new: add file ``e``, modified ``b``' \
+                --author 'Bob <bob@example.com>' \
+                --date '2000-01-04 13:00:00'
+
+            echo 'minor addition 1' >> b
+            git commit -am 'chg: modified ``b`` !minor' \
+                --author 'Bob <bob@example.com>' \
+                --date '2000-01-05 13:00:00'
+            git tag 0.0.3
+
+            ## Add untagged commits
+            echo 'addition' >> b
+            git commit -am 'chg: modified ``b`` XXX' \
+                --author 'Alice <alice@example.com>' \
+                --date '2000-01-06 11:00:00'
+
+            """)
 
     def test_simple_run(self):
         out, err, errlvl = cmd('$tprog')
@@ -36,6 +104,13 @@ class TestConfiguration(GitChangelogTestCase):
             out, "0.0.2",
             msg="At leat one of the tags should be displayed in stdout... "
             "Current stdout:\n%s" % out)
+        self.assertEqual(
+            out, self.REFERENCE,
+            msg="Should match our reference output... "
+            "diff of changelogs:\n%s"
+            % '\n'.join(difflib.unified_diff(out.split("\n"),
+                                             self.REFERENCE.split("\n"),
+                                             lineterm="")))
 
     def test_overriding_options(self):
         """We must be able to define a small gitchangelog.rc that adjust only
@@ -45,7 +120,7 @@ class TestConfiguration(GitChangelogTestCase):
 
             cat <<EOF > .gitchangelog.rc
 
-tag_filter_regexp = r'^v[0-9]+\.[0.9]$'
+tag_filter_regexp = r'^v[0-9]+\\.[0.9]$'
 
 EOF
             git tag 'v7.0' HEAD^
@@ -82,8 +157,30 @@ EOF
             msg="Shouldn't contain !minor tagged commit neither... "
             "content of changelog:\n%s" % changelog)
 
+    def test_with_filename_same_as_tag(self):
+        w("""
 
-class TestInitArgument(GitChangelogTestCase):
+            touch 0.0.1
+
+        """)
+        out, err, errlvl = cmd('$tprog')
+        self.assertEqual(
+            errlvl, 0,
+            msg="Should not fail even if filename same as tag name.")
+        self.assertEqual(
+            err, "",
+            msg="No error message expected. "
+            "Current stderr:\n%s" % err)
+        self.assertEqual(
+            out, self.REFERENCE,
+            msg="Should match our reference output... "
+            "diff of changelogs:\n%s"
+            % '\n'.join(difflib.unified_diff(out.split("\n"),
+                                             self.REFERENCE.split("\n"),
+                                             lineterm="")))
+
+
+class TestInitArgument(BaseGitReposTest):
 
     def test_init_file(self):
 
@@ -117,21 +214,6 @@ class TestInitArgument(GitChangelogTestCase):
         self.assertEqual(
             out, "",
             msg="No standard output message expected in case of error "
-            "Current stdout:\n%s" % out)
-
-    def test_outside_git_repository(self):
-
-        out, err, errlvl = cmd('cd .. ; $tprog init')
-        self.assertEqual(
-            errlvl, 1,
-            msg="Should fail to init outside a git repository.")
-        self.assertContains(
-            err, "repository",
-            msg="There should be a error msg mentioning 'repository'. "
-            "Current stderr:\n%r" % err)
-        self.assertEqual(
-            out, "",
-            msg="No standard output message expected. "
             "Current stdout:\n%s" % out)
 
     def test_in_bare_repository(self):
@@ -177,24 +259,37 @@ class TestInitArgument(GitChangelogTestCase):
             os.path.exists('.gitchangelog.rc'),
             msg="File must have been created.")
 
-    def test_with_filename_same_as_tag(self):
+    def test_config_file_is_not_a_file(self):
         w("""
-
-            touch 0.0.1
-
+            mkdir .gitchangelog.rc
         """)
         out, err, errlvl = cmd('$tprog')
         self.assertEqual(
-            errlvl, 0,
-            msg="Should not fail even if filename same as tag name.")
+            errlvl, 1,
+            msg="Should fail when bogus config file exists but is not a file")
+        self.assertContains(
+            err, "not a file",
+            msg="There should be a error message stating that config file is "
+            "not a file. Current stderr:\n%r" % err)
         self.assertEqual(
-            err, "",
-            msg="No error message expected. "
-            "Current stderr:\n%s" % err)
+            out, "",
+            msg="There should be no standard output. "
+            "Current stdout:\n%s" % out)
+
+
+class TestInitArgumentNotAReposity(BaseTmpDirTest):
+
+    def test_outside_git_repository(self):
+
+        out, err, errlvl = cmd('$tprog init')
         self.assertEqual(
-            out, self.REFERENCE,
-            msg="Should match our reference output... "
-            "diff of changelogs:\n%s"
-            % '\n'.join(difflib.unified_diff(out.split("\n"),
-                                             self.REFERENCE.split("\n"),
-                                             lineterm="")))
+            errlvl, 1,
+            msg="Should fail to init outside a git repository.")
+        self.assertContains(
+            err, "repository",
+            msg="There should be a error msg mentioning 'repository'. "
+            "Current stderr:\n%r" % err)
+        self.assertEqual(
+            out, "",
+            msg="No standard output message expected. "
+            "Current stdout:\n%s" % out)
