@@ -242,6 +242,8 @@ GIT_FORMAT_KEYS = {
     'body': "%b",
 }
 
+GIT_FULL_FORMAT_STRING = "%x00".join(GIT_FORMAT_KEYS.values())
+
 
 class GitCommit(SubGitObjectMixin):
 
@@ -450,10 +452,9 @@ class GitRepos(object):
 
     def log(self, start="HEAD"):
 
-        aformat = "%x00".join(GIT_FORMAT_KEYS.values())
         ret = self.swrap(
             "git log %s -z --first-parent --pretty=format:%s --"
-            % (start, aformat))
+            % (start, GIT_FULL_FORMAT_STRING))
 
         def mk_commit(dct):
             """Creates an already set commit from a dct"""
