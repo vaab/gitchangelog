@@ -451,13 +451,9 @@ class GitRepos(object):
     def log(self, start="HEAD"):
 
         aformat = "%x00".join(GIT_FORMAT_KEYS.values())
-        try:
-            ret = self.swrap(
-                "git log %r -z --first-parent --pretty=format:%s --"
-                % (start, aformat))
-        except ShellError:
-            raise ValueError("Given commit identifier %r doesn't exists"
-                             % start)
+        ret = self.swrap(
+            "git log %s -z --first-parent --pretty=format:%s --"
+            % (start, aformat))
 
         def mk_commit(dct):
             """Creates an already set commit from a dct"""
