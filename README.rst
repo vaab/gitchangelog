@@ -18,13 +18,11 @@ Feature
   - fully driven by a small configuration file to match with your changelog
     policies. (see for example the `sample configuration file`_)
 
-  - ignore commit message based on regexp matching
+  - filter out commits/tags based on regexp matching
 
   - refactor commit message displayed on the fly with replace regexp
 
   - classify commit message into sections (ie: New, Fix, Changes...)
-
-  - ignore non-changelog tags by regexps
 
   - templating system for easy tailoring your output (markdown, ReST, etc)
 

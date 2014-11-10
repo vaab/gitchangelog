@@ -28,7 +28,8 @@ except ImportError:
 PY3 = sys.version_info[0] >= 3
 
 usage_msg = """usage: %(exname)s"""
-help_msg = """Run this command in a git repository to output a formatted changelog
+help_msg = """\
+Run this command in a git repository to output a formatted changelog
 
 %(exname)s uses a config file to filter meaningfull commit or do some
  formatting in commit messages thanks to a config file.
@@ -446,11 +447,28 @@ class GitRepos(object):
 
     @property
     def tags(self):
+        """String list of repository's tag names
+
+        Current tag order is committer date timestamp of tagged commit.
+        No firm reason for that, and it could change in future version.
+
+        """
         tags = self.swrap('git tag -l').split("\n")
+        ## Should we use new version name sorting ?  refering to :
+        ## ``git tags --sort -v:refname`` in git version >2.0.
+        ## Sorting and reversing with command line is not available on
+        ## git version <2.0
         return sorted([self.commit(tag) for tag in tags if tag != ''],
                       key=lambda x: int(x.committer_date_timestamp))
 
     def log(self, start="HEAD"):
+        """Reverse chronological list of git repository's commits
+
+        """
+
+        ## XXXvlab: this requires the whole log output to be stored in memory
+        ## a piped subprocess should be used and this function turned into an
+        ## iterator to avoid issues with any size of log output.
 
         ret = self.swrap(
             "git log %s -z --first-parent --pretty=format:%s --"
@@ -464,7 +482,7 @@ class GitRepos(object):
             return c
 
         values = iter(ret.split('\x00'))
-        while True: ## values.next() will eventualy raise a StopIteration
+        while True:  ## values.next() will eventualy raise a StopIteration
             yield mk_commit(dict([(key, next(values))
                                   for key in GIT_FORMAT_KEYS]))
 
@@ -662,17 +680,18 @@ def changelog(repository,
     def new_version(tag, date, opts):
         title = "%s (%s)" % (tag, date) if tag else \
                 opts["unreleased_version_label"]
-        return {"label": title,
-                "tag": tag,
-                "date": date,
-                }
+        return {
+            "label": title,
+            "tag": tag,
+            "date": date,
+            }
 
     opts = {
         'unreleased_version_label': unreleased_version_label,
         'body_split_regexp': body_split_regexp,
         }
 
-    # setting main container of changelog elements
+    ## Setting main container of changelog elements
     title = "Changelog"
     changelog = {"title": title,
                  "versions": []}
