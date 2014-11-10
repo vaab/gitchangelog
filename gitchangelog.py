@@ -633,7 +633,7 @@ else:
 def changelog(repository,
               ignore_regexps=[],
               replace_regexps={},
-              section_regexps={},
+              section_regexps=[(None,'')],
               unreleased_version_label="unreleased",
               tag_filter_regexp=r"\d+\.\d+(\.\d+)?",
               body_split_regexp="\n\n",

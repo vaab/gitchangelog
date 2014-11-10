@@ -19,6 +19,10 @@ import re
 import gitchangelog
 
 
+def raw_renderer(data, opts):
+    return data
+
+
 def set_env(key, value):
 
     def decorator(f):
@@ -162,6 +166,14 @@ New
 
             """)
         os.chdir("repos")
+
+        self.repos = gitchangelog.GitRepos(os.getcwd())
+
+    @property
+    def raw_changelog(self):
+        ## Currifyed main function
+        return lambda *a, **kw: gitchangelog.changelog(
+            self.repos, *a, output_engine=raw_renderer, **kw)
 
 
 class GitChangelogTestCase(BaseGitReposTest, ExtendedTestCase):
