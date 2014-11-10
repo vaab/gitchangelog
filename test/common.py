@@ -23,6 +23,26 @@ def raw_renderer(data, opts):
     return data
 
 
+def simple_renderer(data, opts):
+    """Provide a fixed template for tests.
+
+    To use when checking what commits gets attributed to which
+    versions/sections.
+
+    Do not use if you want to check body contents as it is not printed.
+
+    """
+    s = ""
+    for version in data["versions"]:
+        s += "%s\n" % version["tag"]
+        for section in version["sections"]:
+            s += "  %s:\n" % section["label"]
+            for commit in section["commits"]:
+                s += "    * %(subject)s [%(author)s]\n" % commit
+        s += "\n"
+    return s
+
+
 def set_env(key, value):
 
     def decorator(f):
@@ -99,3 +119,8 @@ class BaseGitReposTest(BaseTmpDirTest):
         return lambda *a, **kw: gitchangelog.changelog(
             self.repos, *a, output_engine=raw_renderer, **kw)
 
+    @property
+    def simple_changelog(self):
+        ## Currifyed main function
+        return lambda *a, **kw: gitchangelog.changelog(
+            self.repos, *a, output_engine=simple_renderer, **kw)
