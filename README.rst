@@ -15,18 +15,13 @@ Translate commit message history to a changelog.
 Feature
 =======
 
-  - fully driven by a small configuration file to match with your changelog
-    policies. (see for example the `sample configuration file`_)
-
-  - filter out commits/tags based on regexp matching
-
-  - refactor commit message displayed on the fly with replace regexp
-
-  - classify commit message into sections (ie: New, Fix, Changes...)
-
-  - templating system for easy tailoring your output (markdown, ReST, etc)
-
-  - support straight and merging history.
+- fully driven by a small configuration file to match with your changelog
+  policies. (see for example the `sample configuration file`_)
+- filter out commits/tags based on regexp matching
+- refactor commit message displayed on the fly with replace regexp
+- classify commit message into sections (ie: New, Fix, Changes...)
+- templating system for easy tailoring your output (markdown, ReST, etc)
+- support straight and merging history.
 
 
 Requirements
@@ -137,13 +132,11 @@ Usage
 You need to place a ``gitchangelog.rc`` file somewhere, these are the location
 checked in the given order (first match will prevail):
 
-  - in the path given thanks to the environment variable
-    ``GITCHANGELOG_CONFIG_FILENAME``
-
-  - in the path stored in git config's entry "gitchangelog.rc-path" (which
-    could be stored in system location or per repository)
-
-  - in the root of the current git repository with the name ``.gitchangelog.rc``
+- in the path given thanks to the environment variable
+  ``GITCHANGELOG_CONFIG_FILENAME``
+- in the path stored in git config's entry "gitchangelog.rc-path" (which
+  could be stored in system location or per repository)
+- in the root of the current git repository with the name ``.gitchangelog.rc``
 
 Then, you'll be able to call ``gitchangelog`` in a GIT repository and it'll
 print changelog as its standard output.
