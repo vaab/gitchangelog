@@ -26,17 +26,17 @@ class TestCrossBranchTags(BaseGitReposTest):
     REFERENCE = """\
 0.0.4
   None:
-    * Merge branch 'master' into develop. [The Committer]
-    * new: some new commit. [The Committer]
-    * new: second commit on develop branch. [The Committer]
+    * Merge branch 'master' into develop [The Committer]
+    * new: some new commit [The Committer]
+    * new: second commit on develop branch [The Committer]
 
 0.0.3
   None:
-    * fix: hotfix on master. [The Committer]
+    * fix: hotfix on master [The Committer]
 
 0.0.2
   None:
-    * new: first commit on develop branch. [The Committer]
+    * new: first commit on develop branch [The Committer]
 
 """
 
@@ -101,11 +101,11 @@ class TestLogLinearbility(BaseGitReposTest):
     REFERENCE = """\
 0.0.3
   None:
-    * new: commit on develop branch. [The Committer]
+    * new: commit on develop branch [The Committer]
 
 0.0.2
   None:
-    * fix: something. [The Committer]
+    * fix: something [The Committer]
 
 """
 
@@ -154,17 +154,17 @@ class TestLogHardLinearbility(BaseGitReposTest):
     REFERENCE = """\
 0.2
   None:
-    * new: something. [The Committer]
-    * Merge tag '0.1.1' into develop. [The Committer]
-    * chg: continued development. [The Committer]
+    * new: something [The Committer]
+    * Merge tag '0.1.1' into develop [The Committer]
+    * chg: continued development [The Committer]
 
 0.1.1
   None:
-    * fix: out-of-band hotfix. [The Committer]
+    * fix: out-of-band hotfix [The Committer]
 
 0.1
   None:
-    * fix: something. [The Committer]
+    * fix: something [The Committer]
 
 """
 

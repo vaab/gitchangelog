@@ -44,7 +44,7 @@
 ##   Please note that multi-line commit message are supported, and only the
 ##   first line will be considered as the "summary" of the commit message. So
 ##   tags, and other rules only applies to the summary.  The body of the commit
-##   message will be displayed in the changelog with minor reformating.
+##   message will be displayed in the changelog without reformatting.
 
 
 ##
@@ -62,22 +62,6 @@ ignore_regexps = [
         r'^([cC]hg|[fF]ix|[nN]ew)\s*:\s*[d|D]ev:',
         r'^(.{3,3}\s*:)?\s*[fF]irst commit.?\s*$',
   ]
-
-
-##
-## ``replace_regexps`` is a dict associating a regexp pattern and its replacement
-##
-## It will be applied to get the summary line from the full commit message.
-##
-## Note that you can provide multiple replacement patterns, they will be all
-## tried. If None matches, the summary line will be the full commit message.
-##
-replace_regexps = {
-    ## current format (ie: 'chg: dev: my commit msg @tag1 @tag2')
-
-    r'^([cC]hg|[fF]ix|[nN]ew)\s*:\s*((dev|use?r|pkg|test|doc)\s*:\s*)?([^\n@]*)(@[a-z]+\s+)*$':
-	r'\4',
-}
 
 
 ## ``section_regexps`` is a list of 2-tuples associating a string label and a
@@ -104,12 +88,48 @@ section_regexps = [
 ]
 
 
-## ``body_split_regexp`` is a regexp
+## ``body_process`` is a callable
 ##
-## Commit message body (not the summary) if existing will be split
-## (new line) on this regexp
+## This callable will be given the original body and result will
+## be used in the changelog.
 ##
-body_split_regexp = r'\n(?=\w+\s*:)'
+## Available constructs are:
+##
+##   - any python callable that take one txt argument and return txt argument.
+##
+##   - ReSub(pattern, replacement): will apply regexp substitution.
+##
+##   - Indent(chars="  "): will indent the text with the prefix
+##     Please remember that template engines gets also to modify the text and
+##     will usually indent themselves the text if needed.
+##
+##   - Wrap(regexp=r"\n\n"): re-wrap text in separate paragraph to fill 80-Columns
+##
+##   - noop: do nothing
+##
+##   - ucfirst: ensure the first letter is uppercase.
+##     (usually used in the ``subject_process`` pipeline)
+##
+##   - final_dot: ensure text finishes with a dot
+##     (usually used in the ``subject_process`` pipeline)
+##
+##   - strip: remove any spaces before or after the content of the string
+##
+## Additionally, you can `pipe` the provided filters, for instance:
+#body_process = Wrap(regexp=r'\n(?=\w+\s*:)') | Indent(chars="  ")
+#body_process = Wrap(regexp=r'\n(?=\w+\s*:)')
+body_process = noop
+
+
+## ``subject_process`` is a callable
+##
+## This callable will be given the original subject and result will
+## be used in the changelog.
+##
+## Available constructs are those listed in ``body_process`` doc.
+subject_process = (strip |
+    ReSub(r'^([cC]hg|[fF]ix|[nN]ew)\s*:\s*((dev|use?r|pkg|test|doc)\s*:\s*)?([^\n@]*)(@[a-z]+\s+)*$', r'\4') |
+    ucfirst | final_dot)
 
 
 ## ``tag_filter_regexp`` is a regexp

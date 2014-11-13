@@ -81,7 +81,11 @@ setup(
     extras_require = {
         'Mustache': ["pystache", ],
         'Mako': ["mako", ],
-        'test': ["minimock", ],
+        'test': [
+            "minimock",
+            "mako",
+            "pystache",
+            ],
     },
     entry_points="""
     [console_scripts]

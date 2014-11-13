@@ -50,6 +50,8 @@ Config file location will be resolved in this order:
 
 full_help_msg = "%s\n\n%s" % (usage_msg, help_msg)
 
+Null = object()
+
 
 class ShellError(Exception):
 
@@ -103,16 +105,33 @@ def load_config_file(filename, default_filename=None,
 
     return config
 
-
 ##
 ## Text functions
 ##
 
+@available_in_config
+class TextProc(object):
 
+    def __init__(self, fun):
+        self.fun = fun
+        if hasattr(fun, "__name__"):
+            self.__name__ = fun.__name__
+
+    def __call__(self, text):
+        return self.fun(text)
+
+    def __or__(self, value):
+        if isinstance(value, TextProc):
+            return TextProc(lambda text: value.fun(self.fun(text)))
+        raise SyntaxError
+
+
+@TextProc
 def ucfirst(msg):
     return msg[0].upper() + msg[1:]
 
 
+@TextProc
 def final_dot(msg):
     if len(msg) == 0:
         return "No commit message."
@@ -120,6 +139,24 @@ def final_dot(msg):
         return msg + "."
     return msg
 
+
+def first(elts, predicate, default=Null):
+    for elt in elts:
+        if predicate(elt):
+            return elt
+    if default is Null:
+        raise ValueError("No elements satisfy predicate")
+    else:
+        return default
+
+
+def dedent(txt):
+    """Detect if first line is not indented and dedent the remaining"""
+    lines = txt.strip().split("\n")
+    idx, line = first(enumerate(lines), lambda elt: elt[1] != "")
+    if line.startswith("\t") or line.startswith(" "):
+        return textwrap.dedent("\n".join(lines))
+    return line + "\n" + textwrap.dedent("\n".join(lines[idx+1:]))
 
 def indent(text, chars="  ", first=None):
     """Return text string indented with the given chars
@@ -164,6 +201,21 @@ def paragraph_wrap(text, regexp="\n\n"):
     return "\n".join("\n".join(textwrap.wrap(paragraph.strip()))
                      for paragraph in regexp.split(text)).strip()
 
+
+def curryfy(f):
+    return lambda *a, **kw: TextProc(lambda txt: f(txt, *a, **kw))
+
+## these are curryfied version of their lower case definition
+
+Indent = curryfy(indent)
+Wrap = curryfy(paragraph_wrap)
+ReSub = lambda p, r, **k: TextProc(lambda txt: re.sub(p, r, txt, **k))
+noop = TextProc(lambda txt: txt)
+strip = TextProc(lambda txt: txt.strip())
+
+for label in ("Indent", "Wrap", "ReSub", "noop", "final_dot",
+              "ucfirst", "strip"):
+    _config_env[label] = locals()[label]
 
 ##
 ## System functions
@@ -649,12 +701,11 @@ def rest_py(data, opts={}):
         subject = commit["subject"]
         subject += " [%s]" % (commit["author"], )
 
-        entry = indent('\n'.join(textwrap.wrap(ucfirst(subject))),
+        entry = indent('\n'.join(textwrap.wrap(subject)),
                        first="- ").strip() + "\n\n"
 
         if commit["body"]:
-            entry += indent(paragraph_wrap(commit["body"],
-                                           regexp=opts["body_split_regexp"]))
+            entry += indent(commit["body"])
             entry += "\n\n"
 
         return entry
@@ -707,10 +758,7 @@ if pystache:
                 for section in version["sections"]:
                     section["label_chars"] = list(section["label"])
                     for commit in section["commits"]:
-                        commit["body_indented"] = indent(
-                            paragraph_wrap(commit["body"],
-                                           regexp=opts["body_split_regexp"]),
-                            chars="    ")
+                        commit["body_indented"] = indent(commit["body"])
 
             return pystache.render(template, data)
 
@@ -773,13 +821,13 @@ else:
 
 def changelog(repository,
               ignore_regexps=[],
-              replace_regexps={},
               section_regexps=[(None,'')],
               unreleased_version_label="unreleased",
               tag_filter_regexp=r"\d+\.\d+(\.\d+)?",
-              body_split_regexp="\n\n",
               output_engine=rest_py,
               include_merge=True,
+              body_process=lambda x: x,
+              subject_process=lambda x: x,
               ):
     """Returns a string containing the changelog of given repository
 
@@ -790,13 +838,13 @@ def changelog(repository,
 
     :param repository: target ``GitRepos`` object
     :param ignore_regexps: list of regexp identifying ignored commit messages
-    :param replace_regexps: regexps used to replace elements in commit messages
     :param section_regexps: regexps identifying sections
     :param tag_filter_regexp: regexp to match tags used as version
-    :param body_split_regexp: regexp identifying the body of a commit message
     :param unreleased_version_label: version label for untagged commits
     :param template_format: format of template to generate the changelog
     :param include_merge: whether to include merge commits in the log or not
+    :param body_process: text processing object to apply to body
+    :param subject_process: text processing object to apply to subject
 
     :returns: content of changelog
 
@@ -813,7 +861,6 @@ def changelog(repository,
 
     opts = {
         'unreleased_version_label': unreleased_version_label,
-        'body_split_regexp': body_split_regexp,
         }
 
     ## Setting main container of changelog elements
@@ -855,20 +902,12 @@ def changelog(repository,
 
             matched_section = first_matching(section_regexps, commit.subject)
 
-            ## Replace content in commit subject
-
-            subject = commit.subject
-            for regexp, replacement in replace_regexps.items():
-                subject = re.sub(regexp, replacement, subject)
-
             ## Finally storing the commit in the matching section
-
-            subject = final_dot(subject)
 
             sections[matched_section].append({
                 "author": commit.author_name,
-                "subject": subject,
-                "body": commit.body,
+                "subject": subject_process(commit.subject),
+                "body": body_process(commit.body),
             })
 
         ## Flush current version
@@ -959,16 +998,40 @@ def main():
         default_filename=reference_config,
         fail_if_not_present=False)
 
+    ## Check for obsolete options:
+    OBSOLETE_OPTIONS = {
+        "replace_regexps":
+            """This option was superseeded by the ``subject_process`` option.
+               Each regex replacement you had could be translated in a
+               ``ReSub(pattern, replace)`` in the ``subject_process``
+               pipeline.""",
+        "body_split_regex":
+            """This option was superseeded by the ``body_process`` option.
+               The split regex can now be sent as a ``Wrap(regex)`` text process
+               instruction in the ``body_process`` pipeline."""
+        }
+    for option, help_message in OBSOLETE_OPTIONS.items():
+        help_message = dedent(help_message)
+        if option in config:
+            sys.stderr.write(
+                "Error: Removed option %r used in configuration file.\n\n"
+                % option)
+            sys.stderr.write(indent(paragraph_wrap(help_message)))
+            sys.stderr.write(
+                "\n\nBe sure to check in the legacy configuration "
+                "file for accurate help and documentation.\n")
+            exit(1)
+
     content = changelog(
         repository,
         ignore_regexps=config['ignore_regexps'],
-        replace_regexps=config['replace_regexps'],
         section_regexps=config['section_regexps'],
         unreleased_version_label=config['unreleased_version_label'],
         tag_filter_regexp=config['tag_filter_regexp'],
-        body_split_regexp=config['body_split_regexp'],
         output_engine=config.get("output_engine", rest_py),
         include_merge=config.get("include_merge", True),
+        body_process=config.get("body_process", noop),
+        subject_process=config.get("subject_process", noop),
     )
 
     if PY3:

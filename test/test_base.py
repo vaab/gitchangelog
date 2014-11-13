@@ -201,6 +201,39 @@ EOF
             msg="Should not contain commit with 'Merge' in it... "
             "content of changelog:\n%s" % changelog)
 
+    def test_same_output_with_different_engine(self):
+        """Reference implementation should match mustache and mako implem"""
+
+        w("""cat <<EOF > .gitchangelog.rc
+
+output_engine = mustache('restructuredtext')
+
+EOF
+        """)
+        changelog = w('$tprog')
+        self.assertEqual(
+            changelog, self.REFERENCE,
+            msg="Mustache output should match our reference output... "
+            "diff of changelogs:\n%s"
+            % '\n'.join(difflib.unified_diff(self.REFERENCE.split("\n"),
+                                             changelog.split("\n"),
+                                             lineterm="")))
+
+        w("""cat <<EOF > .gitchangelog.rc
+
+output_engine = makotemplate('restructuredtext')
+
+EOF
+        """)
+        changelog = w('$tprog')
+        self.assertEqual(
+            changelog, self.REFERENCE,
+            msg="Mako output should match our reference output... "
+            "diff of changelogs:\n%s"
+            % '\n'.join(difflib.unified_diff(self.REFERENCE.split("\n"),
+                                             changelog.split("\n"),
+                                             lineterm="")))
+
 
 class TestInitArgument(BaseGitReposTest):
 

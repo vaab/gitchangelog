@@ -12,13 +12,12 @@ ${"~" * len(section["label"])}
 % for commit in section["commits"]:
 <%
 subject = "%s [%s]" % (commit["subject"], commit["author"])
-entry = indent('\n'.join(textwrap.wrap(ucfirst(subject))),
+entry = indent('\n'.join(textwrap.wrap(subject)),
                        first="- ").strip()
 %>${entry}
 
 % if commit["body"]:
-${indent(paragraph_wrap(commit["body"],
-                        regexp=opts["body_split_regexp"]))}
+${indent(commit["body"])}
 
 % endif
 % endfor
