@@ -1,7 +1,7 @@
 ##
 ## Format
 ##
-##   ACTION: [AUDIENCE:] COMMIT_MSG [@TAG ...]
+##   ACTION: [AUDIENCE:] COMMIT_MSG [!TAG ...]
 ##
 ## Description
 ##
@@ -27,6 +27,9 @@
 ##
 ##   TAGs are additionnal adjective as 'refactor' 'minor' 'cosmetic'
 ##
+##       They are preceded with a '!' or a '@' (prefer the former, as the
+##       latter is wrongly interpreted in github.) Commonly used tags are:
+##
 ##       'refactor' is obviously for refactoring code only
 ##       'minor' is for a very meaningless change (a typo, adding a comment)
 ##       'cosmetic' is for cosmetic driven change (re-indentation, 80-col...)
@@ -35,11 +38,11 @@
 ## Example:
 ##
 ##   new: usr: support of bazaar implemented
-##   chg: re-indentend some lines @cosmetic
+##   chg: re-indentend some lines !cosmetic
 ##   new: dev: updated code to be compatible with last version of killer lib.
 ##   fix: pkg: updated year of licence coverage.
 ##   new: test: added a bunch of test around user usability of feature X.
-##   fix: typo in spelling my name in comment. @minor
+##   fix: typo in spelling my name in comment. !minor
 ##
 ##   Please note that multi-line commit message are supported, and only the
 ##   first line will be considered as the "summary" of the commit message. So
