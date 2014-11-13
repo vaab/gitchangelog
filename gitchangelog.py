@@ -72,7 +72,6 @@ def die(msg=None):
 ## config file functions
 ##
 
-
 _config_env = {}
 
 
@@ -186,13 +185,13 @@ def indent(text, chars="  ", first=None):
 def paragraph_wrap(text, regexp="\n\n"):
     r"""Wrap text by making sure that paragraph are separated correctly
 
-    >>> string = 'This is first paragraph which is quite long don\'t you \
-    ... think ? Well, I think so.\n\nThis is second paragraph\n'
+        >>> string = 'This is first paragraph which is quite long don\'t you \
+        ... think ? Well, I think so.\n\nThis is second paragraph\n'
 
-    >>> print(paragraph_wrap(string)) # doctest: +NORMALIZE_WHITESPACE
-    This is first paragraph which is quite long don't you think ? Well, I
-    think so.
-    This is second paragraph
+        >>> print(paragraph_wrap(string)) # doctest: +NORMALIZE_WHITESPACE
+        This is first paragraph which is quite long don't you think ? Well, I
+        think so.
+        This is second paragraph
 
     Notice that that each paragraph has been wrapped separately.
 
@@ -660,6 +659,7 @@ class GitRepos(object):
         finally:
             plog.stdout.close()
             plog.stderr.close()
+
 
 def first_matching(section_regexps, string):
     for section, regexps in section_regexps:

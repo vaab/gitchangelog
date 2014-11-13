@@ -13,7 +13,7 @@
 ##       'fix' is for bug fixes
 ##       'new' is for new features, big improvement
 ##
-##   SUBJECT is optional and one of 'dev', 'usr', 'pkg', 'test', 'doc'
+##   AUDIENCE is optional and one of 'dev', 'usr', 'pkg', 'test', 'doc'
 ##
 ##       Is WHO is concerned by the change.
 ##
