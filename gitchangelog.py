@@ -670,6 +670,31 @@ def first_matching(section_regexps, string):
                 return section
 
 
+def ensure_template_file_exists(label, template_name):
+    """Return"""
+
+    template_dir = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        "templates", label)
+
+    template_path = os.path.join(template_dir, "%s.tpl" % template_name)
+
+    if not os.path.exists(template_path):
+        templates = glob.glob(os.path.join(template_dir, "*.tpl"))
+        if len(templates) > 0:
+            msg = ("These are the available %s templates:" % label)
+            msg += "\n - " + \
+                  "\n - ".join(os.path.basename(f).split(".")[0]
+                               for f in templates)
+            msg += "\nTemplates are located in %r" % template_dir
+        else:
+            msg = "No available %s templates found in %r." \
+                  % (label, template_dir)
+        die("Error: Invalid %s template name %r.\n" % (label, template_name) +
+            "%s" % msg)
+
+    return template_path
+
 ##
 ## Output Engines
 ##
@@ -727,23 +752,7 @@ if pystache:
         returned callable must take 2 arguments ``data`` and ``opts``.
 
         """
-        template_dir = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            "templates", "mustache")
-
-        template_path = os.path.join(template_dir, "%s.tpl" % template_name)
-
-        if not os.path.exists(template_path):
-            templates = glob.glob(os.path.join(template_dir, "*.tpl"))
-            if len(templates) > 0:
-                msg = "Available mustache templates:\n - " + \
-                      " - ".join(os.path.basename(f).split(".")[-1]
-                                 for f in templates)
-            else:
-                msg = "No available mustache templates found in %r." \
-                      % template_dir
-            die("%s\n" % msg +
-                "Invalid mustache template name %s." % template_name)
+        template_path = ensure_template_file_exists("mustache", template_name)
 
         with open(template_path) as f:
             template = f.read()
@@ -785,18 +794,7 @@ if mako:
         returned callable must take 2 arguments ``data`` and ``opts``.
 
         """
-        template_dir = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            "templates", "mako")
-
-        template_path = os.path.join(template_dir, "%s.tpl" % template_name)
-
-        if not os.path.exists(template_path):
-            print("Available mako templates:\n - " +
-                  " - ".join(os.path.basename(f).split(".")[-1]
-                             for f in glob.glob(os.path.join(template_dir,
-                                                             "*.tpl"))))
-            die("No %r a valid mako template name." % template_name)
+        template_path = ensure_template_file_exists("mako", template_name)
 
         template = mako.template.Template(filename=template_path)
 

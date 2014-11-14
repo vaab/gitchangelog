@@ -304,7 +304,7 @@ class TestInitArgument(BaseGitReposTest):
             msg="Should not fail in sub directory.")
         self.assertContains(
             out, "created",
-            msg="There should  msg mentioning the file was 'created'. "
+            msg="There should be a msg mentioning the file was 'created'. "
             "Current stdout:\n%r" % out)
         self.assertEqual(
             err, "",
@@ -324,12 +324,46 @@ class TestInitArgument(BaseGitReposTest):
             msg="Should fail when bogus config file exists but is not a file")
         self.assertContains(
             err, "not a file",
-            msg="There should be a error message stating that config file is "
+            msg="There should be an error message stating that config file is "
             "not a file. Current stderr:\n%r" % err)
         self.assertEqual(
             out, "",
             msg="There should be no standard output. "
             "Current stdout:\n%s" % out)
+
+    def test_unexistent_template_name(self):
+        """Reference implementation should match mustache and mako implem"""
+
+        w("""cat <<EOF > .gitchangelog.rc
+
+output_engine = mustache('doesnotexist')
+
+EOF
+        """)
+        out, err, errlvl = cmd('$tprog')
+        self.assertEqual(
+            errlvl, 1,
+            msg="Should fail as template does not exist")
+        self.assertEqual(
+            out, "",
+            msg="No stdout was expected since there was an error. "
+            "Current stdout:\n%r" % out)
+        self.assertContains(
+            err, "doesnotexist",
+            msg="There should be an error message mentioning 'doesnotexist'. "
+            "Current stderr:\n%s" % err)
+        self.assertContains(
+            err, "restructuredtext",
+            msg="The error message should mention 'available'. "
+            "Current stderr:\n%s" % err)
+        self.assertContains(
+            err, "mustache",
+            msg="The error message should mention 'mustache'. "
+            "Current stderr:\n%s" % err)
+        self.assertContains(
+            err, "restructuredtext",
+            msg="The error message should mention 'restructuredtext'. "
+            "Current stderr:\n%s" % err)
 
 
 class TestInitArgumentNotAReposity(BaseTmpDirTest):
