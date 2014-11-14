@@ -4,8 +4,11 @@ from __future__ import unicode_literals
 
 import os.path
 import difflib
+import glob
+import os.path
 
 from common import BaseGitReposTest, BaseTmpDirTest, w, cmd
+from gitchangelog import indent
 
 
 class GitChangelogTest(BaseGitReposTest):
@@ -233,6 +236,30 @@ EOF
             % '\n'.join(difflib.unified_diff(self.REFERENCE.split("\n"),
                                              changelog.split("\n"),
                                              lineterm="")))
+
+    def test_provided_templates(self):
+        """Run all provided templates at least once"""
+
+        for label, directory in [("makotemplate", "mako"),
+                                 ("mustache", "mustache")]:
+            template_dir = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                "..", "templates", directory)
+            templates = glob.glob(os.path.join(template_dir, "*.tpl"))
+            template_labels = [os.path.basename(f).split(".")[0]
+                               for f in templates]
+            for tpl in template_labels:
+                w("""cat <<EOF > .gitchangelog.rc
+
+output_engine = %s(%r)
+
+EOF
+                """ % (label, tpl))
+                out, err, errlvl = cmd('$tprog')
+                self.assertEqual(
+                    errlvl, 0,
+                    msg="Should not fail on %s(%r) " % (label, tpl) +
+                    "Current stderr:\n%s" % indent(err))
 
 
 class TestInitArgument(BaseGitReposTest):
