@@ -33,13 +33,17 @@ New
 
 - Add file ``e``, modified ``b`` [Bob]
 
+  This is a message body.
+
+  With multi-line content:
+  - one
+  - two
+
+
 - Add file ``c`` [Charly]
 
 0.0.2 (2000-01-02)
 ------------------
-
-New
-~~~
 
 - Add ``b`` with non-ascii chars éèàâ§µ. [Alice]
 
@@ -62,7 +66,9 @@ New
             ## Adding second file
             echo 'Second file with strange non-ascii char: éèàâ§µ' > b
             git add b
-            git commit -m 'new: add ``b`` with non-ascii chars éèàâ§µ' \
+
+            ## Notice there are no section here.
+            git commit -m 'add ``b`` with non-ascii chars éèàâ§µ' \
                 --author 'Alice <alice@example.com>' \
                 --date '2000-01-02 11:00:00'
             git tag 0.0.2
@@ -76,7 +82,13 @@ New
             echo 'Fourth file' > d
             echo 'With a modification' >> b
             git add d b
-            git commit -m 'new: add file ``e``, modified ``b``' \
+            git commit -m 'new: add file ``e``, modified ``b``
+
+This is a message body.
+
+With multi-line content:
+- one
+- two' \
                 --author 'Bob <bob@example.com>' \
                 --date '2000-01-04 13:00:00'
 

@@ -172,13 +172,19 @@ def indent(text, chars="  ", first=None):
       This is second line
 
 
+    >>> string = 'This is first line.\\n\\nThis is second line'
+    >>> print(indent(string, first="- "))  # doctest: +NORMALIZE_WHITESPACE
+    - This is first line.
+    <BLANKLINE>
+      This is second line
+
     """
     if first:
         first_line = text.split("\n")[0]
         rest = '\n'.join(text.split("\n")[1:])
-        return '\n'.join([first + first_line,
+        return '\n'.join([(first + first_line).rstrip(),
                           indent(rest, chars=chars)])
-    return '\n'.join([chars + line
+    return '\n'.join([(chars + line).rstrip()
                       for line in text.split('\n')])
 
 
@@ -773,6 +779,9 @@ if pystache:
                 version["label_chars"] = list(version["label"])
                 for section in version["sections"]:
                     section["label_chars"] = list(section["label"])
+                    section["display_label"] = \
+                        not (section["label"] == "Other" and \
+                             len(version["sections"]) == 1)
                     for commit in section["commits"]:
                         commit["body_indented"] = indent(commit["body"])
 
