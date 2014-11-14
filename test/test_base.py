@@ -160,6 +160,29 @@ EOF
             msg="Shouldn't contain !minor tagged commit neither... "
             "content of changelog:\n%s" % changelog)
 
+    def test_provided_config_file(self):
+        """Check provided reference with older name for perfect same result."""
+
+        config_dir = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), "..")
+        configs = glob.glob(os.path.join(config_dir,
+                                         "gitchangelog.rc.reference.v*"))
+        for config in configs:
+            out, err, errlvl = cmd(
+                'GITCHANGELOG_CONFIG_FILENAME="%s" $tprog' % config)
+            self.assertEqual(
+                errlvl, 0,
+                msg="Should not fail with config %r " % (config, ) +
+                "Current stderr:\n%s" % indent(err))
+            self.assertEqual(
+                out, self.REFERENCE,
+                msg="Mako output should match our reference output... "
+                "diff of changelogs:\n%s"
+                % '\n'.join(difflib.unified_diff(
+                    self.REFERENCE.split("\n"),
+                    out.split("\n"),
+                    lineterm="")))
+
     def test_with_filename_same_as_tag(self):
         w("""
 

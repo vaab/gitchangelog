@@ -919,6 +919,46 @@ def changelog(repository,
 
     return output_engine(data=changelog, opts=opts)
 
+##
+## Manage obsolete options
+##
+
+_obsolete_options_managers = []
+
+def obsolete_option_manager(fun):
+    _obsolete_options_managers.append(fun)
+
+@obsolete_option_manager
+def obsolete_replace_regexps(config):
+    """This option was superseeded by the ``subject_process`` option.
+
+    Each regex replacement you had could be translated in a
+    ``ReSub(pattern, replace)`` in the ``subject_process`` pipeline.
+
+    """
+    if "replace_regexps" in config:
+        for pattern, replace in config["replace_regexps"].items():
+            config["subject_process"] = \
+                ReSub(pattern, replace) | \
+                config.get("subject_process", ucfirst | final_dot)
+
+
+@obsolete_option_manager
+def obsolete_body_split_regexp(config):
+    """This option was superseeded by the ``body_process`` option.
+
+    The split regex can now be sent as a ``Wrap(regex)`` text process
+    instruction in the ``body_process`` pipeline.
+
+    """
+    if "body_split_regex" in config:
+        config["body_process"] = Wrap(config["body_split_regex"]) | \
+                                 config.get("body_process", noop)
+
+
+def manage_obsolete_options(config):
+    for man in _obsolete_options_managers:
+        man(config)
 
 ##
 ## Main
@@ -995,29 +1035,7 @@ def main():
         default_filename=reference_config,
         fail_if_not_present=False)
 
-    ## Check for obsolete options:
-    OBSOLETE_OPTIONS = {
-        "replace_regexps":
-            """This option was superseeded by the ``subject_process`` option.
-               Each regex replacement you had could be translated in a
-               ``ReSub(pattern, replace)`` in the ``subject_process``
-               pipeline.""",
-        "body_split_regex":
-            """This option was superseeded by the ``body_process`` option.
-               The split regex can now be sent as a ``Wrap(regex)`` text process
-               instruction in the ``body_process`` pipeline."""
-        }
-    for option, help_message in OBSOLETE_OPTIONS.items():
-        help_message = dedent(help_message)
-        if option in config:
-            sys.stderr.write(
-                "Error: Removed option %r used in configuration file.\n\n"
-                % option)
-            sys.stderr.write(indent(paragraph_wrap(help_message)))
-            sys.stderr.write(
-                "\n\nBe sure to check in the legacy configuration "
-                "file for accurate help and documentation.\n")
-            exit(1)
+    manage_obsolete_options(config)
 
     content = changelog(
         repository,
