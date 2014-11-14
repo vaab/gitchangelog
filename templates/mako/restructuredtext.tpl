@@ -2,8 +2,10 @@ ${data["title"]}
 ${"=" * len(data["title"])}
 
 % for version in data["versions"]:
-${version["label"]}
-${"-" * len(version["label"])}
+<%
+title = "%s (%s)" % (version["tag"], version["date"]) if version["tag"] else opts["unreleased_version_label"]
+%>${title}
+${"-" * len(title)}
 
 % for section in version["sections"]:
 ${section["label"]}

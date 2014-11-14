@@ -706,9 +706,13 @@ def rest_py(data, opts={}):
     def rest_title(label, char="="):
         return (label.strip() + "\n") + (char * len(label) + "\n")
 
-    def render_version(title, sections):
+    def render_version(version):
+        title = "%s (%s)" % (version["tag"], version["date"]) \
+                if version["tag"] else \
+                opts["unreleased_version_label"]
         s = rest_title(title, char="-") + "\n"
 
+        sections = version["sections"]
         nb_sections = len(sections)
         for section in sections:
 
@@ -736,8 +740,7 @@ def rest_py(data, opts={}):
         return entry
 
     return (rest_title(data["title"], char="=") + "\n" +
-            "".join(render_version(title=version["label"],
-                                   sections=version["sections"])
+            "".join(render_version(version)
                     for version in data["versions"]
                     if len(version["sections"]) > 0))
 
@@ -763,6 +766,10 @@ if pystache:
             ## values
             data["title_chars"] = list(data["title"])
             for version in data["versions"]:
+                title = "%s (%s)" % (version["tag"], version["date"]) \
+                        if version["tag"] else \
+                        opts["unreleased_version_label"]
+                version["label"] = title
                 version["label_chars"] = list(version["label"])
                 for section in version["sections"]:
                     section["label_chars"] = list(section["label"])
@@ -848,15 +855,6 @@ def changelog(repository,
 
     """
 
-    def new_version(tag, date, opts):
-        title = "%s (%s)" % (tag, date) if tag else \
-                opts["unreleased_version_label"]
-        return {
-            "label": title,
-            "tag": tag,
-            "date": date,
-            }
-
     opts = {
         'unreleased_version_label': unreleased_version_label,
         }
@@ -882,10 +880,11 @@ def changelog(repository,
     for idx, tag in enumerate(tags):
 
         ## New version
-        current_version = new_version(prev_tag.identifier,
-                                      prev_tag.date, opts) \
-            if prev_tag.identifier != "HEAD" else \
-            new_version(None, prev_tag.date, opts)
+        current_version = {"date": prev_tag.date}
+        current_version["tag"] = prev_tag.identifier \
+                                 if prev_tag.identifier != "HEAD" else \
+                                 None
+
         sections = collections.defaultdict(list)
 
         commits = repository.log(
