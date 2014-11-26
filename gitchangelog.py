@@ -882,23 +882,21 @@ def changelog(repository,
 
     section_order = [k for k, _v in section_regexps]
 
-    prev_tag = repository.commit("HEAD")
-    tags.append(repository.commit("LAST"))
+    tags = [repository.commit("HEAD")] + tags
 
     ## Get the changes between tags (releases)
     for idx, tag in enumerate(tags):
 
         ## New version
-        current_version = {"date": prev_tag.date}
-        current_version["tag"] = prev_tag.identifier \
-                                 if prev_tag.identifier != "HEAD" else \
+        current_version = {"date": tag.date}
+        current_version["tag"] = tag.identifier \
+                                 if tag.identifier != "HEAD" else \
                                  None
 
         sections = collections.defaultdict(list)
-
         commits = repository.log(
-            includes=[prev_tag],
-            excludes=tags[idx:],
+            includes=[tag],
+            excludes=tags[idx + 1:],
             include_merge=include_merge)
 
         for commit in commits:
@@ -923,8 +921,6 @@ def changelog(repository,
         if len(current_version["sections"]) != 0:
             changelog["versions"].append(current_version)
         versions_done[tag] = current_version
-
-        prev_tag = tag
 
     return output_engine(data=changelog, opts=opts)
 

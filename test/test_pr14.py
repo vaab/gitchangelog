@@ -38,6 +38,10 @@ class TestCrossBranchTags(BaseGitReposTest):
   None:
     * new: first commit on develop branch [The Committer]
 
+0.0.1
+  None:
+    * first commit [The Committer]
+
 """
 
     def setUp(self):
@@ -107,6 +111,10 @@ class TestLogLinearbility(BaseGitReposTest):
   None:
     * fix: something [The Committer]
 
+0.0.1
+  None:
+    * first commit [The Committer]
+
 """
 
     def setUp(self):
@@ -165,6 +173,10 @@ class TestLogHardLinearbility(BaseGitReposTest):
 0.1
   None:
     * fix: something [The Committer]
+
+0.0.1
+  None:
+    * first commit [The Committer]
 
 """
 
