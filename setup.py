@@ -78,7 +78,7 @@ setup(
     zip_safe=False,
     install_requires=[
     ],
-    extras_require = {
+    extras_require={
         'Mustache': ["pystache", ],
         'Mako': ["mako", ],
         'test': [
@@ -86,7 +86,7 @@ setup(
             "minimock",
             "mako",
             "pystache",
-            ],
+        ],
     },
     entry_points="""
     [console_scripts]
