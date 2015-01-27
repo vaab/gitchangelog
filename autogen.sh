@@ -1,10 +1,19 @@
 #!/bin/sh
 
-exname="$(basename "$0")"
+##
+## You can download latest version of this file:
+##  $ wget https://gist.github.com/vaab/9118087/raw -O autogen.sh
+##  $ chmod +x autogen.sh
+##
 
 ##
 ## Functions
 ##
+
+exname="$(basename "$0")"
+long_tag="[0-9]+\.[0-9]+(\.[0-9]+)?-[0-9]+-[0-9a-f]+"
+short_tag="[0-9]+\.[0-9]+(\.[0-9]+)?"
+get_short_tag="s/^($short_tag).*\$/\1/g"
 
 get_path() { (
     IFS=:
@@ -16,7 +25,7 @@ get_path() { (
 ) }
 
 print_exit() {
-    echo $@
+    echo "$@"
     exit 1
 }
 
@@ -65,11 +74,76 @@ depends() {
 die() {
     [ "$*" ] || print_syntax_warning "$FUNCNAME: no arguments."
     [ "$exname" ] || print_exit "$FUNCNAME: 'exname' var is null or not defined." >&2
-    print_exit "$exname: ${ERROR}error:${NORMAL} $@" >&2
+    print_exit "$exname: ${ERROR}error:${NORMAL}" "$@" >&2
+}
+
+matches() {
+   echo "$1" | "$grep" -E "^$2\$" >/dev/null 2>&1
+}
+
+get_current_git_date_timestamp() {
+    "$git" show -s --pretty=format:%ct
+}
+
+
+dev_version_tag() {
+    compat_date "$(get_current_git_date_timestamp)" "+%Y%m%d%H%M"
+}
+
+
+get_current_version() {
+
+    version=$("$git" describe --tags)
+    if matches "$version" "$short_tag"; then
+        echo "$version"
+    else
+        version=$(echo "$version" | compat_sed "$get_short_tag")
+        echo "${version}.1dev_r$(dev_version_tag)"
+    fi
+
+}
+
+prepare_files() {
+
+    version=$(get_current_version)
+    short_version=$(echo "$version" | cut -f 1,2,3 -d ".")
+
+
+    for file in $FILES; do
+        if [ -e "$file" ]; then
+            compat_sed_i "s/%%version%%/$version/g;
+                          s/%%short-version%%/${short_version}/g;
+                          s/%%name%%/${NAME}/g;
+                          s/%%author%%/${AUTHOR}/g;
+                          s/%%email%%/${EMAIL}/g;
+                          s/%%author-email%%/${AUTHOR_EMAIL}/g;
+                          s/%%description%%/${DESCRIPTION}/g" \
+                      "$file"
+        fi
+    done
+
+    echo "Version updated to $version."
 }
 
 ##
-## Code
+## LOAD CONFIG
+##
+
+if [ -e .package ]; then
+    . ./.package
+else
+    echo "'./package' file is missing."
+    exit 1
+fi
+
+## list of files where %%version*%% macros are to be replaced:
+[ -z "$FILES" ] && FILES="setup.cfg setup.py CHANGELOG.rst"
+
+[ -z "$NAME" ] && die "No \$NAME was defined in './package'."
+
+
+##
+## CHECK DEPS
 ##
 
 depends git grep
@@ -108,79 +182,39 @@ else
     fi
 fi
 
+if ! "$git" describe --tags >/dev/null 2>&1; then
+    die "Didn't find a git repository (or no tags found). " \
+        "\`\`./autogen.sh\`\` uses git to create changelog and version information."
+fi
 
 
-matches() {
-   echo "$1" | "$grep" -E "^$2\$" >/dev/null 2>&1
-}
-
-
-long_tag="[0-9]+\.[0-9]+(\.[0-9]+)?-[0-9]+-[0-9a-f]+"
-short_tag="[0-9]+\.[0-9]+(\.[0-9]+)?"
-
-get_short_tag="s/^($short_tag).*\$/\1/g"
-
-
-get_current_git_date_timestamp() {
-    "$git" show -s --pretty=format:%ct
-}
-
-
-dev_version_tag() {
-    compat_date "$(get_current_git_date_timestamp)" "+%Y%m%d%H%M"
-}
-
-
-get_current_version() {
-
-    version=$("$git" describe --tags)
-    if matches "$version" "$short_tag"; then
-        echo "$version"
-    else
-        version=$(echo "$version" | compat_sed "$get_short_tag")
-        echo "${version}.1dev_r$(dev_version_tag)"
-    fi
-
-}
-
-set_version_setup_py() {
-
-    version=$(get_current_version)
-    short_version=$(echo "$version" | cut -f 1,2,3 -d ".")
-
-    compat_sed_i "s/%%version%%/$version/g;
-                  s/%%short-version%%/${short_version}/g" \
-                      setup.py CHANGELOG.rst
-    echo "Version updated to $version."
-}
+##
+## CODE
+##
 
 if [ "$1" = "--get-version" ]; then
     get_current_version
     exit 0
 fi
 
-gitchangelog=./gitchangelog.py
-
-if ! test -e "setup.py" >/dev/null 2>&1; then
-    die "No 'setup.py'... this script is meant to work with a python project"
+if [ "$1" = "--get-name" ]; then
+    echo "$NAME"
+    exit 0
 fi
 
-if ! "$git" describe --tags >/dev/null 2>&1; then
-    die "Didn't find a git repository. autogen.sh uses git to create changelog \
-         and version information."
-fi
-
-
-GITCHANGELOG_CONFIG_FILENAME=./gitchangelog.rc.reference "$gitchangelog" > CHANGELOG.rst
-
-if [ "$?" != 0 ]; then
-    (echo -n "Changelog NOT generated. "
-     echo "An error occured while running \`\`gitchangelog\`\`." )>&2
+if get_path gitchangelog >/dev/null; then
+    gitchangelog > CHANGELOG.rst
+    if [ "$?" != 0 ]; then
+        echo "Changelog NOT generated. An error occured while running \`\`gitchangelog\`\`." >&2
+    else
+        echo "Changelog generated."
+    fi
 else
-    echo "Changelog generated."
+    echo "Changelog NOT generated because \`\`gitchangelog\`\` could not be found."
+    touch CHANGELOG.rst  ## create it anyway because it's required by setup.py current install
 fi
 
-set_version_setup_py
+prepare_files
 if [ "$?" != 0 ]; then
     print_error "Error while updating version information."
 fi

@@ -1,0 +1,5 @@
+NAME="gitchangelog"
+DESCRIPTION="gitchangelog generates a changelog thanks to git log."
+EMAIL="valentin.lab@kalysto.org"
+AUTHOR="Valentin LAB"
+AUTHOR_EMAIL="$AUTHOR <$EMAIL>"

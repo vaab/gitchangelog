@@ -1,11 +1,28 @@
-from setuptools import setup, find_packages
+#!/usr/bin/env python
 
-import glob
+##
+## You can download latest version of this file:
+##  $ wget https://gist.github.com/vaab/e0eae9607ae806b662d4/raw -O setup.py
+##  $ chmod +x setup.py
+##
+## This setup.py is meant to be run along with ``./autogen.sh`` that
+## you can also find here: https://gist.github.com/vaab/9118087/raw
+##
 
-import sys, os.path
+try:
+    from setuptools import setup
+except ImportError:
+    from distribute_setup import use_setuptools
+    use_setuptools()
+    from setuptools import setup
+
+##
 ## Ensure that ``./autogen.sh`` is run prior to using ``setup.py``
+##
+
 if "%%short-version%%".startswith("%%"):
-    import os, subprocess
+    import os.path
+    import sys
     if not os.path.exists('./autogen.sh'):
         sys.stderr.write(
             "This source repository was not configured.\n"
@@ -15,69 +32,30 @@ if "%%short-version%%".startswith("%%"):
     if os.path.exists('.autogen.sh.output'):
         sys.stderr.write(
             "It seems that ``./autogen.sh`` couldn't do its job as expected.\n"
-            "Please try to launch ``./autogen.sh`` manualy, and send the results to "
-            "the\nmaintainer of this package.\n"
+            "Please try to launch ``./autogen.sh`` manualy, and send the "
+            "results to the\nmaintainer of this package.\n"
             "Package will not be installed !\n")
         sys.exit(1)
-    sys.stderr.write("Missing version information: running './autogen.sh'...\n")
+    sys.stderr.write("Missing version information: "
+                     "running './autogen.sh'...\n")
+    import os
+    import subprocess
     os.system('./autogen.sh > .autogen.sh.output')
     cmdline = sys.argv[:]
-    if cmdline[1] == "install":
+    if cmdline[0] == "-c":
         ## XXXvlab: for some reason, this is needed when launched from pip
-        if cmdline[0] == "-c":
-            cmdline[0] = "setup.py"
-        errlvl = subprocess.call(["python", ] + cmdline)
-        os.unlink(".autogen.sh.output")
-        sys.exit(errlvl)
+        cmdline[0] = "setup.py"
+    errlvl = subprocess.call(["python", ] + cmdline)
+    os.unlink(".autogen.sh.output")
+    sys.exit(errlvl)
 
-description_files = [
-    'README.rst',
-    'CHANGELOG.rst',
-    'TODO.rst',
-]
 
-long_description = '\n\n'.join(open(f).read()
-                               for f in description_files
-                               if os.path.exists(f))
-
-## XXXvlab: Hacking distutils, not very elegant, but the only way I found
-## to get data files to get copied next to the colour.py file...
-## Any suggestions are welcome.
-from distutils.command.install import INSTALL_SCHEMES
-for scheme in INSTALL_SCHEMES.values():
-    scheme['data'] = scheme['purelib']
+##
+## Normal d2to1 setup
+##
 
 setup(
-    name='gitchangelog',
-    version='%%version%%',
-    description='gitchangelog generates a changelog thanks to git log.',
-    data_files=[
-      ('', ['gitchangelog.rc.reference', ]),
-      ('templates/mustache', glob.glob("templates/mustache/*.tpl")),
-      ('templates/mako', glob.glob("templates/mako/*.tpl")),
-    ],
-    long_description=long_description,
-    # Get more strings from http://www.python.org/pypi?%3Aaction=list_classifiers
-    classifiers=[
-        "Programming Language :: Python",
-        "Environment :: Console",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: BSD License",
-        "Topic :: Software Development",
-        "Topic :: Software Development :: Version Control",
-        "Programming Language :: Python :: 2.5",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-    ],
-    keywords='git changelog',
-    author='Valentin Lab',
-    author_email='valentin.lab@kalysto.org',
-    url='http://github.com/vaab/gitchangelog',
-    license='BSD License',
-    py_modules=['gitchangelog'],
-    namespace_packages=[],
-    zip_safe=False,
-    install_requires=[
-    ],
+    setup_requires=['d2to1'],
     extras_require={
         'Mustache': ["pystache", ],
         'Mako': ["mako", ],
@@ -88,8 +66,5 @@ setup(
             "pystache",
         ],
     },
-    entry_points="""
-    [console_scripts]
-    gitchangelog = gitchangelog:main
-    """,
+    d2to1=True
 )

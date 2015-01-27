@@ -3,10 +3,12 @@ python:
   - "3.4"
   - "2.7"
 install:
-  - ./autogen.sh && python setup.py install && python setup.py develop easy_install gitchangelog[test]
+  - python setup.py install && python setup.py develop easy_install gitchangelog[test]
   - pip install coverage coveralls
 script:
-  - git reset --hard HEAD ; git clean -d -f ; ./autogen.sh && python setup.py sdist --formats=gztar && pip install dist/gitchangelog-$(./autogen.sh --get-version | tr "_" "-").tar.gz --upgrade
+  - git fetch --unshallow && pip install git+file://$PWD
+  - git reset --hard HEAD ; git clean -d -f ; python setup.py sdist --formats=gztar && pip install dist/gitchangelog-$(./autogen.sh --get-version | tr "_" "-").tar.gz --upgrade
+  - pip uninstall -y "$(./autogen.sh --get-name)"
   - nosetests .
 after_success:
   - coveralls
