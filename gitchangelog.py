@@ -18,19 +18,19 @@ from subprocess import Popen, PIPE
 
 try:
     import pystache
-except ImportError:
+except ImportError:  ## pragma: no cover
     pystache = None
 
 try:
     import mako
-except ImportError:
+except ImportError:  ## pragma: no cover
     mako = None
 
 PY3 = sys.version_info[0] >= 3
 
 if PY3:
     imap = map
-else:
+else:  ## pragma: no cover
     imap = itertools.imap
 
 usage_msg = """usage: %(exname)s"""
@@ -138,24 +138,6 @@ def final_dot(msg):
         return msg + "."
     return msg
 
-
-def first(elts, predicate, default=Null):
-    for elt in elts:
-        if predicate(elt):
-            return elt
-    if default is Null:
-        raise ValueError("No elements satisfy predicate")
-    else:
-        return default
-
-
-def dedent(txt):
-    """Detect if first line is not indented and dedent the remaining"""
-    lines = txt.strip().split("\n")
-    idx, line = first(enumerate(lines), lambda elt: elt[1] != "")
-    if line.startswith("\t") or line.startswith(" "):
-        return textwrap.dedent("\n".join(lines))
-    return line + "\n" + textwrap.dedent("\n".join(lines[idx+1:]))
 
 def indent(text, chars="  ", first=None):
     """Return text string indented with the given chars
@@ -591,7 +573,7 @@ class GitRepos(object):
         self.bare = self.swrap("git rev-parse --is-bare-repository") == "true"
         self.toplevel = None if self.bare else \
                         self.swrap("git rev-parse --show-toplevel")
-        self.gitdir = os.path.normpath(
+        self.gitdir = normpath(
             os.path.join(self._orig_path,
                          self.swrap("git rev-parse --git-dir")))
 

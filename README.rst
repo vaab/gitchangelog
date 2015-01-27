@@ -2,11 +2,21 @@
 gitchangelog
 ============
 
-.. image:: https://pypip.in/v/gitchangelog/badge.png
-    :target: https://pypi.python.org/pypi/gitchangelog
+.. image:: http://img.shields.io/pypi/v/gitchangelog.svg?style=flat
+   :target: https://pypi.python.org/pypi/gitchangelog/
+   :alt: Latest PyPI version
 
-.. image:: https://secure.travis-ci.org/vaab/gitchangelog.png?branch=master
-    :target: http://travis-ci.org/vaab/gitchangelog
+.. image:: http://img.shields.io/pypi/dm/gitchangelog.svg?style=flat
+   :target: https://pypi.python.org/pypi/gitchangelog/
+   :alt: Number of PyPI downloads
+
+.. image:: http://img.shields.io/travis/vaab/gitchangelog/master.svg?style=flat
+   :target: https://travis-ci.org/vaab/gitchangelog/
+   :alt: Travis CI build status
+
+.. image:: http://img.shields.io/coveralls/vaab/gitchangelog/master.svg?style=flat
+   :target: https://coveralls.io/r/vaab/gitchangelog
+   :alt: Test coverage
 
 
 Translate commit message history to a changelog.

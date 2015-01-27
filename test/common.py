@@ -43,23 +43,39 @@ def simple_renderer(data, opts):
     return s
 
 
-def set_env(key, value):
+def set_env(**se_kwargs):
 
     def decorator(f):
 
         def _wrapped(*args, **kwargs):
             kwargs["env"] = dict(kwargs.get("env") or os.environ)
-            kwargs["env"][key] = value
+            for key, value in se_kwargs.items():
+                kwargs["env"][key] = value
             return f(*args, **kwargs)
         return _wrapped
     return decorator
 
-tprog = os.path.join(
+BASE_PATH = os.path.normpath(os.path.join(
     os.path.dirname(os.path.realpath(__file__)),
-    "..", "gitchangelog.py")
+    ".."))
+tprog = os.path.join(BASE_PATH, "gitchangelog.py")
 
-w = set_env("tprog", tprog)(gitchangelog.wrap)
-cmd = set_env("tprog", tprog)(gitchangelog.cmd)
+WITH_COVERAGE = gitchangelog.cmd("type coverage")[2] == 0
+if WITH_COVERAGE:
+    tprog_set = set_env(
+        COVERAGE_FILE="%s/.coverage.2" % BASE_PATH,
+        PYTHONPATH="%s" % BASE_PATH,
+        tprog=('coverage run -a --source=%(base_path)s '
+               '--omit=%(base_path)s/setup.py,'
+                   '%(base_path)s/gitchangelog.rc* '
+               '--rcfile="%(base_path)s/.coveragerc" %(tprog)s'
+               % {'base_path': BASE_PATH,
+                  'tprog': tprog}))
+else:
+    tprog_set = set_env(tprog=tprog)
+
+w = tprog_set(gitchangelog.wrap)
+cmd = tprog_set(gitchangelog.cmd)
 
 
 class ExtendedTest(unittest.TestCase):

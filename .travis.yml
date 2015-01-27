@@ -1,9 +1,12 @@
 language: python
 python:
-  - "3.3"
-  - "3.2"
+  - "3.4"
   - "2.7"
-install: ./autogen.sh && python setup.py install && python setup.py develop easy_install gitchangelog[test]
+install:
+  - ./autogen.sh && python setup.py install && python setup.py develop easy_install gitchangelog[test]
+  - pip install coverage coveralls
 script:
-  - python -m unittest discover -fv -s test && python -m doctest gitchangelog.py
-  - ./autogen.sh && python setup.py sdist --formats=gztar && pip install dist/gitchangelog-$(./autogen.sh --get-version | tr "_" "-").tar.gz --upgrade
+  - git reset --hard HEAD ; git clean -d -f ; ./autogen.sh && python setup.py sdist --formats=gztar && pip install dist/gitchangelog-$(./autogen.sh --get-version | tr "_" "-").tar.gz --upgrade
+  - nosetests .
+after_success:
+  - coveralls

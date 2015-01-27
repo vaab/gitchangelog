@@ -82,6 +82,7 @@ setup(
         'Mustache': ["pystache", ],
         'Mako': ["mako", ],
         'test': [
+            "nose",
             "minimock",
             "mako",
             "pystache",
