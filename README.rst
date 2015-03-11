@@ -19,27 +19,29 @@ gitchangelog
    :alt: Test coverage
 
 
-Translate commit message history to a changelog.
+Use your commit log to make beautifull and configurable changelog file.
 
 
 Feature
 =======
 
-- fully driven by a small configuration file to match with your changelog
+- fully driven by a config file that can be tailored with your changelog
   policies. (see for example the `sample configuration file`_)
 - filter out commits/tags based on regexp matching
 - refactor commit summary, or commit body on the fly with replace regexp
 - classify commit message into sections (ie: New, Fix, Changes...)
-- templating system for easy tailoring your output (markdown, ReST, etc)
-- support straight and merging history.
+- any output format supported thanks to templating, you can even choose
+  your own preferred template engine (mako, mustache, full python ...).
+- support your merge or rebase workflows and complicated git histories
 
 
 Requirements
 ============
 
-Each commit are tested regularly on Python 2.7 and Python 3.2.
+``gitchangelog`` is compatible Python 2 and Python 3.
 
-It should work on Linux/BSD/MacOSX and it should work under cygwin on Windows.
+It should work on Linux/BSD/MacOSX and any feedback on Windows would be
+appreciated.
 
 Please submit an issue if you encounter incompatibilies.
 
@@ -139,17 +141,20 @@ the `changelog of the PyPI page`_.
 Usage
 =====
 
-You need to place a ``gitchangelog.rc`` file somewhere, these are the location
-checked in the given order (first match will prevail):
+You need to place a ``gitchangelog.rc`` file somewhere, the
+recommended location is the root of the current git repository with
+the name ``.gitchangelog.rc``.  However you could put it elsewhere,
+and here are the locations checked (first match will prevail):
 
 - in the path given thanks to the environment variable
   ``GITCHANGELOG_CONFIG_FILENAME``
-- in the path stored in git config's entry "gitchangelog.rc-path" (which
+- in the path stored in git config's entry ``gitchangelog.rc-path`` (which
   could be stored in system location or per repository)
-- in the root of the current git repository with the name ``.gitchangelog.rc``
+- (RECOMMENDED) in the root of the current git repository with the name
+  ``.gitchangelog.rc``
 
 Then, you'll be able to call ``gitchangelog`` in a GIT repository and it'll
-print changelog as its standard output.
+print changelog on its standard output.
 
 
 Configuration file format
@@ -296,14 +301,15 @@ Push Request Guidelines
 -----------------------
 
 You can send any code. I'll look at it and will integrate it myself in
-the code base and leave you as the author. This process can take time and
-it'll take less time if you follow the following guidelines:
+the code base while leaving you as the commit(s) author. This process
+can take time and it'll take less time if you follow the following
+guidelines:
 
 - check your code with PEP8 or pylint. Try to stick to 80 columns wide.
-- separate your commits per smallest concern.
-- each commit should pass the tests (to allow easy bisect)
+- separate your commits per smallest concern
 - each functionality/bugfix commit should contain the code, tests,
   and doc.
+- each commit should pass the tests (to allow easy bisect)
 - prior minor commit with typographic or code cosmetic changes are
   very welcome. These should be tagged in their commit summary with
   ``!minor``.
@@ -314,7 +320,8 @@ it'll take less time if you follow the following guidelines:
 
 If you have some questions about guidelines which is not answered here,
 please check the current ``git log``, you might find previous commit that
-would show you how to deal with your issue.
+would show you how to deal with your issue. Otherwise, just send your PR
+and ask your question. I won't bite. Promise.
 
 
 License
