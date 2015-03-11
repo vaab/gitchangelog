@@ -50,8 +50,6 @@ Config file location will be resolved in this order:
 
 full_help_msg = "%s\n\n%s" % (usage_msg, help_msg)
 
-Null = object()
-
 
 class ShellError(Exception):
 
