@@ -121,7 +121,8 @@ section_regexps = [
 ## Additionally, you can `pipe` the provided filters, for instance:
 #body_process = Wrap(regexp=r'\n(?=\w+\s*:)') | Indent(chars="  ")
 #body_process = Wrap(regexp=r'\n(?=\w+\s*:)')
-body_process = noop
+#body_process = noop
+body_process = ReSub(r'((^|\n)[A-Z]\w+(-\w+)*: .*(\n\s+.*)*)+$', r'') | strip
 
 
 ## ``subject_process`` is a callable

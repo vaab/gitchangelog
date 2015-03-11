@@ -39,7 +39,6 @@ New
   - one
   - two
 
-
 - Add file ``c`` [Charly]
 
 0.0.2 (2000-01-02)
@@ -68,7 +67,9 @@ New
             git add b
 
             ## Notice there are no section here.
-            git commit -m 'add ``b`` with non-ascii chars éèàâ§µ' \
+            git commit -m 'add ``b`` with non-ascii chars éèàâ§µ
+
+Change-Id: Ic8aaa0728a43936cd4c6e1ed590e01ba8f0fbf5b' \
                 --author 'Alice <alice@example.com>' \
                 --date '2000-01-02 11:00:00'
             git tag 0.0.2
@@ -88,7 +89,15 @@ This is a message body.
 
 With multi-line content:
 - one
-- two' \
+- two
+
+Bug: #42
+Change-Id: Ic8aaa0728a43936cd4c6e1ed590e01ba8f0fbf5b
+Signed-off-by: A. U. Thor <author@example.com>
+CC: R. E. Viewer <reviewer@example.com>
+Subject: This is a fake subject spanning to several lines
+  as you can see
+' \
                 --author 'Bob <bob@example.com>' \
                 --date '2000-01-04 13:00:00'
 
