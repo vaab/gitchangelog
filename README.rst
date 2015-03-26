@@ -40,8 +40,8 @@ Requirements
 
 ``gitchangelog`` is compatible Python 2 and Python 3.
 
-It should work on Linux/BSD/MacOSX and any feedback on Windows would be
-appreciated.
+It should work on Linux/BSD/MacOSX and any help with Windows
+compatibility would be appreciated.
 
 Please submit an issue if you encounter incompatibilies.
 
