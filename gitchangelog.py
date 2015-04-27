@@ -814,6 +814,7 @@ else:
 ##
 
 def changelog(repository,
+              split_regex=r'(?s)(.+?)(?=[Cc]hg|[Ff]ix|[Nn]ew|$)',
               ignore_regexps=[],
               section_regexps=[(None,'')],
               unreleased_version_label="unreleased",
@@ -879,20 +880,45 @@ def changelog(repository,
             excludes=tags[idx + 1:],
             include_merge=include_merge)
 
+        ## Loop through all the commits
         for commit in commits:
-            if any(re.search(pattern, commit.subject) is not None
-                   for pattern in ignore_regexps):
-                continue
 
-            matched_section = first_matching(section_regexps, commit.subject)
+            ## Split the combined subject and body if using a split_regex otherwise just
+            ## use the subject
+            if (len(strip(split_regex)) > 0):
+                events = re.split(split_regex, commit.subject + '\n\n' + commit.body)
+            else:
+                events = commit.subject
 
-            ## Finally storing the commit in the matching section
-
-            sections[matched_section].append({
-                "author": commit.author_name,
-                "subject": subject_process(commit.subject),
-                "body": body_process(commit.body),
-            })
+            ## Loop through the resulting event list
+            for event in events:
+                
+                ## Check that the event is not just an empty string (presumably the split
+                ## regex is not perfect)
+                if (len(strip(event)) > 0):
+                    
+                    ## If this event matches an ignore regex then skip it
+                    if any(re.search(pattern, event) is not None
+                           for pattern in ignore_regexps):
+                        continue
+                    
+                    ## Find the first matching section (not sure why this is certain to work
+                    ## or what happens if it fails)
+                    matched_section = first_matching(section_regexps, event)
+        
+                    ## Finally store the commit in the matching section
+                    if (len(strip(split_regex)) > 0):
+                        sections[matched_section].append({
+                            "author": commit.author_name,
+                            "subject": subject_process(event),
+                            "body": '',
+                        })
+                    else:
+                        sections[matched_section].append({
+                            "author": commit.author_name,
+                            "subject": subject_process(event),
+                            "body": body_process(commit.body),
+                        })
 
         ## Flush current version
         current_version["sections"] = [{"label": k, "commits": sections[k]}
@@ -1024,6 +1050,7 @@ def main():
 
     content = changelog(
         repository,
+        split_regex=config['split_regex'],
         ignore_regexps=config['ignore_regexps'],
         section_regexps=config['section_regexps'],
         unreleased_version_label=config['unreleased_version_label'],
