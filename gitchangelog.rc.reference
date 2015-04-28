@@ -50,11 +50,12 @@
 ##   message will be displayed in the changelog without reformatting.
 
 ##
-## ``split_regex`` is a regex 
+## ``split_event_regex`` is a regex 
 ##
 ## It is used to split a commit log entry into events before processing each event.
 ##
-split_regex = r'(?s)(.+?)(?=[Cc]hg|[Ff]ix|[Nn]ew|$)'
+#split_event_regex = r'(?s)(.+?)(?=(?:[Cc]hg|[Ff]ix|[Nn]ew)\s*:|\s*$)'
+split_event_regex = None
 
 
 ##
