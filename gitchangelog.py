@@ -13,6 +13,7 @@ import textwrap
 import datetime
 import collections
 import itertools
+from distutils.version import LooseVersion
 
 from subprocess import Popen, PIPE
 
@@ -33,22 +34,48 @@ if PY3:
 else:  ## pragma: no cover
     imap = itertools.imap
 
-usage_msg = """usage: %(exname)s"""
-help_msg = """\
+import argparse
+
+
+def create_parser(prog):
+    parser = argparse.ArgumentParser(
+        prog=prog,
+        description="""\
 Run this command in a git repository to output a formatted changelog
 
-%(exname)s uses a config file to filter meaningful commit or do some
+%(prog)s uses a config file to filter meaningful commit or do some
  formatting in commit messages thanks to a config file.
 
 Config file location will be resolved in this order:
 
   - in shell environment variable GITCHANGELOG_CONFIG_FILENAME
   - in git configuration: ``git config gitchangelog.rc-path``
-  - as '.%(exname)s.rc' in the root of the current git repository
-
+  - as '.%(prog)s.rc' in the root of the current git repository
 """
-
-full_help_msg = "%s\n\n%s" % (usage_msg, help_msg)
+    )
+    parser.add_argument(
+        'min_tag',
+        nargs='?',
+        help='The minimum tag to include'
+    )
+    parser.add_argument(
+        'max_tag',
+        nargs='?',
+        help='The maximum tag to include'
+    )
+    parser.add_argument(
+        '--init',
+        default=False,
+        action='store_true',
+        help='Initialises the repository with the reference .%(prog)s.rc file'
+    )
+    parser.add_argument(
+        '--exclude-head',
+        default=False,
+        action='store_true',
+        help='Excludes HEAD in change log'
+    )
+    return parser
 
 
 class ShellError(Exception):
@@ -822,6 +849,7 @@ def changelog(repository,
               include_merge=True,
               body_process=lambda x: x,
               subject_process=lambda x: x,
+              args=None
               ):
     """Returns a string containing the changelog of given repository
 
@@ -860,9 +888,24 @@ def changelog(repository,
             for tag in reversed(repository.tags)
             if re.match(tag_filter_regexp, tag.identifier)]
 
+    if args is not None:
+        if args.min_tag is not None:
+            tags = filter(
+                lambda tag: LooseVersion(tag.identifier) >=
+                    LooseVersion(args.min_tag),
+                tags
+            )
+        if args.max_tag is not None:
+            tags = filter(
+                lambda tag: LooseVersion(tag.identifier) <=
+                    LooseVersion(args.max_tag),
+                tags
+            )
+
     section_order = [k for k, _v in section_regexps]
 
-    tags = [repository.commit("HEAD")] + tags
+    if not args.exclude_head:
+        tags = [repository.commit("HEAD")] + tags
 
     ## Get the changes between tags (releases)
     for idx, tag in enumerate(tags):
@@ -958,12 +1001,7 @@ def main():
     if basename.endswith(".py"):
         basename = basename[:-3]
 
-    if "-h" in sys.argv or "--help" in sys.argv:
-        print(full_help_msg % {'exname': basename})
-        sys.exit(0)
-
-    if len(sys.argv) > 1 and sys.argv[1] != "init":
-        die(usage_msg % {'exname': basename})
+    args = create_parser(basename).parse_args(sys.argv[1:])
 
     try:
         repository = GitRepos(".")
@@ -973,15 +1011,15 @@ def main():
     repository_config = '%s/.%s.rc' % (repository.toplevel, basename) \
                         if not repository.bare else None
 
-    if len(sys.argv) == 2 and sys.argv[1] == "init":
+    if args.init:
         import shutil
         if repository_config is None:
             die("``init`` of bare repository not supported.")
         if os.path.exists(repository_config):
-            die("File %r already exists." % repository_config)
+            die("File %s already exists." % repository_config)
         shutil.copyfile(reference_config,
                         repository_config)
-        print("File %r created.")
+        print("File %s created." % repository_config)
         sys.exit(0)
 
     try:
@@ -1024,7 +1062,7 @@ def main():
 
     content = changelog(
         repository,
-        ignore_regexps=config['ignore_regexps'],
+        ignore_regexps=config.get('ignore_regexps', []),
         section_regexps=config['section_regexps'],
         unreleased_version_label=config['unreleased_version_label'],
         tag_filter_regexp=config['tag_filter_regexp'],
@@ -1032,6 +1070,7 @@ def main():
         include_merge=config.get("include_merge", True),
         body_process=config.get("body_process", noop),
         subject_process=config.get("subject_process", noop),
+        args=args
     )
 
     if PY3:
