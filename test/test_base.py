@@ -310,7 +310,7 @@ class TestInitArgument(BaseGitReposTest):
 
     def test_init_file(self):
 
-        out, err, errlvl = cmd('$tprog init')
+        out, err, errlvl = cmd('$tprog --init')
         self.assertEqual(
             errlvl, 0,
             msg="Should not fail to init on simple git repository")
@@ -329,7 +329,7 @@ class TestInitArgument(BaseGitReposTest):
     def test_init_file_already_exists(self):
 
         w("touch .gitchangelog.rc")
-        out, err, errlvl = cmd('$tprog init')
+        out, err, errlvl = cmd('$tprog --init')
         self.assertEqual(
             errlvl, 1,
             msg="Should fail to init on simple git repository")
@@ -349,7 +349,7 @@ class TestInitArgument(BaseGitReposTest):
             git clone --bare repos test_bare
 
         """)
-        out, err, errlvl = cmd('cd ../test_bare && $tprog init')
+        out, err, errlvl = cmd('cd ../test_bare && $tprog --init')
         self.assertEqual(
             errlvl, 1,
             msg="Should fail to init outside a git repository.")
@@ -369,7 +369,7 @@ class TestInitArgument(BaseGitReposTest):
             cd subdir
 
         """)
-        out, err, errlvl = cmd('$tprog init')
+        out, err, errlvl = cmd('$tprog --init')
         self.assertEqual(
             errlvl, 0,
             msg="Should not fail in sub directory.")
@@ -441,7 +441,7 @@ class TestInitArgumentNotAReposity(BaseTmpDirTest):
 
     def test_outside_git_repository(self):
 
-        out, err, errlvl = cmd('$tprog init')
+        out, err, errlvl = cmd('$tprog --init')
         self.assertEqual(
             errlvl, 1,
             msg="Should fail to init outside a git repository.")

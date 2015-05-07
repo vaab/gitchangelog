@@ -904,7 +904,7 @@ def changelog(repository,
 
     section_order = [k for k, _v in section_regexps]
 
-    if not args.exclude_head:
+    if args is None or not args.exclude_head:
         tags = [repository.commit("HEAD")] + tags
 
     ## Get the changes between tags (releases)
