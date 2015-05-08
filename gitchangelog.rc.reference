@@ -184,8 +184,8 @@ output_engine = rest_py
 #output_engine = makotemplate("restructuredtext")
 
 
-## ``include_merges`` is a boolean
+## ``include_merge`` is a boolean
 ##
 ## This option tells git-log whether to include merge commits in the log.
 ## The default is to include them.
-include_merges = True
+include_merge = True
