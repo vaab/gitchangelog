@@ -9,16 +9,18 @@ install:
   - pip install coverage coveralls
   - if [ -e requirements.txt ]; then pip install -r requirements.txt; fi
 script:
-  - ## checking that we can actually install it
+  ## checking that we can actually install it
   - python setup.py install
   - python setup.py develop easy_install "$(./autogen.sh --get-name)[test]"  ## getting deps
   - python setup.py develop --uninstall  ## removing stuff that breaks the following checks
-  - ## checking pip installability
+  ## checking pip installability
   - git fetch --unshallow ; pip install git+file://$PWD
   - git reset --hard HEAD ; git clean -d -f ; python setup.py sdist --formats=gztar && pip install "dist/$(./autogen.sh --get-name)-$(./autogen.sh --get-version | tr "_" "-").tar.gz" --upgrade
   - python -c "import $(./autogen.sh --get-name)"
+  - '( cd /tmp && mkdir test_gitchangelog && cd test_gitchangelog && touch a && git init . && git add -A . &&   git config --global user.email "you@example.com" && git config --global user.name "Your Name" && git commit -m "first commit" && git tag 0.0.1 && gitchangelog )'
   - pip uninstall -y "$(./autogen.sh --get-name)"
-  - ## real tests
+  ## real tests
+  - ./gitchangelog
   - nosetests .
 after_success:
   - coveralls

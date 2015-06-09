@@ -50,6 +50,14 @@ if "%%short-version%%".startswith("%%"):
     sys.exit(errlvl)
 
 
+## XXXvlab: Hacking distutils, not very elegant, but the only way I found
+## to get data files to get copied next to the colour.py file...
+## Any suggestions are welcome.
+from distutils.command.install import INSTALL_SCHEMES
+for scheme in INSTALL_SCHEMES.values():
+    scheme['data'] = scheme['purelib']
+
+
 ##
 ## Normal d2to1 setup
 ##
