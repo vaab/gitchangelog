@@ -1,4 +1,5 @@
-include gitchangelog.py
-include gitchangelog.rc.reference
+global-exclude *.pyc
+recursive-include gitchangelog *
+recursive-include scripts *
 include *.rst
-recursive-include templates *.tpl
+include LICENSE
