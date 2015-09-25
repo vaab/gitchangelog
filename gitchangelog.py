@@ -411,7 +411,7 @@ class GitCommit(SubGitObjectMixin):
         aformat = "%x00".join(GIT_FORMAT_KEYS[l]
                               for l in missing_attrs)
         try:
-            ret = self.swrap("git show -s %s --pretty=format:%s --"
+            ret = self.swrap("git log -n 1 %s --pretty=format:%s --"
                              % (identifier, aformat))
         except ShellError:
             raise ValueError("Given commit identifier %s doesn't exists"
