@@ -6,7 +6,7 @@ install:
   - easy_install --version
   - pip install setuptools==9.1   ## version 10 introduce a bug with d2to1
   - pip install pip==1.5.6  ## some ``python setup.py`` black magic do not work with d2to1 and pip ``6.0.7``
-  - pip install coverage coveralls
+  - pip install coverage==3.7 coveralls
   - if [ -e requirements.txt ]; then pip install -r requirements.txt; fi
 script:
   ## checking that we can actually install it
