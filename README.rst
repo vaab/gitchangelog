@@ -290,6 +290,26 @@ attributed to versions::
   ``.gitchangelog.rc`` file.
 
 
+Use cases
+=========
+
+
+No sectionning
+--------------
+
+If you want to remove sectionning but keep anything else, you should
+probably use::
+
+    section_regexps = [
+        ('', None)
+    ]
+
+    subject_process = (strip | ucfirst | final_dot)
+
+This will disable sectionning and won't remove the prefixes
+used for sectionning from the commit's summary.
+
+
 Contributing
 ============
 

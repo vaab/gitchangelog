@@ -74,6 +74,11 @@ ignore_regexps = [
 ## titles are the label, and a commit is classified under this section if any
 ## of the regexps associated is matching.
 ##
+## Please note that ``section_regexps`` will only classify commits and won't
+## make any changes to the contents. So you'll probably want to go check
+## ``subject_process`` (or ``body_process``) to do some changes to the subject,
+## whenever you are tweaking this variable.
+##
 section_regexps = [
     ('New', [
 	r'^[nN]ew\s*:\s*((dev|use?r|pkg|test|doc)\s*:\s*)?([^\n]*)$',
