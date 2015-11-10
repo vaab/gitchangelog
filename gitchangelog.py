@@ -40,7 +40,7 @@ usage_msg = """
   %(exname)s {-h|--help}
   %(exname)s {-v|--version}
   %(exname)s init               ## obsolete
-  %(exname)s show"""
+  %(exname)s show [REVLIST]"""
 
 description_msg = """\
 Run this command in a git repository to output a formatted changelog
@@ -434,9 +434,20 @@ class GitCommit(SubGitObjectMixin):
             float(self.author_date_timestamp))
         return d.strftime('%Y-%m-%d')
 
+    def __le__(self, value):
+        if not isinstance(value, GitCommit):
+            value = self._repos.commit(value)
+        return self.swrap("git merge-base --is-ancestor '%s' '%s'; echo $?"
+                          % (self.sha1, value.sha1)) == "0"
+
+    def __lt__(self, value):
+        if not isinstance(value, GitCommit):
+            value = self._repos.commit(value)
+        return self <= value and not self == value
+
     def __eq__(self, value):
         if not isinstance(value, GitCommit):
-            return False
+            value = self._repos.commit(value)
         return self.sha1 == value.sha1
 
     def __hash__(self):
@@ -595,15 +606,17 @@ class GitRepos(object):
         command = "cd %s; %s" % (self._orig_path, command)
         return swrap(command, **kwargs)
 
-    @property
-    def tags(self):
+    def tags(self, contains=None):
         """String list of repository's tag names
 
         Current tag order is committer date timestamp of tagged commit.
         No firm reason for that, and it could change in future version.
 
         """
-        tags = self.swrap('git tag -l').split("\n")
+        if contains:
+            tags = self.swrap("git tag -l --contains '%s'" % contains).split("\n")
+        else:
+            tags = self.swrap('git tag -l').split("\n")
         ## Should we use new version name sorting ?  refering to :
         ## ``git tags --sort -v:refname`` in git version >2.0.
         ## Sorting and reversing with command line is not available on
@@ -732,7 +745,8 @@ def rest_py(data, opts={}):
 
         return entry
 
-    return (rest_title(data["title"], char="=") + "\n" +
+    return (((rest_title(data["title"], char="=") + "\n")
+             if data["title"] else "") +
             "".join(render_version(version)
                     for version in data["versions"]
                     if len(version["sections"]) > 0))
@@ -757,7 +771,8 @@ if pystache:
 
             ## mustache is very simple so we need to add some intermediate
             ## values
-            data["title_chars"] = list(data["title"])
+            data["general_title"] = True if data["title"] else False
+            data["title_chars"] = list(data["title"]) if data["title"] else []
             for version in data["versions"]:
                 title = "%s (%s)" % (version["tag"], version["date"]) \
                         if version["tag"] else \
@@ -820,7 +835,7 @@ else:
 ## Data Structure
 ##
 
-def changelog(repository,
+def changelog(repository, revlist=None,
               ignore_regexps=[],
               section_regexps=[(None,'')],
               unreleased_version_label="unreleased",
@@ -838,6 +853,7 @@ def changelog(repository,
     (see ``gitchangelog.rc.sample`` file for more info)
 
     :param repository: target ``GitRepos`` object
+    :param revlist: list of strings that git log understands as revlist
     :param ignore_regexps: list of regexp identifying ignored commit messages
     :param section_regexps: regexps identifying sections
     :param tag_filter_regexp: regexp to match tags used as version
@@ -850,26 +866,47 @@ def changelog(repository,
     :returns: content of changelog
 
     """
+    revlist = revlist or []
 
     opts = {
         'unreleased_version_label': unreleased_version_label,
         }
 
     ## Setting main container of changelog elements
-    title = "Changelog"
+    title = None if revlist else "Changelog"
     changelog = {"title": title,
                  "versions": []}
 
     ## Hash to speedup lookups
     versions_done = {}
 
+    excludes = [rev[1:]
+                for rev in swrap("git rev-parse --rev-only %s"
+                                 % " ".join(revlist)).split("\n")
+                if rev.startswith("^")] if revlist else []
+    ## Note that ``--reverse -n 1`` still returns the first and not the last element
+    contains = swrap("git rev-list %s"
+                     % " ".join(revlist)).split("\n")[-1] if revlist else None
+
     tags = [tag
-            for tag in reversed(repository.tags)
+            for tag in repository.tags(contains=contains)
             if re.match(tag_filter_regexp, tag.identifier)]
+
+    tags.append(repository.commit("HEAD"))
+
+    if revlist:
+        max_rev = repository.commit(swrap("git rev-list -n 1 %s"
+                             % " ".join(revlist))) if revlist else None
+        new_tags = []
+        for tag in tags:
+            if max_rev < tag:
+                break
+            new_tags.append(tag)
+        tags = new_tags
 
     section_order = [k for k, _v in section_regexps]
 
-    tags = [repository.commit("HEAD")] + tags
+    tags = list(reversed(tags))
 
     ## Get the changes between tags (releases)
     for idx, tag in enumerate(tags):
@@ -883,7 +920,7 @@ def changelog(repository,
         sections = collections.defaultdict(list)
         commits = repository.log(
             includes=[tag],
-            excludes=tags[idx + 1:],
+            excludes=tags[idx + 1:] + excludes,
             include_merge=include_merge)
 
         for commit in commits:
@@ -985,7 +1022,8 @@ def parse_cmd_line(usage, description, epilog, exname, version):
         'init', help='Create default config file in current repository.')
     show_parser = subparsers.add_parser(
         'show', help='Prints current changelog.',
-        usage='%(exname)s show' % {'exname': exname})
+        usage='%(exname)s show [REVLIST]' % {'exname': exname})
+    show_parser.add_argument('revlist', nargs='*', action="store", default=[])
 
     return parser.parse_args()
 
@@ -1074,7 +1112,7 @@ def main():
     manage_obsolete_options(config)
 
     content = changelog(
-        repository,
+        repository, opts.revlist,
         ignore_regexps=config['ignore_regexps'],
         section_regexps=config['section_regexps'],
         unreleased_version_label=config['unreleased_version_label'],

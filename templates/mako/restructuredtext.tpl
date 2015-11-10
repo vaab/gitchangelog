@@ -1,6 +1,8 @@
+% if data["title"]:
 ${data["title"]}
 ${"=" * len(data["title"])}
 
+% endif
 % for version in data["versions"]:
 <%
 title = "%s (%s)" % (version["tag"], version["date"]) if version["tag"] else opts["unreleased_version_label"]

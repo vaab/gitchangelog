@@ -49,6 +49,25 @@ New
 
 """
 
+    INCR_REFERENCE_002_003 = r"""0.0.3 (2000-01-05)
+------------------
+
+New
+~~~
+
+- Add file ``e``, modified ``b`` [Bob]
+
+  This is a message body.
+
+  With multi-line content:
+  - one
+  - two
+
+- Add file ``c`` [Charly]
+
+
+"""
+
     def setUp(self):
         super(GitChangelogTest, self).setUp()
 
@@ -115,7 +134,7 @@ Subject: This is a fake subject spanning to several lines
 
             """)
 
-    def test_simple_run(self):
+    def test_simple_run_no_args_legacy_call(self):
         out, err, errlvl = cmd('$tprog')
         self.assertEqual(
             errlvl, 0,
@@ -135,6 +154,49 @@ Subject: This is a fake subject spanning to several lines
             % '\n'.join(difflib.unified_diff(out.split("\n"),
                                              self.REFERENCE.split("\n"),
                                              lineterm="")))
+
+    def test_simple_run_show_call(self):
+        out, err, errlvl = cmd('$tprog show')
+        self.assertEqual(
+            errlvl, 0,
+            msg="Should not fail on simple repo and without config file")
+        self.assertEqual(
+            err, "",
+            msg="There should be no standard error outputed. "
+            "Current stderr:\n%r" % err)
+        self.assertContains(
+            out, "0.0.2",
+            msg="At least one of the tags should be displayed in stdout... "
+            "Current stdout:\n%s" % out)
+        self.assertEqual(
+            out, self.REFERENCE,
+            msg="Should match our reference output... "
+            "diff of changelogs:\n%s"
+            % '\n'.join(difflib.unified_diff(out.split("\n"),
+                                             self.REFERENCE.split("\n"),
+                                             lineterm="")))
+
+    def test_incremental_show_call(self):
+        out, err, errlvl = cmd('$tprog show 0.0.2..0.0.3')
+        self.assertEqual(
+            errlvl, 0,
+            msg="Should not fail on simple repo and without config file")
+        self.assertEqual(
+            err, "",
+            msg="There should be no standard error outputed. "
+            "Current stderr:\n%r" % err)
+        self.assertContains(
+            out, "0.0.3",
+            msg="The tag 0.0.3 should be displayed in stdout... "
+            "Current stdout:\n%s" % out)
+        self.assertEqual(
+            out, self.INCR_REFERENCE_002_003,
+            msg="Should match our reference output... "
+            "diff of changelogs:\n%s"
+            % '\n'.join(difflib.unified_diff(
+                out.split("\n"),
+                self.INCR_REFERENCE_002_003.split("\n"),
+                lineterm="")))
 
     def test_overriding_options(self):
         """We must be able to define a small gitchangelog.rc that adjust only
@@ -278,6 +340,39 @@ EOF
             msg="Mako output should match our reference output... "
             "diff of changelogs:\n%s"
             % '\n'.join(difflib.unified_diff(self.REFERENCE.split("\n"),
+                                             changelog.split("\n"),
+                                             lineterm="")))
+
+    def test_same_output_with_different_engine_incr(self):
+        """Reference implementation should match mustache and mako implem"""
+
+        w("""cat <<EOF > .gitchangelog.rc
+
+output_engine = mustache('restructuredtext')
+
+EOF
+        """)
+        changelog = w('$tprog show 0.0.2..0.0.3')
+        self.assertEqual(
+            changelog, self.INCR_REFERENCE_002_003,
+            msg="Mustache output should match our reference output... "
+            "diff of changelogs:\n%s"
+            % '\n'.join(difflib.unified_diff(self.INCR_REFERENCE_002_003.split("\n"),
+                                             changelog.split("\n"),
+                                             lineterm="")))
+
+        w("""cat <<EOF > .gitchangelog.rc
+
+output_engine = makotemplate('restructuredtext')
+
+EOF
+        """)
+        changelog = w('$tprog show 0.0.2..0.0.3')
+        self.assertEqual(
+            changelog, self.INCR_REFERENCE_002_003,
+            msg="Mako output should match our reference output... "
+            "diff of changelogs:\n%s"
+            % '\n'.join(difflib.unified_diff(self.INCR_REFERENCE_002_003.split("\n"),
                                              changelog.split("\n"),
                                              lineterm="")))
 

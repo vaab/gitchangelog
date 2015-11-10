@@ -33,6 +33,7 @@ Feature
 - any output format supported thanks to templating, you can even choose
   your own preferred template engine (mako, mustache, full python ...).
 - support your merge or rebase workflows and complicated git histories
+- support full or incremental changelog generation to match your needs.
 
 
 Requirements
@@ -308,6 +309,35 @@ probably use::
 
 This will disable sectionning and won't remove the prefixes
 used for sectionning from the commit's summary.
+
+
+Incremental changelog
+---------------------
+
+Also known as partial changelog generation, this feature allows to generate
+only a subpart of your changelog. Usually this makes sense::
+
+- When wanting to switch to ``gitchangelog``, or change your
+  conventions:
+    - part of your history is not following conventions.
+    - you have a previous CHANGELOG you want to blend in.
+
+- You'd rather commit your changelog file:
+    - For performance reason, you can then generate changelog only for
+      the new commit and save the result.
+    - Because you want to be able to edit it to make some minor
+      edition if needed.
+
+You can use then ``gitchangelog show REVLIST``. Examples follows::
+
+    ## will output only tags between 0.0.2 (excluded) and 0.0.3 (included)
+    gitchangelog show 0.0.2..0.0.3
+
+    ## will output only tags since 0.0.3 (excluded)
+    gitchangelog show ^0.0.3
+
+    ## will output all tags up to 0.0.3 (included)
+    gitchangelog show 0.0.3
 
 
 Contributing
