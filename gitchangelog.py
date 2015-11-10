@@ -16,6 +16,9 @@ import itertools
 
 from subprocess import Popen, PIPE
 
+__version__ = "%%version%%"  ## replaced by autogen.sh
+
+
 try:
     import pystache
 except ImportError:  ## pragma: no cover
@@ -33,22 +36,26 @@ if PY3:
 else:  ## pragma: no cover
     imap = itertools.imap
 
-usage_msg = """usage: %(exname)s"""
-help_msg = """\
-Run this command in a git repository to output a formatted changelog
+usage_msg = """
+  %(exname)s {-h|--help}
+  %(exname)s {-v|--version}
+  %(exname)s init               ## obsolete
+  %(exname)s show"""
 
+description_msg = """\
+Run this command in a git repository to output a formatted changelog
+"""
+
+epilog_msg = """\
 %(exname)s uses a config file to filter meaningful commit or do some
- formatting in commit messages thanks to a config file.
+formatting in commit messages thanks to a config file.
 
 Config file location will be resolved in this order:
-
   - in shell environment variable GITCHANGELOG_CONFIG_FILENAME
   - in git configuration: ``git config gitchangelog.rc-path``
   - as '.%(exname)s.rc' in the root of the current git repository
 
 """
-
-full_help_msg = "%s\n\n%s" % (usage_msg, help_msg)
 
 
 class ShellError(Exception):
@@ -946,8 +953,47 @@ def manage_obsolete_options(config):
         man(config)
 
 ##
+## Command line parsing
+##
+
+def parse_cmd_line(usage, description, epilog, exname, version):
+
+    import argparse
+
+    try:
+        parser = argparse.ArgumentParser(
+            usage=usage,
+            description=description,
+            epilog="\n" + epilog,
+            prog=exname,
+            formatter_class=argparse.RawTextHelpFormatter,
+            version=version)
+    except TypeError:  ## compat with argparse from python 3.4
+        parser = argparse.ArgumentParser(
+            usage=usage,
+            description=description,
+            epilog="\n" + epilog,
+            prog=exname,
+            formatter_class=argparse.RawTextHelpFormatter)
+        parser.add_argument('-v', '--version',
+                            help="show program's version number and exit",
+                            action="version", version=version)
+
+    subparsers = parser.add_subparsers(help='commands', dest='action',
+                                       prog=exname)
+    _init_parser = subparsers.add_parser(
+        'init', help='Create default config file in current repository.')
+    show_parser = subparsers.add_parser(
+        'show', help='Prints current changelog.',
+        usage='%(exname)s show' % {'exname': exname})
+
+    return parser.parse_args()
+
+
+##
 ## Main
 ##
+
 
 def main():
     reference_config = os.path.join(
@@ -958,12 +1004,17 @@ def main():
     if basename.endswith(".py"):
         basename = basename[:-3]
 
-    if "-h" in sys.argv or "--help" in sys.argv:
-        print(full_help_msg % {'exname': basename})
-        sys.exit(0)
+    ## Support legacy call of ``gitchangelog`` without arguments
+    if len(sys.argv) == 1:
+        sys.argv.append("show")
 
-    if len(sys.argv) > 1 and sys.argv[1] != "init":
-        die(usage_msg % {'exname': basename})
+    i = lambda x: x % {'exname': basename}
+
+    opts = parse_cmd_line(usage=i(usage_msg),
+                          description=i(description_msg),
+                          epilog=i(epilog_msg),
+                          exname=basename,
+                          version=__version__)
 
     try:
         repository = GitRepos(".")
@@ -973,7 +1024,7 @@ def main():
     repository_config = '%s/.%s.rc' % (repository.toplevel, basename) \
                         if not repository.bare else None
 
-    if len(sys.argv) == 2 and sys.argv[1] == "init":
+    if opts.action == "init":
         import shutil
         if repository_config is None:
             die("``init`` of bare repository not supported.")
@@ -981,7 +1032,7 @@ def main():
             die("File %r already exists." % repository_config)
         shutil.copyfile(reference_config,
                         repository_config)
-        print("File %r created.")
+        print("File %r created." % repository_config)
         sys.exit(0)
 
     try:
