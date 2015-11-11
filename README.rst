@@ -26,7 +26,7 @@ Feature
 =======
 
 - fully driven by a config file that can be tailored with your changelog
-  policies. (see for example the `sample configuration file`_)
+  policies. (see for example the `reference configuration file`_)
 - filter out commits/tags based on regexp matching
 - refactor commit summary, or commit body on the fly with replace regexp
 - classify commit message into sections (ie: New, Fix, Changes...)
@@ -142,8 +142,11 @@ the `changelog of the PyPI page`_.
 Usage
 =====
 
-You need to place a ``gitchangelog.rc`` file somewhere, the
-recommended location is the root of the current git repository with
+The `reference configuration file`_ is delivered within ``gitchangelog`` package
+and provides defaults for settings.
+
+You *may* place a ``gitchangelog.rc`` file somewhere to override the defaults.
+The recommended location is the root of the current git repository with
 the name ``.gitchangelog.rc``.  However you could put it elsewhere,
 and here are the locations checked (first match will prevail):
 
@@ -161,12 +164,12 @@ print changelog on its standard output.
 Configuration file format
 -------------------------
 
-The `sample configuration file`_ is quite heavily commented and is quite
+The `reference configuration file`_ is quite heavily commented and is quite
 simple.  You should be able to use it as required.
 
-.. _sample configuration file: http://github.com/vaab/gitchangelog/blob/master/gitchangelog.rc.reference
+.. _reference configuration file: http://github.com/vaab/gitchangelog/blob/master/gitchangelog.rc.reference
 
-The changelog of gitchangelog is generated with himself and with the sample
+The changelog of gitchangelog is generated with himself and with the reference
 configuration file. You'll see the output in the `changelog of the PyPI page`_.
 
 .. _changelog of the PyPI page: http://pypi.python.org/pypi/gitchangelog
