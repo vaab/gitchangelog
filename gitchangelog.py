@@ -50,6 +50,9 @@ Config file location will be resolved in this order:
 
 full_help_msg = "%s\n\n%s" % (usage_msg, help_msg)
 
+# in Windows we need some minor change to be able to execute sub-processes
+isWindows = sys.platform.startswith('win')
+
 
 class ShellError(Exception):
 
@@ -299,7 +302,7 @@ class Proc(Popen):
         super(Proc, self).__init__(
             command, shell=True,
             stdin=PIPE, stdout=PIPE, stderr=PIPE,
-            close_fds=True, env=env,
+            env=env, close_fds=(not isWindows),
             universal_newlines=False)
 
         self.stdin = Phile(self.stdin)
@@ -310,7 +313,7 @@ class Proc(Popen):
 def cmd(command, env=None):
     p = Popen(command, shell=True,
               stdin=PIPE, stdout=PIPE, stderr=PIPE,
-              close_fds=True, env=env,
+              env=env, close_fds=(not isWindows),
               universal_newlines=False)
     stdout, stderr = p.communicate()
     return (stdout.decode(locale.getpreferredencoding()),
@@ -585,7 +588,9 @@ class GitRepos(object):
     def swrap(self, command, **kwargs):
         """Essential force the CWD of the command to be in self._orig_path"""
 
-        command = "cd %s; %s" % (self._orig_path, command)
+        # on Windows the command separator is the ampersand; the semicolon can be used as argument separator instead of
+        # space
+        command = "cd %s %s %s" % (self._orig_path, '&' if isWindows else ';',command)
         return swrap(command, **kwargs)
 
     @property
@@ -953,7 +958,6 @@ def main():
     reference_config = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
         "gitchangelog.rc.reference")
-
     basename = os.path.basename(sys.argv[0])
     if basename.endswith(".py"):
         basename = basename[:-3]
@@ -987,10 +991,14 @@ def main():
     try:
         gc_rc = repository.config.get("gitchangelog.rc-path")
     except ShellError as e:
-        sys.stderr.write(
-            "Error parsing git config: %s."
-            " Won't be able to read 'rc-path' if defined.\n"
-            % (str(e)))
+        msg = str(e)
+
+        # workaround for Windows: if the key is not defined an error is shown in the output
+        if not(isWindows and "invalid key" in msg):
+            sys.stderr.write(
+                "Error parsing git config: %s."
+                " Won't be able to read 'rc-path' if defined.\n"
+                % msg)
         gc_rc = None
 
     gc_rc = normpath(gc_rc, cwd=repository.toplevel) if gc_rc else None
