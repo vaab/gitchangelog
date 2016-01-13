@@ -33,6 +33,16 @@ if PY3:
 else:  ## pragma: no cover
     imap = itertools.imap
 
+if sys.platform == 'win32':
+    PLT_CFG = {'close_fds' : False,
+               'basename' : 'gitchangelog',
+               'multi_cmd_sep' : ' && '
+    }
+else:
+    PLT_CFG = {'close_fds' : True,
+               'basename' : os.path.basename(sys.argv[0]),
+               'multi_cmd_sep' : ' ; '
+    }
 usage_msg = """usage: %(exname)s"""
 help_msg = """\
 Run this command in a git repository to output a formatted changelog
@@ -299,7 +309,7 @@ class Proc(Popen):
         super(Proc, self).__init__(
             command, shell=True,
             stdin=PIPE, stdout=PIPE, stderr=PIPE,
-            close_fds=True, env=env,
+            close_fds=PLT_CFG['close_fds'], env=env,
             universal_newlines=False)
 
         self.stdin = Phile(self.stdin)
@@ -310,7 +320,7 @@ class Proc(Popen):
 def cmd(command, env=None):
     p = Popen(command, shell=True,
               stdin=PIPE, stdout=PIPE, stderr=PIPE,
-              close_fds=True, env=env,
+              close_fds=PLT_CFG['close_fds'], env=env,
               universal_newlines=False)
     stdout, stderr = p.communicate()
     return (stdout.decode(locale.getpreferredencoding()),
@@ -585,7 +595,7 @@ class GitRepos(object):
     def swrap(self, command, **kwargs):
         """Essential force the CWD of the command to be in self._orig_path"""
 
-        command = "cd %s; %s" % (self._orig_path, command)
+        command = "cd %s %s %s" % (self._orig_path, PLT_CFG['multi_cmd_sep'], command)
         return swrap(command, **kwargs)
 
     @property
@@ -954,7 +964,7 @@ def main():
         os.path.dirname(os.path.realpath(__file__)),
         "gitchangelog.rc.reference")
 
-    basename = os.path.basename(sys.argv[0])
+    basename = PLT_CFG['basename']
     if basename.endswith(".py"):
         basename = basename[:-3]
 
