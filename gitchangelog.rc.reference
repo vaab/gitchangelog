@@ -143,6 +143,14 @@ subject_process = (strip |
 tag_filter_regexp = r'^[0-9]+\.[0-9]+(\.[0-9]+)?$'
 
 
+## ``revert_regexp`` is a regexp
+##
+## Commit bodies that mark a revert commit must match this regexp.
+## The first group must be the commit hash.
+##
+revert_regexp = r'This reverts commit ([0-9a-f]+)\.'
+
+
 ## ``unreleased_version_label`` is a string
 ##
 ## This label will be used as the changelog Title of the last set of changes
