@@ -127,6 +127,8 @@ And here is the ``gitchangelog`` output::
     sample rc file. [Valentin Lab]
 
   - Added a succint ``--help`` support. [Valentin Lab]
+  
+    ! Reverted by Brian on 2016-04-23
 
   Fix
   ~~~
