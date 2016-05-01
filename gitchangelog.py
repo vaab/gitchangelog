@@ -809,25 +809,6 @@ else:
         die("Required 'mako' python module not found.")
 
 
-def reverteds_dict(
-    commits,
-    revert_regexp,
-    ):
-    """
-    :param commits: iterable; each item is checked with the given regular expression.
-    :param revert_regexp: Is applied to the body of each commit message.
-    When matching, the commit is considered to revert another one.
-    :returns: a map {sha1:commit}
-    The values are exactly all commits that revert another one.
-    The map key is the sha1 of the commit that is reverted (not the sha1 of the corresponding map value).
-    """
-    reverteds = {}
-    for commit in commits:
-        m = re.match(revert_regexp, commit.body)
-        if m:
-            reverteds[m.group(1)] = commit
-    return reverteds
-
 
 ##
 ## Data Structure
@@ -895,22 +876,31 @@ def changelog(repository,
                                  None
 
         sections = collections.defaultdict(list)
-        commits = list(repository.log(
+        commits = repository.log(
             includes=[tag],
             excludes=tags[idx + 1:],
-            include_merge=include_merge))
+            include_merge=include_merge)
 
-        reverteds = reverteds_dict(commits, revert_regexp)
+        # reverteds is a map {sha1:commit}
+        # The values are exactly all commits that revert another one.
+        # The map key is the sha1 of the commit that is reverted (not the sha1 of the corresponding map value).
+        reverteds = {}
 
         for commit in commits:
+            
+            #Apply revert_regexp to the body of each commit message.
+            #When matching, the commit is considered to revert another one.
+            m = re.match(revert_regexp, commit.body)
+            if m:
+                reverteds[m.group(1)] = commit
+
             if any(re.search(pattern, commit.subject) is not None
                    for pattern in ignore_regexps):
                 continue
 
             matched_section = first_matching(section_regexps, commit.subject)
 
-            ## Finally storing the commit in the matching section
-
+            # Create additional commit message when commit is known to be reverted:
             revert = reverteds.get(commit.sha1)
             if revert:
                 d = datetime.datetime.utcfromtimestamp(
@@ -918,6 +908,8 @@ def changelog(repository,
                 revert_txt = "! Reverted by " + revert.committer_name + " on " + d.strftime('%Y-%m-%d')
             else:
                 revert_txt = ""
+                
+            ## Finally storing the commit in the matching section
             sections[matched_section].append({
                 "author": commit.author_name,
                 "subject": subject_process(commit.subject),
