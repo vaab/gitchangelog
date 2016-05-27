@@ -21,6 +21,13 @@ gitchangelog
 
 Use your commit log to make beautifull and configurable changelog file.
 
+***
+
+**This fork adds warnings about reverted commits. The warning prevents you from accidentially announcing a commit that someone has reverted.**
+
+***
+
+
 
 Feature
 =======
