@@ -296,10 +296,13 @@ class Phile(object):
 class Proc(Popen):
 
     def __init__(self, command, env=None):
+        # Note that on Windows, you cannot set *close_fds* to ``True``
+        # and also redirect the standard handles by setting *stdin*, *stdout* or *stderr*.
+        close_fds = False if os.name in ['nt', 'ce'] else True
         super(Proc, self).__init__(
             command, shell=True,
             stdin=PIPE, stdout=PIPE, stderr=PIPE,
-            close_fds=True, env=env,
+            close_fds=close_fds, env=env,
             universal_newlines=False)
 
         self.stdin = Phile(self.stdin)
@@ -308,9 +311,12 @@ class Proc(Popen):
 
 
 def cmd(command, env=None):
+    # Note that on Windows, you cannot set *close_fds* to ``True``
+    # and also redirect the standard handles by setting *stdin*, *stdout* or *stderr*.
+    close_fds = False if os.name in ['nt', 'ce'] else True
     p = Popen(command, shell=True,
               stdin=PIPE, stdout=PIPE, stderr=PIPE,
-              close_fds=True, env=env,
+              close_fds=close_fds, env=env,
               universal_newlines=False)
     stdout, stderr = p.communicate()
     return (stdout.decode(locale.getpreferredencoding()),
@@ -584,9 +590,13 @@ class GitRepos(object):
 
     def swrap(self, command, **kwargs):
         """Essential force the CWD of the command to be in self._orig_path"""
-
-        command = "cd %s; %s" % (self._orig_path, command)
-        return swrap(command, **kwargs)
+        old_dir = os.path.curdir
+        os.chdir(self._orig_path)
+        try:
+            command = "%s" % (command,)
+            return swrap(command, **kwargs)
+        finally:
+            os.chdir(old_dir)
 
     @property
     def tags(self):
@@ -968,7 +978,7 @@ def main():
     try:
         repository = GitRepos(".")
     except EnvironmentError as e:
-        die(e.message)
+        die(e.args[0])
 
     repository_config = '%s/.%s.rc' % (repository.toplevel, basename) \
                         if not repository.bare else None
