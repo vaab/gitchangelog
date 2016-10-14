@@ -11,8 +11,10 @@ import sys
 import glob
 import textwrap
 import datetime
+import time
 import collections
 import itertools
+import dateutil.parser
 
 from subprocess import Popen, PIPE
 
@@ -844,6 +846,8 @@ def changelog(repository, revlist=None,
               include_merge=True,
               body_process=lambda x: x,
               subject_process=lambda x: x,
+              after=None,
+              before=None,
               ):
     """Returns a string containing the changelog of given repository
 
@@ -862,6 +866,8 @@ def changelog(repository, revlist=None,
     :param include_merge: whether to include merge commits in the log or not
     :param body_process: text processing object to apply to body
     :param subject_process: text processing object to apply to subject
+    :param after: date string to get all commits after tht date
+    :param before: date string to get all commits before that date
 
     :returns: content of changelog
 
@@ -923,9 +929,24 @@ def changelog(repository, revlist=None,
             excludes=tags[idx + 1:] + excludes,
             include_merge=include_merge)
 
+        #
+        after_timestamp = \
+            time.mktime(dateutil.parser.parse(after).timetuple()) \
+            if after is not None else 0.0
+
+        before_timestamp = \
+            time.mktime(dateutil.parser.parse(before).timetuple()) \
+            if before is not None else time.time()
+
         for commit in commits:
             if any(re.search(pattern, commit.subject) is not None
                    for pattern in ignore_regexps):
+                continue
+
+            if not float(commit.committer_date_timestamp) > after_timestamp:
+                continue
+
+            if not float(commit.committer_date_timestamp) < before_timestamp:
                 continue
 
             matched_section = first_matching(section_regexps, commit.subject)
@@ -1121,6 +1142,9 @@ def main():
         include_merge=config.get("include_merge", True),
         body_process=config.get("body_process", noop),
         subject_process=config.get("subject_process", noop),
+        after=config.get("start_date", None),
+        before=config.get("end_date", None),
+
     )
 
     if PY3:
