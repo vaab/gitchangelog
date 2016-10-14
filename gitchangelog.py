@@ -57,6 +57,8 @@ Config file location will be resolved in this order:
 
 """
 
+def stderr(msg):
+    print(msg, file=sys.stderr)
 
 class ShellError(Exception):
 
@@ -68,10 +70,10 @@ class ShellError(Exception):
         super(ShellError, self).__init__(msg)
 
 
-def die(msg=None):
+def die(msg=None, errlvl=1):
     if msg:
-        sys.stderr.write(msg + "\n")
-    sys.exit(1)
+        stderr(msg)
+    sys.exit(errlvl)
 
 ##
 ## config file functions
@@ -1076,9 +1078,9 @@ def main():
     try:
         gc_rc = repository.config.get("gitchangelog.rc-path")
     except ShellError as e:
-        sys.stderr.write(
+        stderr(
             "Error parsing git config: %s."
-            " Won't be able to read 'rc-path' if defined.\n"
+            " Won't be able to read 'rc-path' if defined."
             % (str(e)))
         gc_rc = None
 
