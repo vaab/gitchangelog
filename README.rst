@@ -315,18 +315,22 @@ Incremental changelog
 ---------------------
 
 Also known as partial changelog generation, this feature allows to generate
-only a subpart of your changelog. Usually this makes sense::
+only a subpart of your changelog. Usually this makes sense:
+
 
 - When wanting to switch to ``gitchangelog``, or change your
   conventions:
-    - part of your history is not following conventions.
-    - you have a previous CHANGELOG you want to blend in.
+
+  - part of your history is not following conventions.
+  - you have a previous CHANGELOG you want to blend in.
 
 - You'd rather commit your changelog file:
-    - For performance reason, you can then generate changelog only for
-      the new commit and save the result.
-    - Because you want to be able to edit it to make some minor
-      edition if needed.
+
+  - For performance reason, you can then generate changelog only for
+    the new commit and save the result.
+  - Because you want to be able to edit it to make some minor
+    edition if needed.
+
 
 You can use then ``gitchangelog show REVLIST``. Examples follows::
 
