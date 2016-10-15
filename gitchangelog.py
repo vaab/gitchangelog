@@ -831,6 +831,7 @@ else:
         die("Required 'mako' python module not found.")
 
 
+
 ##
 ## Data Structure
 ##
@@ -840,6 +841,7 @@ def changelog(repository, revlist=None,
               section_regexps=[(None,'')],
               unreleased_version_label="unreleased",
               tag_filter_regexp=r"\d+\.\d+(\.\d+)?",
+              revert_regexp=r"This reverts commit ([0-9a-f]+)\.",
               output_engine=rest_py,
               include_merge=True,
               body_process=lambda x: x,
@@ -923,19 +925,39 @@ def changelog(repository, revlist=None,
             excludes=tags[idx + 1:] + excludes,
             include_merge=include_merge)
 
+        # reverteds is a map {sha1:commit}
+        # The values are exactly all commits that revert another one.
+        # The map key is the sha1 of the commit that is reverted (not the sha1 of the corresponding map value).
+        reverteds = {}
+
         for commit in commits:
+            
+            #Apply revert_regexp to the body of each commit message.
+            #When matching, the commit is considered to revert another one.
+            m = re.match(revert_regexp, commit.body)
+            if m:
+                reverteds[m.group(1)] = commit
+
             if any(re.search(pattern, commit.subject) is not None
                    for pattern in ignore_regexps):
                 continue
 
             matched_section = first_matching(section_regexps, commit.subject)
 
+            # Create additional commit message when commit is known to be reverted:
+            revert = reverteds.get(commit.sha1)
+            if revert:
+                d = datetime.datetime.utcfromtimestamp(
+                    float(revert.committer_date_timestamp))
+                revert_txt = "! Reverted by " + revert.committer_name + " on " + d.strftime('%Y-%m-%d')
+            else:
+                revert_txt = ""
+                
             ## Finally storing the commit in the matching section
-
             sections[matched_section].append({
                 "author": commit.author_name,
                 "subject": subject_process(commit.subject),
-                "body": body_process(commit.body),
+                "body": body_process(commit.body + revert_txt),
             })
 
         ## Flush current version
@@ -1117,6 +1139,7 @@ def main():
         section_regexps=config['section_regexps'],
         unreleased_version_label=config['unreleased_version_label'],
         tag_filter_regexp=config['tag_filter_regexp'],
+        revert_regexp=config['revert_regexp'],
         output_engine=config.get("output_engine", rest_py),
         include_merge=config.get("include_merge", True),
         body_process=config.get("body_process", noop),
@@ -1127,6 +1150,9 @@ def main():
         print(content)
     else:
         print(content.encode(_preferred_encoding))
+
+
+
 
 ##
 ## Launch program

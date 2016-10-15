@@ -21,6 +21,13 @@ gitchangelog
 
 Use your commit log to make beautifull and configurable changelog file.
 
+***
+
+**This fork adds warnings about reverted commits. The warning prevents you from accidentially announcing a commit that someone has reverted.**
+
+***
+
+
 
 Feature
 =======
@@ -128,6 +135,8 @@ And here is the ``gitchangelog`` output::
     sample rc file. [Valentin Lab]
 
   - Added a succint ``--help`` support. [Valentin Lab]
+  
+    ! Reverted by Brian on 2016-04-23
 
   Fix
   ~~~
