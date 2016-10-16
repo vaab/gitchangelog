@@ -175,6 +175,114 @@ Subject: This is a fake subject spanning to several lines
                                              self.REFERENCE.split("\n"),
                                              lineterm="")))
 
+    def test_simple_show_with_changelog_python_exception(self):
+        w("""
+
+            cat <<EOF > .gitchangelog.rc
+
+def raise_exc(data, opts):
+    raise Exception('Test Exception XYZ')
+
+output_engine = raise_exc
+
+EOF
+
+        """)
+
+        out, err, errlvl = cmd('$tprog show')
+        self.assertContains(
+            err, "XYZ",
+            msg="The exception message should be displayed and thus contain XYZ... "
+            "Current stderr:\n%s" % err)
+        self.assertEqual(
+            errlvl, 255,
+            msg="Should fail with errlvl 255 if exception in output_engine..."
+            "Current errlvl: %s" % errlvl)
+        self.assertContains(
+            err, "--debug",
+            msg="Message about ``--debug``... "
+            "Current stderr:\n%s" % err)
+        self.assertNotContains(
+            err, "Traceback (most recent call last):",
+            msg="The exception message should NOT contain traceback information... "
+            "Current stderr:\n%s" % err)
+        self.assertEqual(
+            out, "",
+            msg="There should be no standard output. "
+            "Current stdout:\n%r" % out)
+
+    def test_show_with_changelog_python_exc_in_cli_debug_mode(self):
+        w("""
+
+            cat <<EOF > .gitchangelog.rc
+
+def raise_exc(data, opts):
+    raise Exception('Test Exception XYZ')
+
+output_engine = raise_exc
+
+EOF
+
+        """)
+
+        out, err, errlvl = cmd('$tprog --debug show')
+        self.assertContains(
+            err, "XYZ",
+            msg="The exception message should be displayed and thus contain XYZ... "
+            "Current stderr:\n%s" % err)
+        self.assertNotContains(
+            err, "--debug",
+            msg="Should not contain any message about ``--debug``... "
+            "Current stderr:\n%s" % err)
+        self.assertContains(
+            err, "Traceback (most recent call last):",
+            msg="The exception message should contain traceback information... "
+            "Current stderr:\n%s" % err)
+        self.assertEqual(
+            errlvl, 255,
+            msg="Should fail with errlvl 255 if exception in output_engine..."
+            "Current errlvl: %s" % errlvl)
+        self.assertEqual(
+            out, "",
+            msg="There should be no standard output. "
+            "Current stdout:\n%r" % out)
+
+    def test_show_with_changelog_python_exc_in_env_debug_mode(self):
+        w("""
+
+            cat <<EOF > .gitchangelog.rc
+
+def raise_exc(data, opts):
+    raise Exception('Test Exception XYZ')
+
+output_engine = raise_exc
+
+EOF
+
+        """)
+
+        out, err, errlvl = cmd('DEBUG_GITCHANGELOG=1 $tprog show')
+        self.assertContains(
+            err, "XYZ",
+            msg="The exception message should be displayed and thus contain XYZ... "
+            "Current stderr:\n%s" % err)
+        self.assertNotContains(
+            err, "--debug",
+            msg="Should not contain any message about ``--debug``... "
+            "Current stderr:\n%s" % err)
+        self.assertContains(
+            err, "Traceback (most recent call last):",
+            msg="The exception message should contain traceback information... "
+            "Current stderr:\n%s" % err)
+        self.assertEqual(
+            errlvl, 255,
+            msg="Should fail with errlvl 255 if exception in output_engine..."
+            "Current errlvl: %s" % errlvl)
+        self.assertEqual(
+            out, "",
+            msg="There should be no standard output. "
+            "Current stdout:\n%r" % out)
+
     def test_incremental_show_call(self):
         out, err, errlvl = cmd('$tprog show 0.0.2..0.0.3')
         self.assertEqual(

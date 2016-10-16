@@ -13,6 +13,7 @@ import textwrap
 import datetime
 import collections
 import itertools
+import traceback
 
 from subprocess import Popen, PIPE
 
@@ -61,6 +62,10 @@ def stderr(msg):
     print(msg, file=sys.stderr)
 
 
+def err(msg):
+    stderr("Error: " + msg)
+
+
 def warn(msg):
     stderr("Warning: " + msg)
 
@@ -79,6 +84,35 @@ def die(msg=None, errlvl=1):
     if msg:
         stderr(msg)
     sys.exit(errlvl)
+
+
+def format_last_exception(prefix="  | "):
+    """Format the last exception for display it in tests.
+
+    This allows to raise custom exception, without loosing the context of what
+    caused the problem in the first place:
+
+    >>> def f():
+    ...     raise Exception("Something terrible happened")
+    >>> try:  ## doctest: +ELLIPSIS
+    ...     f()
+    ... except Exception:
+    ...     formated_exception = format_last_exception()
+    ...     raise ValueError('Oups, an error occured:\\n%s' % formated_exception)
+    Traceback (most recent call last):
+    ...
+    ValueError: Oups, an error occured:
+      | Traceback (most recent call last):
+    ...
+      | Exception: Something terrible happened
+
+    """
+
+    return '\n'.join(
+        str(prefix + line)
+        for line in traceback.format_exc().strip().split('\n'))
+
+
 
 ##
 ## config file functions
@@ -1034,6 +1068,10 @@ def parse_cmd_line(usage, description, epilog, exname, version):
                             help="show program's version number and exit",
                             action="version", version=version)
 
+    parser.add_argument('-d', '--debug',
+                        help="Enable debug mode (show full tracebacks).",
+                        action="store_true", dest="debug")
+
     subparsers = parser.add_subparsers(help='commands', dest='action',
                                        prog=exname)
     _init_parser = subparsers.add_parser(
@@ -1052,6 +1090,9 @@ def parse_cmd_line(usage, description, epilog, exname, version):
 
 
 def main():
+
+    ## Basic environment infos
+
     reference_config = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
         "gitchangelog.rc.reference")
@@ -1059,6 +1100,9 @@ def main():
     basename = os.path.basename(sys.argv[0])
     if basename.endswith(".py"):
         basename = basename[:-3]
+
+    debug_varname = "DEBUG_%s" % basename.upper()
+    DEBUG = os.environ.get(debug_varname, False)
 
     ## Support legacy call of ``gitchangelog`` without arguments
     if len(sys.argv) == 1:
@@ -1071,6 +1115,7 @@ def main():
                           epilog=i(epilog_msg),
                           exname=basename,
                           version=__version__)
+    DEBUG = DEBUG or opts.debug
 
     try:
         repository = GitRepos(".")
@@ -1129,17 +1174,38 @@ def main():
 
     manage_obsolete_options(config)
 
-    content = changelog(
-        repository, opts.revlist,
-        ignore_regexps=config['ignore_regexps'],
-        section_regexps=config['section_regexps'],
-        unreleased_version_label=config['unreleased_version_label'],
-        tag_filter_regexp=config['tag_filter_regexp'],
-        output_engine=config.get("output_engine", rest_py),
-        include_merge=config.get("include_merge", True),
-        body_process=config.get("body_process", noop),
-        subject_process=config.get("subject_process", noop),
-    )
+    try:
+        content = changelog(
+            repository, opts.revlist,
+            ignore_regexps=config['ignore_regexps'],
+            section_regexps=config['section_regexps'],
+            unreleased_version_label=config['unreleased_version_label'],
+            tag_filter_regexp=config['tag_filter_regexp'],
+            output_engine=config.get("output_engine", rest_py),
+            include_merge=config.get("include_merge", True),
+            body_process=config.get("body_process", noop),
+            subject_process=config.get("subject_process", noop),
+        )
+    except KeyboardInterrupt:
+        if DEBUG:
+            err("Keyboard interrupt received while running '%s':"
+                % (basename, ))
+            stderr(format_last_exception())
+        else:
+            err("Keyboard Interrupt. Bailing out.")
+        exit(254)
+    except Exception as e:  ## pylint: disable=broad-except
+        if DEBUG:
+            err("Exception while running '%s':"
+                % (basename, ))
+            stderr(format_last_exception())
+        else:
+            message = "%s" % e
+            err(message)
+            stderr("  (set %s environment variable, "
+                   "or use ``--debug`` to see full traceback)" %
+                   (debug_varname, ))
+        exit(255)
 
     if PY3:
         print(content)
