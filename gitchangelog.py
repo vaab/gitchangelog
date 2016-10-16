@@ -60,6 +60,11 @@ Config file location will be resolved in this order:
 def stderr(msg):
     print(msg, file=sys.stderr)
 
+
+def warn(msg):
+    stderr("Warning: " + msg)
+
+
 class ShellError(Exception):
 
     def __init__(self, msg, errlvl=None, command=None, out=None, err=None):
@@ -846,6 +851,7 @@ def changelog(repository, revlist=None,
               include_merge=True,
               body_process=lambda x: x,
               subject_process=lambda x: x,
+              warn=warn,        ## Mostly used for test
               ):
     """Returns a string containing the changelog of given repository
 
@@ -893,6 +899,12 @@ def changelog(repository, revlist=None,
     tags = [tag
             for tag in repository.tags(contains=contains)
             if re.match(tag_filter_regexp, tag.identifier)]
+
+    if not tags:
+        warn("no tag %sname matching tag_filter_regexp %r."
+            % ("contained in revlist %r with " %  " ".join(revlist)
+               if revlist else "",
+               tag_filter_regexp))
 
     tags.append(repository.commit("HEAD"))
 
@@ -947,6 +959,10 @@ def changelog(repository, revlist=None,
         if len(current_version["sections"]) != 0:
             changelog["versions"].append(current_version)
         versions_done[tag] = current_version
+
+    if not changelog["versions"]:
+        warn("Empty changelog. No commits were elected to be used as entry.")
+
 
     return output_engine(data=changelog, opts=opts)
 
