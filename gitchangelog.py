@@ -747,7 +747,7 @@ def rest_py(data, opts={}):
 
     return (((rest_title(data["title"], char="=") + "\n")
              if data["title"] else "") +
-            "".join(render_version(version)
+            "\n\n".join(render_version(version)
                     for version in data["versions"]
                     if len(version["sections"]) > 0))
 
