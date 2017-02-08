@@ -747,7 +747,7 @@ def rest_py(data, opts={}):
 
     return (((rest_title(data["title"], char="=") + "\n")
              if data["title"] else "") +
-            "".join(render_version(version)
+            "\n\n".join(render_version(version)
                     for version in data["versions"]
                     if len(version["sections"]) > 0))
 
@@ -787,7 +787,7 @@ if pystache:
                     for commit in section["commits"]:
                         commit["body_indented"] = indent(commit["body"])
 
-            return pystache.render(template, data)
+            return pystache.render(template, data).strip("\n") + "\n\n"
 
         return renderer
 
@@ -820,7 +820,7 @@ if mako:
             kwargs = mako_env.copy()
             kwargs.update({"data": data,
                            "opts": opts})
-            return template.render(**kwargs)
+            return template.render(**kwargs).strip("\n") + "\n\n"
 
         return renderer
 
