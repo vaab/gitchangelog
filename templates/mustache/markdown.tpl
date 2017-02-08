@@ -1,7 +1,6 @@
 # {{title}}
 {{#versions}}
 
-
 ## {{label}}
 
 {{#sections}}

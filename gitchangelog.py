@@ -787,7 +787,7 @@ if pystache:
                     for commit in section["commits"]:
                         commit["body_indented"] = indent(commit["body"])
 
-            return pystache.render(template, data)
+            return pystache.render(template, data).strip("\n") + "\n\n"
 
         return renderer
 
@@ -820,7 +820,7 @@ if mako:
             kwargs = mako_env.copy()
             kwargs.update({"data": data,
                            "opts": opts})
-            return template.render(**kwargs)
+            return template.render(**kwargs).strip("\n") + "\n\n"
 
         return renderer
 
