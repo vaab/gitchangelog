@@ -1,11 +1,10 @@
 # {{title}}
 {{#versions}}
 
+
 ## {{label}}
 
 {{#sections}}
-
-
 ### {{label}}
 
 {{#commits}}
