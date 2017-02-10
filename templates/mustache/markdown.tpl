@@ -1,16 +1,16 @@
-# {{title}}
+# {{{title}}}
 {{#versions}}
 
-## {{label}}
+## {{{label}}}
 
 {{#sections}}
-### {{label}}
+### {{{label}}}
 
 {{#commits}}
-* {{subject}} [{{author}}]
+* {{{subject}}} [{{{author}}}]
 {{#body}}
 
-{{body_indented}}
+{{{body_indented}}}
 {{/body}}
 
 {{/commits}}

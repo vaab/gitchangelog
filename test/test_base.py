@@ -43,7 +43,7 @@ New
 
 0.0.2 (2000-01-02)
 ------------------
-- Add ``b`` with non-ascii chars éèàâ§µ. [Alice]
+- Add ``b`` with non-ascii chars éèàâ§µ and HTML chars ``&<`` [Alice]
 
 
 
@@ -85,7 +85,7 @@ New
             git add b
 
             ## Notice there are no section here.
-            git commit -m 'add ``b`` with non-ascii chars éèàâ§µ
+            git commit -m 'add ``b`` with non-ascii chars éèàâ§µ and HTML chars ``&<``
 
 Change-Id: Ic8aaa0728a43936cd4c6e1ed590e01ba8f0fbf5b' \
                 --author 'Alice <alice@example.com>' \
