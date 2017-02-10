@@ -258,12 +258,13 @@ EOF
                 "Current stderr:\n%s" % indent(err))
             self.assertEqual(
                 out, self.REFERENCE,
-                msg="Mako output should match our reference output... "
+                msg="config %r output should match our reference output... "
                 "diff of changelogs:\n%s"
-                % '\n'.join(difflib.unified_diff(
-                    self.REFERENCE.split("\n"),
-                    out.split("\n"),
-                    lineterm="")))
+                % (config,
+                   '\n'.join(difflib.unified_diff(
+                   self.REFERENCE.split("\n"),
+                   out.split("\n"),
+                   lineterm=""))))
 
     def test_with_filename_same_as_tag(self):
         w("""
