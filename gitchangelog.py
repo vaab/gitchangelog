@@ -716,7 +716,7 @@ def rest_py(data, opts={}):
         title = "%s (%s)" % (version["tag"], version["date"]) \
                 if version["tag"] else \
                 opts["unreleased_version_label"]
-        s = rest_title(title, char="-") + "\n"
+        s = rest_title(title, char="-")
 
         sections = version["sections"]
         nb_sections = len(sections)
@@ -726,7 +726,7 @@ def rest_py(data, opts={}):
                             else "Other"
 
             if not (section_label == "Other" and nb_sections == 1):
-                s += rest_title(section_label, "~") + "\n"
+                s += "\n" + rest_title(section_label, "~")
 
             for commit in section["commits"]:
                 s += render_commit(commit)
@@ -737,19 +737,19 @@ def rest_py(data, opts={}):
         subject += " [%s]" % (commit["author"], )
 
         entry = indent('\n'.join(textwrap.wrap(subject)),
-                       first="- ").strip() + "\n\n"
+                       first="- ").strip() + "\n"
 
         if commit["body"]:
-            entry += indent(commit["body"])
-            entry += "\n\n"
+            entry += "\n" + indent(commit["body"])
+            entry += "\n"
 
         return entry
 
-    return (((rest_title(data["title"], char="=") + "\n")
+    return (((rest_title(data["title"], char="=") + "\n\n")
              if data["title"] else "") +
-            "".join(render_version(version)
-                    for version in data["versions"]
-                    if len(version["sections"]) > 0))
+            "\n\n".join(render_version(version)
+                      for version in data["versions"]
+                      if len(version["sections"]) > 0)) + "\n\n"
 
 ## formatter engines
 

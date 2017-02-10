@@ -17,20 +17,20 @@ class GitChangelogTest(BaseGitReposTest):
     REFERENCE = r"""Changelog
 =========
 
+
 %%version%% (unreleased)
 ------------------------
 
 Changes
 ~~~~~~~
-
 - Modified ``b`` XXX. [Alice]
+
 
 0.0.3 (2000-01-05)
 ------------------
 
 New
 ~~~
-
 - Add file ``e``, modified ``b`` [Bob]
 
   This is a message body.
@@ -38,13 +38,13 @@ New
   With multi-line content:
   - one
   - two
-
 - Add file ``c`` [Charly]
+
 
 0.0.2 (2000-01-02)
 ------------------
-
 - Add ``b`` with non-ascii chars éèàâ§µ. [Alice]
+
 
 
 """
@@ -54,7 +54,6 @@ New
 
 New
 ~~~
-
 - Add file ``e``, modified ``b`` [Bob]
 
   This is a message body.
@@ -62,8 +61,8 @@ New
   With multi-line content:
   - one
   - two
-
 - Add file ``c`` [Charly]
+
 
 
 """

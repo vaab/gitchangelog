@@ -2,6 +2,7 @@
 ${data["title"]}
 ${"=" * len(data["title"])}
 
+
 % endif
 % for version in data["versions"]:
 <%
@@ -10,12 +11,11 @@ title = "%s (%s)" % (version["tag"], version["date"]) if version["tag"] else opt
 nb_sections = len(version["sections"])
 %>${title}
 ${"-" * len(title)}
-
 % for section in version["sections"]:
 % if not (section["label"] == "Other" and nb_sections == 1):
+
 ${section["label"]}
 ${"~" * len(section["label"])}
-
 % endif
 % for commit in section["commits"]:
 <%
@@ -26,8 +26,8 @@ entry = indent('\n'.join(textwrap.wrap(subject)),
 
 % if commit["body"]:
 ${indent(commit["body"])}
-
 % endif
 % endfor
 % endfor
+
 % endfor
