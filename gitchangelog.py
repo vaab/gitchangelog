@@ -1081,7 +1081,22 @@ def parse_cmd_line(usage, description, epilog, exname, version):
         usage='%(exname)s show [REVLIST]' % {'exname': exname})
     show_parser.add_argument('revlist', nargs='*', action="store", default=[])
 
-    return parser.parse_args()
+    ## Python argparse in 2.7 doesn't like --debug to be after
+    ## positional argument.
+    argv = sys.argv[1:]
+    if "--debug" in argv:
+        argv.remove("--debug")
+        argv = ["--debug", ] + argv
+    if "-d" in argv:
+        argv.remove("-d")
+        argv = ["-d", ] + argv
+    if len([action for action in argv if not action.startswith("-")]) == 0:
+        ## Then we don't have positional argument, and this won't be supported
+        ## by argparse from python 2.7. See http://bugs.python.org/issue9253
+        ## so let's cheat and add "show" if no action.
+        argv += ["show", ]
+
+    return parser.parse_args(argv)
 
 
 ##
