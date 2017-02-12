@@ -1149,6 +1149,8 @@ def main():
             die("``init`` of bare repository not supported.")
         if os.path.exists(repository_config):
             die("File %r already exists." % repository_config)
+        if not os.path.exists(reference_config):
+            die("Reference file %r not found." % reference_config)
         shutil.copyfile(reference_config,
                         repository_config)
         print("File %r created." % repository_config)
@@ -1185,6 +1187,8 @@ def main():
             else:
                 break
 
+    if not os.path.exists(reference_config):
+        die("Config reference file %r not found." % reference_config)
     config = load_config_file(
         os.path.expanduser(changelogrc),
         default_filename=reference_config,
