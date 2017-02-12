@@ -1135,7 +1135,10 @@ def main():
     try:
         repository = GitRepos(".")
     except EnvironmentError as e:
-        die(e.message)
+        try:
+            die(str(e))
+        except Exception as e2:
+            die(repr(e2))
 
     repository_config = '%s/.%s.rc' % (repository.toplevel, basename) \
                         if not repository.bare else None

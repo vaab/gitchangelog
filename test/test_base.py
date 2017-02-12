@@ -760,6 +760,10 @@ class TestInitArgumentNotAReposity(BaseTmpDirTest):
             err, "repository",
             msg="There should be a error msg mentioning 'repository'. "
             "Current stderr:\n%r" % err)
+        self.assertNotContains(
+            err, "Traceback",
+            msg="There should be no mention of 'Traceback'. "
+            "Current stderr:\n%r" % err)
         self.assertEqual(
             out, "",
             msg="No standard output message expected. "
