@@ -43,19 +43,11 @@ if "%%short-version%%".startswith("%%"):
     os.system('./autogen.sh > .autogen.sh.output')
     cmdline = sys.argv[:]
     if cmdline[0] == "-c":
-        ## XXXvlab: for some reason, this is needed when launched from pip
+        ## for some reason, this is needed when launched from pip
         cmdline[0] = "setup.py"
     errlvl = subprocess.call(["python", ] + cmdline)
     os.unlink(".autogen.sh.output")
     sys.exit(errlvl)
-
-
-## XXXvlab: Hacking distutils, not very elegant, but the only way I found
-## to get data files to get copied next to the colour.py file...
-## Any suggestions are welcome.
-from distutils.command.install import INSTALL_SCHEMES
-for scheme in INSTALL_SCHEMES.values():
-    scheme['data'] = scheme['purelib']
 
 
 ##
