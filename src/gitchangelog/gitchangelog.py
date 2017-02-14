@@ -37,6 +37,17 @@ if PY3:
 else:  ## pragma: no cover
     imap = itertools.imap
 
+WIN32 = sys.platform == 'win32'
+if WIN32:
+    PLT_CFG = {
+        'close_fds': False,
+    }
+else:
+    PLT_CFG = {
+        'close_fds': True,
+    }
+
+
 usage_msg = """
   %(exname)s {-h|--help}
   %(exname)s {-v|--version}
@@ -347,7 +358,7 @@ class Proc(Popen):
         super(Proc, self).__init__(
             command, shell=True,
             stdin=PIPE, stdout=PIPE, stderr=PIPE,
-            close_fds=True, env=env,
+            close_fds=PLT_CFG['close_fds'], env=env,
             universal_newlines=False)
 
         self.stdin = Phile(self.stdin)
@@ -358,7 +369,7 @@ class Proc(Popen):
 def cmd(command, env=None):
     p = Popen(command, shell=True,
               stdin=PIPE, stdout=PIPE, stderr=PIPE,
-              close_fds=True, env=env,
+              close_fds=PLT_CFG['close_fds'], env=env,
               universal_newlines=False)
     stdout, stderr = p.communicate()
     return (stdout.decode(locale.getpreferredencoding()),
@@ -588,7 +599,7 @@ class GitConfig(SubGitObjectMixin):
         try:
             res = self.swrap(cmd)
         except ShellError as e:
-            if e.errlvl == 1 and e.out == "" and e.err == "":
+            if e.errlvl == 1 and e.out == "":
                 raise AttributeError("key %r is not found in git config."
                                      % label)
             raise
@@ -616,6 +627,8 @@ class GitRepos(object):
         try:
             self._git_version = self.swrap("git version")
         except ShellError:
+            if DEBUG:
+                raise
             raise EnvironmentError(
                 "Required ``git`` command not found or broken in $PATH. "
                 "(calling ``git version`` failed.)")
@@ -624,6 +637,8 @@ class GitRepos(object):
         try:
             self.swrap("git remote")
         except ShellError:
+            if DEBUG:
+                raise
             raise EnvironmentError(
                 "Not in a git repository. (calling ``git remote`` failed.)")
 
@@ -643,9 +658,13 @@ class GitRepos(object):
 
     def swrap(self, command, **kwargs):
         """Essential force the CWD of the command to be in self._orig_path"""
-
-        command = "cd %s; %s" % (self._orig_path, command)
-        return swrap(command, **kwargs)
+        old_dir = os.path.curdir
+        os.chdir(self._orig_path)
+        try:
+            command = "%s" % (command,)
+            return swrap(command, **kwargs)
+        finally:
+            os.chdir(old_dir)
 
     def tags(self, contains=None):
         """String list of repository's tag names
@@ -1106,6 +1125,7 @@ def parse_cmd_line(usage, description, epilog, exname, version):
 
 def main():
 
+    global DEBUG
     ## Basic environment infos
 
     reference_config = os.path.join(

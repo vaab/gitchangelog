@@ -41,10 +41,27 @@ Requirements
 
 ``gitchangelog`` is compatible Python 2 and Python 3.
 
-It should work on Linux/BSD/MacOSX and any help with Windows
-compatibility would be appreciated.
+``gitchangelog`` published on PyPI works on Linux/BSD/MacOSX and Windows.
+
+To be noted: the windows version is currently not being tested as well as
+the others and you won't be able to easily use it from sources as the tests
+and the sources tools are not yet compatible. Any help on this topic is
+welcome (as with others).
 
 Please submit an issue if you encounter incompatibilies.
+
+
+Installation
+============
+
+Gitchangelog is published on PyPI, thus:
+
+    pip install gitchangelog
+
+\.. is the way to go for installing it on any platform.
+
+If you are installing from source, please note that the development tools
+are not working fully yet on Windows.
 
 
 Sample
