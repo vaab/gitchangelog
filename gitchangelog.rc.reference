@@ -166,19 +166,21 @@ unreleased_version_label = "%%version%% (unreleased)"
 ##        Legacy pure python engine, outputs ReSTructured text.
 ##        This is the default.
 ##
-##   - mustache(<template_name>)
+##   - mustache(<template_name>[, <optional_dir>])
 ##
 ##        Template name could be any of the available templates in
-##        ``templates/mustache/*.tpl``.
+##        ``templates/mustache/*.tpl`` or in the custom directory passed
+##        as second argument.
 ##        Requires python package ``pystache``.
 ##        Examples:
 ##           - mustache("markdown")
 ##           - mustache("restructuredtext")
 ##
-##   - makotemplate(<template_name>)
+##   - makotemplate(<template_name>[, <optional_dir>])
 ##
 ##        Template name could be any of the available templates in
-##        ``templates/mako/*.tpl``.
+##        ``templates/mako/*.tpl`` or in the custom directory passed
+##        as second argument.
 ##        Requires python package ``mako``.
 ##        Examples:
 ##           - makotemplate("restructuredtext")
@@ -186,7 +188,9 @@ unreleased_version_label = "%%version%% (unreleased)"
 output_engine = rest_py
 #output_engine = mustache("restructuredtext")
 #output_engine = mustache("markdown")
+#output_engine = mustache("custom_template", "/path/to/custom/template/")
 #output_engine = makotemplate("restructuredtext")
+#output_engine = makotemplate("custom_template", "/path/to/custom/template/")
 
 
 ## ``include_merge`` is a boolean

@@ -717,12 +717,15 @@ def first_matching(section_regexps, string):
                 return section
 
 
-def ensure_template_file_exists(label, template_name):
+def ensure_template_file_exists(label, template_name, dir):
     """Return"""
 
-    template_dir = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        "templates", label)
+    if dir:
+        template_dir = dir
+    else:
+        template_dir = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            "templates", label)
 
     template_path = os.path.join(template_dir, "%s.tpl" % template_name)
 
@@ -797,13 +800,13 @@ def rest_py(data, opts={}):
 if pystache:
 
     @available_in_config
-    def mustache(template_name):
+    def mustache(template_name, dir=None):
         """Return a callable that will render a changelog data structure
 
         returned callable must take 2 arguments ``data`` and ``opts``.
 
         """
-        template_path = ensure_template_file_exists("mustache", template_name)
+        template_path = ensure_template_file_exists("mustache", template_name, dir)
 
         with open(template_path) as f:
             template = f.read()
@@ -835,7 +838,7 @@ if pystache:
 else:
 
     @available_in_config
-    def mustache(template_name):
+    def mustache(template_name, dir=None):
         die("Required 'pystache' python module not found.")
 
 
@@ -847,13 +850,13 @@ if mako:
                                               paragraph_wrap))
 
     @available_in_config
-    def makotemplate(template_name):
+    def makotemplate(template_name, dir=None):
         """Return a callable that will render a changelog data structure
 
         returned callable must take 2 arguments ``data`` and ``opts``.
 
         """
-        template_path = ensure_template_file_exists("mako", template_name)
+        template_path = ensure_template_file_exists("mako", template_name, dir)
 
         template = mako.template.Template(filename=template_path)
 
@@ -868,7 +871,7 @@ if mako:
 else:
 
     @available_in_config
-    def makotemplate(template_name):
+    def makotemplate(template_name, dir=None):
         die("Required 'mako' python module not found.")
 
 
