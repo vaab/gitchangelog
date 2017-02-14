@@ -16,7 +16,7 @@ import os.path
 import shutil
 import re
 
-import gitchangelog
+from gitchangelog import gitchangelog
 
 
 def raw_renderer(data, opts):
@@ -58,7 +58,7 @@ def set_env(**se_kwargs):
 BASE_PATH = os.path.normpath(os.path.join(
     os.path.dirname(os.path.realpath(__file__)),
     ".."))
-tprog = os.path.join(BASE_PATH, "gitchangelog.py")
+tprog = os.path.join(BASE_PATH, "src", "gitchangelog", "gitchangelog.py")
 
 WITH_COVERAGE = gitchangelog.cmd("type coverage")[2] == 0
 if WITH_COVERAGE:

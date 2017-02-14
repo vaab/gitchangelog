@@ -1,4 +1,2 @@
-include gitchangelog.py
-include gitchangelog.rc.reference
+graft src
 include *.rst LICENSE
-recursive-include templates *.tpl

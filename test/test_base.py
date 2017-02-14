@@ -8,7 +8,7 @@ import glob
 import os.path
 
 from common import BaseGitReposTest, BaseTmpDirTest, w, cmd
-from gitchangelog import indent
+from gitchangelog.gitchangelog import indent
 
 
 class GitChangelogTest(BaseGitReposTest):
