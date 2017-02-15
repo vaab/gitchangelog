@@ -654,6 +654,40 @@ EOF
             msg="The error message should mention 'restructuredtext'. "
             "Current stderr:\n%s" % err)
 
+    def test_file_template_name(self):
+        """Existing files should be accepted as valid templates"""
+
+        w("""
+             cat <<EOF > mytemplate.tpl
+check: {{{title}}}
+EOF
+             cat <<EOF > .gitchangelog.rc
+
+output_engine = mustache('mytemplate.tpl')
+
+EOF
+        """)
+
+        reference = """check: Changelog
+
+"""
+
+        out, err, errlvl = cmd('$tprog')
+        self.assertEqual(
+            err, "",
+            msg="There should be non error messages. "
+            "Current stderr:\n%s" % err)
+        self.assertEqual(
+            errlvl, 0,
+            msg="Should succeed to find template")
+        self.assertEqual(
+            out, reference,
+            msg="Mako output should match our reference output... "
+            "diff of changelogs:\n%s"
+            % '\n'.join(difflib.unified_diff(reference.split("\n"),
+                                             out.split("\n"),
+                                             lineterm="")))
+
     def test_template_as_access_to_full_commit(self):
         """Existing files should be accepted as valid templates"""
 
