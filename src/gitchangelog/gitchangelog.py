@@ -723,7 +723,19 @@ def first_matching(section_regexps, string):
 
 
 def ensure_template_file_exists(label, template_name):
-    """Return"""
+    """Return template file path given a label hint and the template name
+
+    Template name can be either a filename with full path,
+    if this is the case, the label is of no use.
+
+    If ``template_name`` does not refer to an existing file,
+    then ``label`` is used to find a template file in the
+    the bundled ones.
+
+    """
+
+    if os.path.isfile(template_name):
+        return template_name
 
     template_dir = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
@@ -1199,6 +1211,11 @@ def main():
 
     if not os.path.exists(reference_config):
         die("Config reference file %r not found." % reference_config)
+
+    ## config file may lookup for templates relative to the toplevel
+    ## of git repository
+    os.chdir(repository.toplevel)
+
     config = load_config_file(
         os.path.expanduser(changelogrc),
         default_filename=reference_config,

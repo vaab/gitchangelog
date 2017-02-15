@@ -222,11 +222,27 @@ Mustache
 
 The ``mustache``  output engine uses `mustache templates`_.
 
-The `mustache`_ templates for ``gitchangelog`` are located in
-``templates/mustache`` and are powered via `pystache`_ the python
+The `mustache`_ templates are powered via `pystache`_ the python
 implementation of the `mustache`_ specifications. So `mustache`_ output engine
 will only be available if you have `pystache`_ module available in your python
 environment.
+
+There are `mustache templates`_ bundled with the default installation
+of gitchangelog. These can be called by providing a simple label to the
+``mustache(..)`` output_engine, for instance (in your ``.gitchangelog.rc``)::
+
+    output_engine = mustache("markdown")
+
+Or you could provide your own mustache template by specifying an absolute
+path (or a relative one, starting from the git toplevel of your project) to
+your template file, for instance::
+
+    output_engine = mustache(".gitchangelog.tpl")
+
+And feel free to copy the bundled templates to use them as bases for your
+own variations. These are located in ``src/gitchangelog/templates/mustache``
+directory in the source and are installed in ``templates/mustache`` directory
+starting from where your ``gitchangelog.py`` was installed.
 
 .. _mustache: http://mustache.github.io
 .. _pystache: https://pypi.python.org/pypi/pystache
@@ -236,10 +252,27 @@ environment.
 Mako
 ~~~~
 
-The ``makotemplate`` output engine templates for ``gitchangelog`` are located in
-``templates/mako`` and are powered via `mako`_ python templating system. So
-`mako`_ output engine will only be available if you have `mako`_ module
-available in your python environment.
+The ``makotemplate`` output engine templates for ``gitchangelog`` are
+powered via `mako`_ python templating system. So `mako`_ output engine
+will only be available if you have `mako`_ module available in your
+python environment.
+
+There are `mako`_ templates bundled with the default installation
+of gitchangelog. These can be called by providing a simple label to the
+``makotemplate(..)`` output_engine, for instance (in your ``.gitchangelog.rc``)::
+
+    output_engine = makotemplate("markdown")
+
+Or you could provide your own mako template by specifying an absolute
+path (or a relative one, starting from the git toplevel of your project) to
+your template file, for instance::
+
+    output_engine = makotemplate(".gitchangelog.tpl")
+
+And feel free to copy the bundled templates to use them as bases for your
+own variations. These are located in ``src/gitchangelog/templates/mako``
+directory in the source and are installed in ``templates/mako`` directory
+starting from where your ``gitchangelog.py`` was installed.
 
 .. _mako: http://www.makotemplates.org
 
