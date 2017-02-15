@@ -17,5 +17,5 @@ init:
 build: false  ## Not a C# project, build stuff at the test step instead.
 
 test_script:
-  - "python src\\gitchangelog\\gitchangelog.py"
+  - "python src\\gitchangelog\\gitchangelog.py --debug"
 
