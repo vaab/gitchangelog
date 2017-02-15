@@ -736,8 +736,8 @@ def ensure_template_file_exists(label, template_name):
         if len(templates) > 0:
             msg = ("These are the available %s templates:" % label)
             msg += "\n - " + \
-                  "\n - ".join(os.path.basename(f).split(".")[0]
-                               for f in templates)
+                   "\n - ".join(os.path.basename(f).split(".")[0]
+                                for f in templates)
             msg += "\nTemplates are located in %r" % template_dir
         else:
             msg = "No available %s templates found in %r." \
