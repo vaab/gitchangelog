@@ -794,8 +794,8 @@ def rest_py(data, opts={}):
     return (((rest_title(data["title"], char="=") + "\n\n")
              if data["title"] else "") +
             "\n\n".join(render_version(version)
-                      for version in data["versions"]
-                      if len(version["sections"]) > 0)) + "\n\n"
+                        for version in data["versions"]
+                        if len(version["sections"]) > 0)) + "\n\n"
 
 ## formatter engines
 
@@ -828,7 +828,7 @@ if pystache:
                 for section in version["sections"]:
                     section["label_chars"] = list(section["label"])
                     section["display_label"] = \
-                        not (section["label"] == "Other" and \
+                        not (section["label"] == "Other" and
                              len(version["sections"]) == 1)
                     for commit in section["commits"]:
                         commit["body_indented"] = indent(commit["body"])
@@ -904,9 +904,9 @@ def changelog(repository, revlist=None,
     :param revlist: list of strings that git log understands as revlist
     :param ignore_regexps: list of regexp identifying ignored commit messages
     :param section_regexps: regexps identifying sections
-    :param tag_filter_regexp: regexp to match tags used as version
     :param unreleased_version_label: version label for untagged commits
-    :param template_format: format of template to generate the changelog
+    :param tag_filter_regexp: regexp to match tags used as version
+    :param output_engine: callable to render the changelog data
     :param include_merge: whether to include merge commits in the log or not
     :param body_process: text processing object to apply to body
     :param subject_process: text processing object to apply to subject
@@ -919,7 +919,7 @@ def changelog(repository, revlist=None,
 
     opts = {
         'unreleased_version_label': unreleased_version_label,
-        }
+    }
 
     ## Setting main container of changelog elements
     title = None if revlist else "Changelog"
@@ -943,15 +943,16 @@ def changelog(repository, revlist=None,
 
     if not tags:
         warn("no tag %sname matching tag_filter_regexp %r."
-            % ("contained in revlist %r with " %  " ".join(revlist)
-               if revlist else "",
-               tag_filter_regexp))
+             % ("contained in revlist %r with " %  " ".join(revlist)
+                if revlist else "",
+                tag_filter_regexp))
 
     tags.append(repository.commit("HEAD"))
 
     if revlist:
-        max_rev = repository.commit(swrap("git rev-list -n 1 %s"
-                             % " ".join(revlist))) if revlist else None
+        max_rev = repository.commit(swrap(
+            "git rev-list -n 1 %s"
+            % " ".join(revlist))) if revlist else None
         new_tags = []
         for tag in tags:
             if max_rev < tag:
@@ -1005,7 +1006,6 @@ def changelog(repository, revlist=None,
     if not changelog["versions"]:
         warn("Empty changelog. No commits were elected to be used as entry.")
 
-
     return output_engine(data=changelog, opts=opts)
 
 ##
@@ -1013,6 +1013,7 @@ def changelog(repository, revlist=None,
 ##
 
 _obsolete_options_managers = []
+
 
 def obsolete_option_manager(fun):
     _obsolete_options_managers.append(fun)
@@ -1048,6 +1049,7 @@ def obsolete_body_split_regexp(config):
 def manage_obsolete_options(config):
     for man in _obsolete_options_managers:
         man(config)
+
 
 ##
 ## Command line parsing
@@ -1110,7 +1112,6 @@ def parse_cmd_line(usage, description, epilog, exname, version):
 ##
 ## Main
 ##
-
 
 def main():
 
@@ -1181,7 +1182,7 @@ def main():
         (True, lambda: os.environ.get('GITCHANGELOG_CONFIG_FILENAME')),
         (True, lambda: gc_rc),
         (False, lambda: ('%s/.%s.rc' % (repository.toplevel, basename)) \
-                 if not repository.bare else None),
+                        if not repository.bare else None),
         ## Removed to enforce per-repository gitchangelog file.
         # (False, lambda: os.path.expanduser('~/.%s.rc' % basename)),
         # (False, lambda: '/etc/%s.rc' % basename),
@@ -1258,14 +1259,10 @@ def main():
     else:
         print(content.encode(_preferred_encoding))
 
+
 ##
 ## Launch program
 ##
 
 if __name__ == "__main__":
-
-    # import doctest
-    # doctest.testmod()
-    # sys.exit(1)
-
     main()
