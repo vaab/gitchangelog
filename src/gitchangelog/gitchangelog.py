@@ -1145,6 +1145,8 @@ def main():
     try:
         repository = GitRepos(".")
     except EnvironmentError as e:
+        if DEBUG:
+            raise
         try:
             die(str(e))
         except Exception as e2:
