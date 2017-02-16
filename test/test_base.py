@@ -650,6 +650,58 @@ EOF
             msg="The error message should mention 'restructuredtext'. "
             "Current stderr:\n%s" % err)
 
+    def test_template_as_access_to_full_commit(self):
+        """Existing files should be accepted as valid templates"""
+
+        w("""
+             cat <<'EOF' > mytemplate.tpl
+% for version in data["versions"]:
+${version["tag"]}
+% for section in version["sections"]:
+  ${section["label"]}:
+% for commit in section["commits"]:
+    - ${commit["commit"].subject}
+% endfor
+% endfor
+% endfor
+EOF
+             cat <<EOF > .gitchangelog.rc
+
+output_engine = makotemplate('mytemplate.tpl')
+
+EOF
+        """)
+
+        reference = """\
+None
+  Changes:
+    - chg: modified ``b`` XXX
+0.0.3
+  New:
+    - new: add file ``e``, modified ``b``
+    - new: add file ``c``
+0.0.2
+  Other:
+    - add ``b`` with non-ascii chars \xe9\xe8\xe0\xe2\xa7\xb5 and HTML chars ``&<``
+
+"""
+
+        out, err, errlvl = cmd('$tprog')
+        self.assertEqual(
+            err, "",
+            msg="There should be non error messages. "
+            "Current stderr:\n%s" % err)
+        self.assertEqual(
+            errlvl, 0,
+            msg="Should succeed to find template")
+        self.assertEqual(
+            out, reference,
+            msg="Mako output should match our reference output... "
+            "diff of changelogs:\n%s"
+            % '\n'.join(difflib.unified_diff(reference.split("\n"),
+                                             out.split("\n"),
+                                             lineterm="")))
+
 
 class TestInitArgument(BaseGitReposTest):
 
