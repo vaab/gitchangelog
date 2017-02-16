@@ -12,7 +12,6 @@ import glob
 import textwrap
 import datetime
 import collections
-import itertools
 import traceback
 
 from subprocess import Popen, PIPE
@@ -31,11 +30,6 @@ except ImportError:  ## pragma: no cover
     mako = None
 
 PY3 = sys.version_info[0] >= 3
-
-if PY3:
-    imap = map
-else:  ## pragma: no cover
-    imap = itertools.imap
 
 WIN32 = sys.platform == 'win32'
 if WIN32:
@@ -266,17 +260,7 @@ for label in ("Indent", "Wrap", "ReSub", "noop", "final_dot",
 ##
 
 _preferred_encoding = locale.getpreferredencoding()
-
-
-def itermap(fun):
-
-    def _new(orig_iter_method):
-
-        def new_iter_method(*arg, **kwargs):
-            return imap(
-                fun, orig_iter_method(*arg, **kwargs))
-        return new_iter_method
-    return _new
+DEFAULT_GIT_LOG_ENCODING = 'utf-8'
 
 
 class Phile(object):
@@ -322,11 +306,11 @@ class Phile(object):
 
     """
 
-    def __init__(self, file, buffersize=4096):
+    def __init__(self, file, buffersize=4096, encoding=_preferred_encoding):
         self._file = file
         self._buffersize = buffersize
+        self._encoding = encoding
 
-    @itermap(lambda r: r.decode(_preferred_encoding))
     def read(self, delimiter="\n"):
         buf = ""
         if PY3:
@@ -335,17 +319,17 @@ class Phile(object):
         while True:
             chunk = self._file.read(self._buffersize)
             if not chunk:
-                yield buf
+                yield buf.decode(self._encoding)
                 raise StopIteration
             records = chunk.split(delimiter)
             records[0] = buf + records[0]
             for record in records[:-1]:
-                yield record
+                yield record.decode(self._encoding)
             buf = records[-1]
 
     def write(self, buf):
         if PY3:
-            buf = buf.encode(_preferred_encoding)
+            buf = buf.encode(self._encoding)
         return self._file.write(buf)
 
     def close(self):
@@ -354,16 +338,16 @@ class Phile(object):
 
 class Proc(Popen):
 
-    def __init__(self, command, env=None):
+    def __init__(self, command, env=None, encoding=_preferred_encoding):
         super(Proc, self).__init__(
             command, shell=True,
             stdin=PIPE, stdout=PIPE, stderr=PIPE,
             close_fds=PLT_CFG['close_fds'], env=env,
             universal_newlines=False)
 
-        self.stdin = Phile(self.stdin)
-        self.stdout = Phile(self.stdout)
-        self.stderr = Phile(self.stderr)
+        self.stdin = Phile(self.stdin, encoding=encoding)
+        self.stdout = Phile(self.stdout, encoding=encoding)
+        self.stderr = Phile(self.stderr, encoding=encoding)
 
 
 def cmd(command, env=None):
@@ -684,7 +668,8 @@ class GitRepos(object):
         return sorted([self.commit(tag) for tag in tags if tag != ''],
                       key=lambda x: int(x.committer_date_timestamp))
 
-    def log(self, includes=["HEAD", ], excludes=[], include_merge=True):
+    def log(self, includes=["HEAD", ], excludes=[], include_merge=True,
+            encoding=_preferred_encoding):
         """Reverse chronological list of git repository's commits
 
         Note: rev lists can be GitCommit instance list or identifier list.
@@ -701,7 +686,8 @@ class GitRepos(object):
         ## --topo-order: don't mix commits from separate branches.
         plog = Proc("git log --stdin -z --topo-order --pretty=format:%s %s --"
                     % (GIT_FULL_FORMAT_STRING,
-                       '--no-merges' if not include_merge else ''))
+                       '--no-merges' if not include_merge else ''),
+                    encoding=encoding)
         for ref in refs["includes"]:
             plog.stdin.write("%s\n" % ref.sha1)
 
@@ -904,6 +890,7 @@ def changelog(repository, revlist=None,
               include_merge=True,
               body_process=lambda x: x,
               subject_process=lambda x: x,
+              log_encoding=DEFAULT_GIT_LOG_ENCODING,
               warn=warn,        ## Mostly used for test
               ):
     """Returns a string containing the changelog of given repository
@@ -923,6 +910,7 @@ def changelog(repository, revlist=None,
     :param include_merge: whether to include merge commits in the log or not
     :param body_process: text processing object to apply to body
     :param subject_process: text processing object to apply to subject
+    :param log_encoding: the encoding used in git logs
 
     :returns: content of changelog
 
@@ -988,7 +976,8 @@ def changelog(repository, revlist=None,
         commits = repository.log(
             includes=[tag],
             excludes=tags[idx + 1:] + excludes,
-            include_merge=include_merge)
+            include_merge=include_merge,
+            encoding=log_encoding)
 
         for commit in commits:
             if any(re.search(pattern, commit.subject) is not None
@@ -1214,6 +1203,20 @@ def main():
         default_filename=reference_config,
         fail_if_not_present=False)
 
+    log_encoding = config.get("log_encoding", None)
+    if log_encoding is None:
+        try:
+            log_encoding = repository.config.get("i18n.logOuputEncoding")
+        except ShellError as e:
+            stderr(
+                "Error parsing git config: %s."
+                " Won't be able to read 'rc-path' if defined."
+                % (str(e)))
+            gc_rc = None
+
+    ## Final defaults coming from git defaults
+    log_encoding = log_encoding or DEFAULT_GIT_LOG_ENCODING
+
     manage_obsolete_options(config)
 
     try:
@@ -1227,6 +1230,7 @@ def main():
             include_merge=config.get("include_merge", True),
             body_process=config.get("body_process", noop),
             subject_process=config.get("subject_process", noop),
+            log_encoding=log_encoding,
         )
     except KeyboardInterrupt:
         if DEBUG:
