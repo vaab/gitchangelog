@@ -19,4 +19,5 @@ build: false  ## Not a C# project, build stuff at the test step instead.
 
 test_script:
   - "python src\\gitchangelog\\gitchangelog.py --debug"
+  - "python src\\gitchangelog\\gitchangelog.py --debug show HEAD^^..HEAD"
 

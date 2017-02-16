@@ -362,8 +362,8 @@ def cmd(command, env=None):
               close_fds=PLT_CFG['close_fds'], env=env,
               universal_newlines=False)
     stdout, stderr = p.communicate()
-    return (stdout.decode(locale.getpreferredencoding()),
-            stderr.decode(locale.getpreferredencoding()),
+    return (stdout.decode(_preferred_encoding),
+            stderr.decode(_preferred_encoding),
             p.returncode)
 
 
@@ -632,8 +632,12 @@ class GitCommit(SubGitObjectMixin):
     def __le__(self, value):
         if not isinstance(value, GitCommit):
             value = self._repos.commit(value)
-        return self.swrap("git merge-base --is-ancestor '%s' '%s'; echo $?"
-                          % (self.sha1, value.sha1)) == "0"
+        try:
+            self.swrap("git merge-base --is-ancestor '%s' '%s'"
+                       % (self.sha1, value.sha1))
+            return True
+        except ShellError:
+            return False
 
     def __lt__(self, value):
         if not isinstance(value, GitCommit):
