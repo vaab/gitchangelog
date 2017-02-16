@@ -18,7 +18,6 @@ from subprocess import Popen, PIPE
 
 __version__ = "%%version%%"  ## replaced by autogen.sh
 
-
 try:
     import pystache
 except ImportError:  ## pragma: no cover
