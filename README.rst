@@ -2,19 +2,23 @@
 gitchangelog
 ============
 
-.. image:: http://img.shields.io/pypi/v/gitchangelog.svg?style=flat
+.. image:: https://img.shields.io/pypi/v/gitchangelog.svg?style=flat
    :target: https://pypi.python.org/pypi/gitchangelog/
    :alt: Latest PyPI version
 
-.. image:: http://img.shields.io/pypi/dm/gitchangelog.svg?style=flat
+.. image:: https://img.shields.io/pypi/dm/gitchangelog.svg?style=flat
    :target: https://pypi.python.org/pypi/gitchangelog/
    :alt: Number of PyPI downloads
 
-.. image:: http://img.shields.io/travis/vaab/gitchangelog/master.svg?style=flat
+.. image:: https://img.shields.io/travis/vaab/gitchangelog/master.svg?style=flat
    :target: https://travis-ci.org/vaab/gitchangelog/
    :alt: Travis CI build status
 
-.. image:: http://img.shields.io/coveralls/vaab/gitchangelog/master.svg?style=flat
+.. image:: https://img.shields.io/appveyor/ci/vaab/gitchangelog.svg
+   :target: https://ci.appveyor.com/project/vaab/gitchangelog/branch/master
+   :alt: Appveyor CI build status
+
+.. image:: https://img.shields.io/coveralls/vaab/gitchangelog/master.svg?style=flat
    :target: https://coveralls.io/r/vaab/gitchangelog
    :alt: Test coverage
 
