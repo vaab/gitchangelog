@@ -29,7 +29,8 @@ try:
 except ImportError:  ## pragma: no cover
     mako = None
 
-PY3 = sys.version_info[0] >= 3
+PY_VERSION = float("%d.%d" % sys.version_info[0:2])
+PY3 = PY_VERSION >= 3
 
 WIN32 = sys.platform == 'win32'
 if WIN32:
@@ -259,7 +260,12 @@ for label in ("Indent", "Wrap", "ReSub", "noop", "final_dot",
 ## System functions
 ##
 
-_preferred_encoding = locale.getpreferredencoding()
+## Note that locale.getpreferredencoding() does NOT follow
+## PYTHONIOENCODING by default. But ``sys.stdout.encoding``
+## does. In PY2, however, if _preferred_encoding is not
+## set to utf-8, it leads to encoding errors.
+_preferred_encoding = os.environ.get("PYTHONIOENCODING") or \
+                      locale.getpreferredencoding()
 DEFAULT_GIT_LOG_ENCODING = 'utf-8'
 
 
@@ -1378,11 +1384,25 @@ def main():
                    (debug_varname, ))
         exit(255)
 
-    if PY3:
-        print(content)
-    else:
-        print(content.encode(_preferred_encoding))
+    try:
+        print(content if PY3 else content.encode(_preferred_encoding))
+    except UnicodeEncodeError:
+        if DEBUG:
+            raise
+        stderr("""\
+UnicodeEncodeError:
+  There was a problem outputing the resulting changelog to your console.
 
+  This probably means that the changelog contains characters that can't
+  be translated to characters in your current charset (%s).
+""" % sys.stdout.encoding)
+        if WIN32 and PY_VERSION < 3.6 and sys.stdout.encoding != 'utf-8':
+            ## As of PY 3.6, encoding is now ``utf-8`` regardless of
+            ## PYTHONIOENCODING
+            ## https://www.python.org/dev/peps/pep-0528/
+            stderr("  You might want to try to fix that by setting "
+                   "PYTHONIOENCODING to 'utf-8'.")
+        exit(1)
 
 ##
 ## Launch program

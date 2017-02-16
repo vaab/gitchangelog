@@ -12,6 +12,7 @@ environment:
 
 init:
   - set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
+  - set PYTHONIOENCODING=utf-8
   - python -V
 
 build: false  ## Not a C# project, build stuff at the test step instead.
