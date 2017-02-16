@@ -431,18 +431,111 @@ GIT_FORMAT_KEYS = {
 
 GIT_FULL_FORMAT_STRING = "%x00".join(GIT_FORMAT_KEYS.values())
 
+REGEX_RFC822_KEY_VALUE = r'(^|\n)(?P<key>[A-Z]\w+(-\w+)*): (?P<value>[^\n]*(\n\s+[^\n]*)*)'
+REGEX_RFC822_POSTFIX = r'(%s)+$' % REGEX_RFC822_KEY_VALUE
+
 
 class GitCommit(SubGitObjectMixin):
+    r"""Represent a Git Commit and expose through its attribute many information
+
+    Let's create a fake GitRepos:
+
+        >>> from minimock import Mock
+        >>> repos = Mock("gitRepos")
+
+    Initialization:
+
+        >>> def mock_swrap(str):
+        ...     global BODY, SUBJECT
+        ...     print("Called gitRepos.swrap(%r)" % str)
+        ...     if str.startswith("git rev-list"):
+        ...         return "123456"  ## sha1 of first element of tree
+        ...     elif str.startswith("git log"):
+        ...         dct = {
+        ...             'sha1': "000000",
+        ...             'subject': SUBJECT,
+        ...             'author_name': "John Smith",
+        ...             'author_date': "Tue Feb 14 20:31:22 2017 +0700",
+        ...             'author_email': "john.smith@example.com",
+        ...             'author_date_timestamp': "0",   ## epoch
+        ...             'committer_name': "Alice Wang",
+        ...             'committer_date_timestamp': "0", ## epoch
+        ...             'raw_body': "my subject\n\n%s" % BODY,
+        ...             'body': BODY,
+        ...         }
+        ...         return "\x00".join([dct[key] for key in GIT_FORMAT_KEYS.keys()])
+        ...     raise NotImplementedError()
+        ...
+        >>> repos.swrap = mock_swrap
+
+    Query, by attributes or items:
+
+        >>> SUBJECT = "fee fie foh"
+        >>> BODY = "foo foo foo"
+
+        >>> head = GitCommit(repos, "HEAD")
+        >>> head.subject
+        Called gitRepos.swrap('git log -n 1 HEAD --pretty=format:...')
+        'fee fie foh'
+        >>> head.author_name
+        'John Smith'
+
+    Notice that on the second call, there's no need to call again git log as
+    all the values have already been computed.
+
+    Trailer
+    =======
+
+    ``GitCommit`` offers a simple direct API to trailer values. These
+    are like RFC822's header value but are at the end of body:
+
+        >>> BODY = '''\
+        ... Stuff in the body
+        ... Change-id: 1234
+        ... Value-X: Supports multi
+        ...   line values'''
+
+        >>> head = GitCommit(repos, "HEAD")
+        >>> head.trailer_change_id
+        Called gitRepos.swrap('git log -n 1 HEAD --pretty=format:...')
+        '1234'
+        >>> head.trailer_value_x
+        'Supports multi\nline values'
+
+    Notice how the multi-line value was unindented.
+    In case of multiple values, these are concatened in lists:
+
+        >>> BODY = '''\
+        ... Stuff in the body
+        ... Co-Authored-By: Bob
+        ... Co-Authored-By: Alice
+        ... Co-Authored-By: Jack
+        ... '''
+
+        >>> head = GitCommit(repos, "HEAD")
+        >>> head.trailer_co_authored_by
+        Called gitRepos.swrap('git log -n 1 HEAD --pretty=format:...')
+        ['Bob', 'Alice', 'Jack']
+
+    """
 
     def __init__(self, repos, identifier):
         super(GitCommit, self).__init__(repos)
         self.identifier = identifier
+        self._trailer_parsed = False
 
     def __getattr__(self, label):
         """Completes commits attributes upon request."""
         attrs = GIT_FORMAT_KEYS.keys()
         if label not in attrs:
-            return super(GitCommit, self).__getattr__(label)
+            try:
+                return self.__dict__[label]
+            except KeyError:
+                if self._trailer_parsed:
+                    raise AttributeError(label)
+                ## let's force the reading of all data from the commit
+                ## to look through body for additional RFC822's header keys
+                pass
 
         identifier = self.identifier
         if identifier == "LAST":
@@ -451,17 +544,45 @@ class GitCommit(SubGitObjectMixin):
 
         ## Compute only missing information
         missing_attrs = [l for l in attrs if not l in self.__dict__]
-        aformat = "%x00".join(GIT_FORMAT_KEYS[l]
-                              for l in missing_attrs)
-        try:
-            ret = self.swrap("git log -n 1 %s --pretty=format:%s --"
-                             % (identifier, aformat))
-        except ShellError:
-            raise ValueError("Given commit identifier %s doesn't exists"
-                             % self.identifier)
-        attr_values = ret.split("\x00")
-        for attr, value in zip(missing_attrs, attr_values):
-            setattr(self, attr, value.strip())
+        ## some commit can be already fully specified (see ``mk_commit``)
+        if missing_attrs:
+            aformat = "%x00".join(GIT_FORMAT_KEYS[l]
+                                  for l in missing_attrs)
+            try:
+                ret = self.swrap("git log -n 1 %s --pretty=format:%s --"
+                                 % (identifier, aformat))
+            except ShellError:
+                raise ValueError("Given commit identifier %s doesn't exists"
+                                 % self.identifier)
+            attr_values = ret.split("\x00")
+            for attr, value in zip(missing_attrs, attr_values):
+                setattr(self, attr, value.strip())
+
+        ## Let's interpret RFC822-like header keys that could be in the body
+        match = re.search(REGEX_RFC822_POSTFIX, self.body)
+        if match is not None:
+            pos = match.start()
+            postfix = self.body[pos:]
+            self.body = self.body[:pos]
+            if postfix:
+                for match in re.finditer(REGEX_RFC822_KEY_VALUE, postfix):
+                    dct = match.groupdict()
+                    key = dct["key"].replace("-", "_").lower()
+                    if "\n" in dct["value"]:
+                        first_line, remaining = dct["value"].split('\n', 1)
+                        value = "%s\n%s" % (first_line, textwrap.dedent(remaining))
+                    else:
+                        value = dct["value"]
+                    try:
+                        prev_value = self.__dict__["trailer_%s" % key]
+                    except KeyError:
+                        setattr(self, "trailer_%s" % key, value)
+                    else:
+                        setattr(self, "trailer_%s" % key,
+                                prev_value + [value, ]
+                                if isinstance(prev_value, list)
+                                else [prev_value, value, ])
+        self._trailer_parsed = True
         return getattr(self, label)
 
     @property
