@@ -23,7 +23,7 @@ class GitChangelogTest(BaseGitReposTest):
 
 Changes
 ~~~~~~~
-- Modified ``b`` XXX. [Alice]
+- Modified ``b`` XXX. [Alice, Charly, Juliet]
 
 
 0.0.3 (2000-01-05)
@@ -127,7 +127,11 @@ Subject: This is a fake subject spanning to several lines
 
             ## Add untagged commits
             echo 'addition' >> b
-            git commit -am 'chg: modified ``b`` XXX' \
+            git commit -am 'chg: modified ``b`` XXX
+
+Co-Authored-By: Juliet <juliet@example.com>
+Co-Authored-By: Charly <charly@example.com>
+' \
                 --author 'Alice <alice@example.com>' \
                 --date '2000-01-06 11:00:00'
 

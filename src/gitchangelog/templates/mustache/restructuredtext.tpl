@@ -14,7 +14,7 @@
 {{#label_chars}}~{{/label_chars}}
 {{/display_label}}
 {{#commits}}
-- {{{subject}}} [{{{author}}}]
+- {{{subject}}} [{{{author_names_joined}}}]
 
 {{#body}}
 {{{body_indented}}}

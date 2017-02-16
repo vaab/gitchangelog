@@ -427,6 +427,7 @@ GIT_FORMAT_KEYS = {
     'sha1': "%H",
     'subject': "%s",
     'author_name': "%an",
+    'author_email': "%ae",
     'author_date': "%ad",
     'author_date_timestamp': "%at",
     'committer_name': "%cn",
@@ -523,6 +524,26 @@ class GitCommit(SubGitObjectMixin):
         Called gitRepos.swrap('git log -n 1 HEAD --pretty=format:...')
         ['Bob', 'Alice', 'Jack']
 
+    Special values
+    ==============
+
+    Authors
+    -------
+
+        >>> BODY = '''\
+        ... Stuff in the body
+        ... Co-Authored-By: Bob
+        ... Co-Authored-By: Alice
+        ... Co-Authored-By: Jack
+        ... '''
+
+        >>> head = GitCommit(repos, "HEAD")
+        >>> head.author_names
+        Called gitRepos.swrap('git log -n 1 HEAD --pretty=format:...')
+        ['Alice', 'Bob', 'Jack', 'John Smith']
+
+    Notice that they are printed in alphabetical order.
+
     """
 
     def __init__(self, repos, identifier):
@@ -590,6 +611,17 @@ class GitCommit(SubGitObjectMixin):
                                 else [prev_value, value, ])
         self._trailer_parsed = True
         return getattr(self, label)
+
+    @property
+    def author_names(self):
+        return [re.sub(r'^([^<]+)<[^>]+>\s*$', r'\1', author).strip()
+                for author in self.authors]
+
+    @property
+    def authors(self):
+        co_authors = getattr(self, 'trailer_co_authored_by', [])
+        co_authors = co_authors if isinstance(co_authors, list) else [co_authors]
+        return sorted(co_authors + ["%s <%s>" % (self.author_name, self.author_email)])
 
     @property
     def date(self):
@@ -907,7 +939,7 @@ def rest_py(data, opts={}):
 
     def render_commit(commit, opts=opts):
         subject = commit["subject"]
-        subject += " [%s]" % (commit["author"], )
+        subject += " [%s]" % (", ".join(commit["authors"]), )
 
         entry = indent('\n'.join(textwrap.wrap(subject)),
                        first="- ").strip() + "\n"
@@ -958,6 +990,8 @@ if pystache:
                         not (section["label"] == "Other" and
                              len(version["sections"]) == 1)
                     for commit in section["commits"]:
+                        commit["author_names_joined"] = ", ".join(
+                            commit["authors"])
                         commit["body_indented"] = indent(commit["body"])
 
             return pystache.render(template, data)
@@ -1118,6 +1152,7 @@ def changelog(repository, revlist=None,
 
             sections[matched_section].append({
                 "author": commit.author_name,
+                "authors": commit.author_names,
                 "subject": subject_process(commit.subject),
                 "body": body_process(commit.body),
                 "commit": commit,

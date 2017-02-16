@@ -39,6 +39,7 @@ Feature
 - support your merge or rebase workflows and complicated git histories
 - support full or incremental changelog generation to match your needs.
 - support easy access to `trailers key values`_ (if you use them)
+- support of multi-authors for one commit through ``Co-Authored-By`` `trailers key values`_
 
 .. _trailers key values: https://git.wiki.kernel.org/index.php/CommitMessageConventions
 
