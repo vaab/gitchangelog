@@ -114,20 +114,10 @@ class BaseGitReposTest(BaseTmpDirTest):
 
     def setUp(self):
         super(BaseGitReposTest, self).setUp()
-        w(r"""
-
-            ## Creating repository
-            mkdir repos
-            cd repos
-            git init .
-
-            git config user.email "committer@example.com"
-            git config user.name "The Committer"
-
-        """)
-        os.chdir("repos")
-
-        self.repos = gitchangelog.GitRepos(os.getcwd())
+        self.repos = gitchangelog.GitRepos.create(
+            "repos",
+            email="committer@example.com",
+            user="The Committer")
 
     @property
     def raw_changelog(self):

@@ -13,6 +13,8 @@ import textwrap
 import datetime
 import collections
 import traceback
+import contextlib
+
 
 from subprocess import Popen, PIPE
 
@@ -27,6 +29,8 @@ try:
     import mako
 except ImportError:  ## pragma: no cover
     mako = None
+
+DEBUG = None
 
 PY_VERSION = float("%d.%d" % sys.version_info[0:2])
 PY3 = PY_VERSION >= 3
@@ -89,6 +93,16 @@ def die(msg=None, errlvl=1):
     if msg:
         stderr(msg)
     sys.exit(errlvl)
+
+
+@contextlib.contextmanager
+def set_cwd(dir):
+    curdir = os.getcwd()
+    os.chdir(dir)
+    try:
+        yield
+    finally:
+        os.chdir(curdir)
 
 
 def format_last_exception(prefix="  | "):
@@ -794,6 +808,21 @@ class GitRepos(object):
         self.gitdir = normpath(
             os.path.join(self._orig_path,
                          self.swrap("git rev-parse --git-dir")))
+
+    @classmethod
+    def create(cls, dir, *args, **kwargs):
+        os.mkdir(dir)
+        return cls.init(dir, *args, **kwargs)
+
+    @classmethod
+    def init(cls, dir, user=None, email=None):
+        with set_cwd(dir):
+            wrap("git init .")
+            if user:
+                wrap("git config user.email '%s'" % user)
+            if email:
+                wrap("git config user.name '%s'" % user)
+        return cls(dir)
 
     def commit(self, identifier):
         return GitCommit(self, identifier)
