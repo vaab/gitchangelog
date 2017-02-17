@@ -178,7 +178,7 @@ Configuration file format
 The `reference configuration file`_ is quite heavily commented and is quite
 simple.  You should be able to use it as required.
 
-.. _reference configuration file: http://github.com/vaab/gitchangelog/blob/master/gitchangelog.rc.reference
+.. _reference configuration file: https://github.com/vaab/gitchangelog/blob/master/src/gitchangelog/gitchangelog.rc.reference
 
 The changelog of gitchangelog is generated with himself and with the reference
 configuration file. You'll see the output in the `changelog of the PyPI page`_.
