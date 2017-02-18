@@ -952,6 +952,7 @@ def ensure_template_file_exists(label, template_name):
 
     return template_path
 
+
 ##
 ## Output Engines
 ##
@@ -1096,7 +1097,7 @@ else:
 
 def versions_data_iter(repository, revlist=None,
                        ignore_regexps=[],
-                       section_regexps=[(None,'')],
+                       section_regexps=[(None, '')],
                        tag_filter_regexp=r"\d+\.\d+(\.\d+)?",
                        include_merge=True,
                        body_process=lambda x: x,
@@ -1132,7 +1133,8 @@ def versions_data_iter(repository, revlist=None,
                 for rev in swrap("git rev-parse --rev-only %s"
                                  % " ".join(revlist)).split("\n")
                 if rev.startswith("^")] if revlist else []
-    ## Note that ``--reverse -n 1`` still returns the first and not the last element
+    ## Note that ``--reverse -n 1`` still returns the first and not
+    ## the last element
     contains = swrap("git rev-list %s"
                      % " ".join(revlist)).split("\n")[-1] if revlist else None
 
