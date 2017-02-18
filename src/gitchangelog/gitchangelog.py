@@ -18,8 +18,6 @@ import itertools
 
 from subprocess import Popen, PIPE
 
-__version__ = "%%version%%"  ## replaced by autogen.sh
-
 try:
     import pystache
 except ImportError:  ## pragma: no cover
@@ -29,6 +27,9 @@ try:
     import mako
 except ImportError:  ## pragma: no cover
     mako = None
+
+
+__version__ = "%%version%%"  ## replaced by autogen.sh
 
 DEBUG = None
 
@@ -896,7 +897,7 @@ class GitRepos(object):
         values = plog.stdout.read("\x00")
 
         try:
-            while True:  ## values.next() will eventualy raise a StopIteration
+            while True:  ## next(values) will eventualy raise a StopIteration
                 yield mk_commit(dict([(key, next(values))
                                       for key in GIT_FORMAT_KEYS]))
         finally:
@@ -1140,7 +1141,7 @@ def versions_data_iter(repository, revlist=None,
 
     if not tags:
         warn("no tag %sname matching tag_filter_regexp %r."
-             % ("contained in revlist %r with " %  " ".join(revlist)
+             % ("contained in revlist %r with " % " ".join(revlist)
                 if revlist else "",
                 tag_filter_regexp))
 
@@ -1256,6 +1257,7 @@ _obsolete_options_managers = []
 
 def obsolete_option_manager(fun):
     _obsolete_options_managers.append(fun)
+
 
 @obsolete_option_manager
 def obsolete_replace_regexps(config):
