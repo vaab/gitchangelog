@@ -50,7 +50,6 @@ else:
 usage_msg = """
   %(exname)s {-h|--help}
   %(exname)s {-v|--version}
-  %(exname)s init               ## obsolete
   %(exname)s show [REVLIST]"""
 
 description_msg = """\
@@ -1327,8 +1326,6 @@ def parse_cmd_line(usage, description, epilog, exname, version):
 
     subparsers = parser.add_subparsers(help='commands', dest='action',
                                        prog=exname)
-    _init_parser = subparsers.add_parser(
-        'init', help='Create default config file in current repository.')
     show_parser = subparsers.add_parser(
         'show', help='Prints current changelog.',
         usage='%(exname)s show [REVLIST]' % {'exname': exname})
@@ -1394,22 +1391,6 @@ def main():
             die(str(e))
         except Exception as e2:
             die(repr(e2))
-
-    repository_config = '%s/.%s.rc' % (repository.toplevel, basename) \
-                        if not repository.bare else None
-
-    if opts.action == "init":
-        import shutil
-        if repository_config is None:
-            die("``init`` of bare repository not supported.")
-        if os.path.exists(repository_config):
-            die("File %r already exists." % repository_config)
-        if not os.path.exists(reference_config):
-            die("Reference file %r not found." % reference_config)
-        shutil.copyfile(reference_config,
-                        repository_config)
-        print("File %r created." % repository_config)
-        sys.exit(0)
 
     try:
         gc_rc = repository.config.get("gitchangelog.rc-path")
