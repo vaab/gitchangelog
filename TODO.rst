@@ -1,4 +1,0 @@
-TODO
-====
-
-- [ ] Need complete documentation
