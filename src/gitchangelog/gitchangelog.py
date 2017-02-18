@@ -439,6 +439,7 @@ class SubGitObjectMixin(object):
 
 GIT_FORMAT_KEYS = {
     'sha1': "%H",
+    'sha1_short': "%h",
     'subject': "%s",
     'author_name': "%an",
     'author_email': "%ae",
@@ -474,6 +475,7 @@ class GitCommit(SubGitObjectMixin):
         ...     elif str.startswith("git log"):
         ...         dct = {
         ...             'sha1': "000000",
+        ...             'sha1_short': "000",
         ...             'subject': SUBJECT,
         ...             'author_name': "John Smith",
         ...             'author_date': "Tue Feb 14 20:31:22 2017 +0700",
