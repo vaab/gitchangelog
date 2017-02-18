@@ -14,7 +14,7 @@ import datetime
 import collections
 import traceback
 import contextlib
-
+import itertools
 
 from subprocess import Popen, PIPE
 
@@ -994,11 +994,12 @@ def rest_py(data, opts={}):
 
         return entry
 
-    return (((rest_title(data["title"], char="=") + "\n\n")
-             if data["title"] else "") +
-            "\n\n".join(render_version(version)
-                        for version in data["versions"]
-                        if len(version["sections"]) > 0)) + "\n\n"
+    if data["title"]:
+        yield rest_title(data["title"], char="=") + "\n\n"
+
+    for version in data["versions"]:
+        if len(version["sections"]) > 0:
+            yield render_version(version) + "\n\n"
 
 ## formatter engines
 
@@ -1016,13 +1017,8 @@ if pystache:
         with open(template_path) as f:
             template = f.read()
 
-        def renderer(data, opts):
-
-            ## mustache is very simple so we need to add some intermediate
-            ## values
-            data["general_title"] = True if data["title"] else False
-            data["title_chars"] = list(data["title"]) if data["title"] else []
-            for version in data["versions"]:
+        def stuffed_versions(versions, opts):
+            for version in versions:
                 title = "%s (%s)" % (version["tag"], version["date"]) \
                         if version["tag"] else \
                         opts["unreleased_version_label"]
@@ -1037,6 +1033,16 @@ if pystache:
                         commit["author_names_joined"] = ", ".join(
                             commit["authors"])
                         commit["body_indented"] = indent(commit["body"])
+                yield version
+
+        def renderer(data, opts):
+
+            ## mustache is very simple so we need to add some intermediate
+            ## values
+            data["general_title"] = True if data["title"] else False
+            data["title_chars"] = list(data["title"]) if data["title"] else []
+
+            data["versions"] = stuffed_versions(data["versions"], opts)
 
             return pystache.render(template, data)
 
@@ -1086,22 +1092,17 @@ else:
 ## Data Structure
 ##
 
-def changelog(repository, revlist=None,
-              ignore_regexps=[],
-              section_regexps=[(None,'')],
-              unreleased_version_label="unreleased",
-              tag_filter_regexp=r"\d+\.\d+(\.\d+)?",
-              output_engine=rest_py,
-              include_merge=True,
-              body_process=lambda x: x,
-              subject_process=lambda x: x,
-              log_encoding=DEFAULT_GIT_LOG_ENCODING,
-              warn=warn,        ## Mostly used for test
-              ):
-    """Returns a string containing the changelog of given repository
-
-    This function returns a string corresponding to the template rendered with
-    the changelog data tree.
+def versions_data_iter(repository, revlist=None,
+                       ignore_regexps=[],
+                       section_regexps=[(None,'')],
+                       tag_filter_regexp=r"\d+\.\d+(\.\d+)?",
+                       include_merge=True,
+                       body_process=lambda x: x,
+                       subject_process=lambda x: x,
+                       log_encoding=DEFAULT_GIT_LOG_ENCODING,
+                       warn=warn,        ## Mostly used for test
+                       ):
+    """Returns an iterator through versions data structures
 
     (see ``gitchangelog.rc.sample`` file for more info)
 
@@ -1109,27 +1110,18 @@ def changelog(repository, revlist=None,
     :param revlist: list of strings that git log understands as revlist
     :param ignore_regexps: list of regexp identifying ignored commit messages
     :param section_regexps: regexps identifying sections
-    :param unreleased_version_label: version label for untagged commits
     :param tag_filter_regexp: regexp to match tags used as version
-    :param output_engine: callable to render the changelog data
     :param include_merge: whether to include merge commits in the log or not
     :param body_process: text processing object to apply to body
     :param subject_process: text processing object to apply to subject
     :param log_encoding: the encoding used in git logs
+    :param warn: callable to output warnings, mocked by tests
 
-    :returns: content of changelog
+    :returns: iterator of versions data_structures
 
     """
+
     revlist = revlist or []
-
-    opts = {
-        'unreleased_version_label': unreleased_version_label,
-    }
-
-    ## Setting main container of changelog elements
-    title = None if revlist else "Changelog"
-    changelog = {"title": title,
-                 "versions": []}
 
     ## Hash to speedup lookups
     versions_done = {}
@@ -1207,11 +1199,51 @@ def changelog(repository, revlist=None,
                                        for k in section_order
                                        if k in sections]
         if len(current_version["sections"]) != 0:
-            changelog["versions"].append(current_version)
+            yield current_version
         versions_done[tag] = current_version
 
-    if not changelog["versions"]:
+
+def changelog(output_engine=rest_py,
+              unreleased_version_label="unreleased",
+              warn=warn,        ## Mostly used for test
+              **kwargs):
+    """Returns a string containing the changelog of given repository
+
+    This function returns a string corresponding to the template rendered with
+    the changelog data tree.
+
+    (see ``gitchangelog.rc.sample`` file for more info)
+
+    For an exact list of arguments, see the arguments of
+    ``versions_data_iter(..)``.
+
+    :param unreleased_version_label: version label for untagged commits
+    :param output_engine: callable to render the changelog data
+    :param warn: callable to output warnings, mocked by tests
+
+    :returns: content of changelog
+
+    """
+
+    opts = {
+        'unreleased_version_label': unreleased_version_label,
+    }
+
+    ## Setting main container of changelog elements
+    title = None if kwargs.get("revlist") else "Changelog"
+    changelog = {"title": title,
+                 "versions": []}
+
+    versions = versions_data_iter(warn=warn, **kwargs)
+
+    ## poke once in versions to know if there's at least one:
+    try:
+        first_version = next(versions)
+    except StopIteration:
         warn("Empty changelog. No commits were elected to be used as entry.")
+        changelog["versions"] = []
+    else:
+        changelog["versions"] = itertools.chain([first_version], versions)
 
     return output_engine(data=changelog, opts=opts)
 
@@ -1436,7 +1468,7 @@ def main():
 
     try:
         content = changelog(
-            repository, opts.revlist,
+            repository=repository, revlist=opts.revlist,
             ignore_regexps=config['ignore_regexps'],
             section_regexps=config['section_regexps'],
             unreleased_version_label=config['unreleased_version_label'],
@@ -1468,8 +1500,14 @@ def main():
                    (debug_varname, ))
         exit(255)
 
+    compat_encode = lambda str: str if PY3 else str.encode(_preferred_encoding)
+
     try:
-        print(content if PY3 else content.encode(_preferred_encoding))
+        if isinstance(content, collections.Iterator):
+            for chunk in content:
+                print(compat_encode(chunk), end='')
+        else:
+            print(compat_encode(content), end='')
     except UnicodeEncodeError:
         if DEBUG:
             raise

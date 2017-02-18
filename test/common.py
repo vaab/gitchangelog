@@ -122,11 +122,11 @@ class BaseGitReposTest(BaseTmpDirTest):
     @property
     def raw_changelog(self):
         ## Currifyed main function
-        return lambda *a, **kw: gitchangelog.changelog(
-            self.repos, *a, output_engine=raw_renderer, **kw)
+        return lambda **kw: gitchangelog.changelog(
+            repository=self.repos, output_engine=raw_renderer, **kw)
 
     @property
     def simple_changelog(self):
         ## Currifyed main function
-        return lambda *a, **kw: gitchangelog.changelog(
-            self.repos, *a, output_engine=simple_renderer, **kw)
+        return lambda **kw: gitchangelog.changelog(
+            repository=self.repos, output_engine=simple_renderer, **kw)

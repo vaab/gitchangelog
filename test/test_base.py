@@ -46,7 +46,6 @@ New
 - Add ``b`` with non-ascii chars éèàâ§µ and HTML chars ``&<`` [Alice]
 
 
-
 """
 
     INCR_REFERENCE_002_003 = r"""0.0.3 (2000-01-05)
@@ -62,7 +61,6 @@ New
   - one
   - two
 - Add file ``c`` [Charly]
-
 
 
 """
@@ -669,7 +667,6 @@ EOF
         """)
 
         reference = """check: Changelog
-
 """
 
         out, err, errlvl = cmd('$tprog')
@@ -721,7 +718,6 @@ None
 0.0.2
   Other:
     - add ``b`` with non-ascii chars \xe9\xe8\xe0\xe2\xa7\xb5 and HTML chars ``&<``
-
 """
 
         out, err, errlvl = cmd('$tprog')
