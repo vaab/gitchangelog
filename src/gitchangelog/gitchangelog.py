@@ -33,6 +33,11 @@ __version__ = "%%version%%"  ## replaced by autogen.sh
 
 DEBUG = None
 
+
+##
+## Platform and python compatibility
+##
+
 PY_VERSION = float("%d.%d" % sys.version_info[0:2])
 PY3 = PY_VERSION >= 3
 
@@ -46,6 +51,10 @@ else:
         'close_fds': True,
     }
 
+
+##
+## Help and usage strings
+##
 
 usage_msg = """
   %(exname)s {-h|--help}
@@ -67,6 +76,11 @@ Config file location will be resolved in this order:
 
 """
 
+
+##
+## Shell command helper functions
+##
+
 def stderr(msg):
     print(msg, file=sys.stderr)
 
@@ -79,6 +93,12 @@ def warn(msg):
     stderr("Warning: " + msg)
 
 
+def die(msg=None, errlvl=1):
+    if msg:
+        stderr(msg)
+    sys.exit(errlvl)
+
+
 class ShellError(Exception):
 
     def __init__(self, msg, errlvl=None, command=None, out=None, err=None):
@@ -87,12 +107,6 @@ class ShellError(Exception):
         self.out = out
         self.err = err
         super(ShellError, self).__init__(msg)
-
-
-def die(msg=None, errlvl=1):
-    if msg:
-        stderr(msg)
-    sys.exit(errlvl)
 
 
 @contextlib.contextmanager
@@ -538,6 +552,7 @@ class GitCommit(SubGitObjectMixin):
         >>> head.trailer_co_authored_by
         Called gitRepos.swrap('git log -n 1 HEAD --pretty=format:...')
         ['Bob', 'Alice', 'Jack']
+
 
     Special values
     ==============
