@@ -18,6 +18,12 @@ import re
 
 from gitchangelog import gitchangelog
 
+def file_put_contents(filename, string):
+    """Write string to filename."""
+
+    with open(filename, 'w') as f:
+        f.write(string)
+
 
 def raw_renderer(data, opts):
     return data

@@ -41,6 +41,11 @@ DEBUG = None
 PY_VERSION = float("%d.%d" % sys.version_info[0:2])
 PY3 = PY_VERSION >= 3
 
+try:
+    basestring
+except NameError:
+    basestring = str
+
 WIN32 = sys.platform == 'win32'
 if WIN32:
     PLT_CFG = {
@@ -283,6 +288,62 @@ for label in ("Indent", "Wrap", "ReSub", "noop", "final_dot",
               "ucfirst", "strip"):
     _config_env[label] = locals()[label]
 
+
+def protect_rev(rev):
+    """Protect revision when used on a command line
+
+    This targets ``bash`` and ``CMD.exe``
+
+    In bash environment, interpretation of quotes is made by bash
+    itself.  On CMD, it is passed as-is (with quote) and git on
+    windows support the de-quoting.
+
+    Note that using quotes in reference is valid (at least on linux)::
+
+        $ git check-ref-format --branch "let's\"see" && echo "is valid"
+        let's"see
+        is valid
+
+    """
+    return '"%s"' % rev.replace('"', r'\"')
+
+
+##
+## Inferring revision
+##
+
+@available_in_config
+def FileFirstRegexMatch(filename, pattern):
+    def _call():
+        if not os.path.isfile(filename):
+            die("FileFirstRegexMatch: Can't open file '%s'." % filename)
+        with open(filename) as f:
+            file_content = f.read()
+
+        match = re.search(pattern, file_content)
+        if match is None:
+            warn("Regex %s did not match any substring in '%s'."
+                 % (pattern, filename))
+            return None
+        dct = match.groupdict()
+        if dct:
+            if "rev" not in dct:
+                warn("Named pattern used, but no one are named 'rev'. "
+                     "Using full match.")
+                return match.group(0)
+            if dct['rev'] is None:
+                die("Named pattern used, but it was not valued.")
+            return dct['rev']
+        return match.group(0)
+    return _call
+
+
+@available_in_config
+def Caret(l):
+    if callable(l):
+        l = l()
+    return "^%s" % l
+
 ##
 ## System functions
 ##
@@ -389,9 +450,10 @@ def cmd(command, env=None):
               close_fds=PLT_CFG['close_fds'], env=env,
               universal_newlines=False)
     stdout, stderr = p.communicate()
-    return (stdout.decode(_preferred_encoding),
-            stderr.decode(_preferred_encoding),
-            p.returncode)
+    return (
+        stdout.decode(getattr(sys.stdout, "encoding", None) or _preferred_encoding),
+        stderr.decode(getattr(sys.stderr, "encoding", None) or _preferred_encoding),
+        p.returncode)
 
 
 def wrap(command, ignore_errlvls=[0], env=None):
@@ -866,7 +928,7 @@ class GitRepos(object):
 
         """
         if contains:
-            tags = self.swrap("git tag -l --contains '%s'" % contains).split("\n")
+            tags = self.swrap("git tag -l --contains \"%s\"" % contains).split("\n")
         else:
             tags = self.swrap('git tag -l').split("\n")
         ## Should we use new version name sorting ?  refering to :
@@ -1145,13 +1207,16 @@ def versions_data_iter(repository, revlist=None,
     versions_done = {}
 
     excludes = [rev[1:]
-                for rev in swrap("git rev-parse --rev-only %s"
-                                 % " ".join(revlist)).split("\n")
+                for rev in swrap("git rev-parse --rev-only %s --"
+                                 % " ".join(protect_rev(rev)
+                                            for rev in revlist)).split("\n")
                 if rev.startswith("^")] if revlist else []
     ## Note that ``--reverse -n 1`` still returns the first and not
     ## the last element
     contains = swrap("git rev-list %s"
-                     % " ".join(revlist)).split("\n")[-1] if revlist else None
+                     % " ".join(protect_rev(rev)
+                                for rev in revlist)
+                     ).split("\n")[-1] if revlist else None
 
     tags = [tag
             for tag in repository.tags(contains=contains)
@@ -1168,7 +1233,8 @@ def versions_data_iter(repository, revlist=None,
     if revlist:
         max_rev = repository.commit(swrap(
             "git rev-list -n 1 %s"
-            % " ".join(revlist))) if revlist else None
+            % " ".join(protect_rev(rev)
+                       for rev in revlist))) if revlist else None
         new_tags = []
         for tag in tags:
             if max_rev < tag:
@@ -1366,6 +1432,40 @@ def parse_cmd_line(usage, description, epilog, exname, version):
     return parser.parse_args(argv)
 
 
+def get_revision(repository, config, opts):
+    if opts.revlist:
+        revs = opts.revlist
+    else:
+        revs = config.get("revs")
+        if revs:
+            if callable(revs):
+                revs = revs()
+            if not isinstance(revs, list):
+                die("Invalid type for 'revs' in config file. "
+                    "A 'list' type is required, and a %r was given."
+                    % type(revs).__name__)
+            revs = [rev() if callable(rev) else rev
+                    for rev in revs]
+        else:
+            revs = []
+
+    for rev in revs:
+        if not isinstance(rev, basestring):
+            die("Invalid type for revision in revs list from config file. "
+                "'str' type is required, and a %r was given."
+                % type(rev).__name__)
+        try:
+            repository.swrap("git rev-parse --rev-only %s --" % protect_rev(rev))
+        except ShellError:
+            if DEBUG:
+                raise
+            die("Revision %r is not valid." % rev)
+
+    if revs == ["HEAD", ]:
+        return []
+    return revs
+
+
 def get_log_encoding(repository, config):
 
     log_encoding = config.get("log_encoding", None)
@@ -1469,11 +1569,12 @@ def main():
         fail_if_not_present=False)
 
     log_encoding = get_log_encoding(repository, config)
+    revlist = get_revision(repository, config, opts)
     manage_obsolete_options(config)
 
     try:
         content = changelog(
-            repository=repository, revlist=opts.revlist,
+            repository=repository, revlist=revlist,
             ignore_regexps=config['ignore_regexps'],
             section_regexps=config['section_regexps'],
             unreleased_version_label=config['unreleased_version_label'],

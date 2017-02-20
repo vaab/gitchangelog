@@ -415,6 +415,28 @@ EOF
                 self.INCR_REFERENCE_002_003.split("\n"),
                 lineterm="")))
 
+    def test_incremental_call_multirev(self):
+        out, err, errlvl = cmd('$tprog show ^0.0.2 0.0.3 0.0.3')
+        self.assertEqual(
+            errlvl, 0,
+            msg="Should not fail on simple repo and without config file")
+        self.assertEqual(
+            err, "",
+            msg="There should be no standard error outputed. "
+            "Current stderr:\n%r" % err)
+        self.assertContains(
+            out, "0.0.3",
+            msg="The tag 0.0.3 should be displayed in stdout... "
+            "Current stdout:\n%s" % out)
+        self.assertEqual(
+            out, self.INCR_REFERENCE_002_003,
+            msg="Should match our reference output... "
+            "diff of changelogs:\n%s"
+            % '\n'.join(difflib.unified_diff(
+                out.split("\n"),
+                self.INCR_REFERENCE_002_003.split("\n"),
+                lineterm="")))
+
     def test_overriding_options(self):
         """We must be able to define a small gitchangelog.rc that adjust only
         one variable of all the builtin defaults."""

@@ -390,6 +390,36 @@ You can use then ``gitchangelog show REVLIST``. Examples follows::
     ## will output all tags up to 0.0.3 (included)
     gitchangelog show 0.0.3
 
+Additionally, ``gitchangelog`` can figure out which revision is the
+last for you (with some little help). This is done by specifying the
+``revs`` config option. This config file option will be used as if
+specified on the command line.
+
+Here is an example that fits the current changelog format::
+
+    revs = [
+        Caret(
+            FileFirstRegexMatch(
+    	        "CHANGELOG.rst",
+    	        r"(?P<rev>[0-9]+\.[0-9]+\.[0-9]+)\s+\([0-9]+-[0-9]{2}-[0-9]{2}\)\n--+\n\n")),
+    ]
+
+This will look into the file ``CHANGELOG.rst`` for the first match of
+the given regex and return the match of the ``rev`` regex sub-pattern
+it as a string. The ``Caret`` function will simply prefix the given
+string with a ``^``. As a consequence, this code will prevent
+recreating any previously generated changelog (more information
+about the `REVLIST syntax`_ from ``git rev-list`` arguments.)
+
+.. _REVLIST syntax: https://git-scm.com/docs/git-rev-list#_description
+
+
+Note that the data structure provided to the template will set the
+``title`` to ``None`` if you provided no REVLIST through command-line
+or the config file (or if the revlist was equivalently set to
+``["HEAD", ]``).  This a good way to make your template detect it is
+in "incremental mode".
+
 
 Contributing
 ============
