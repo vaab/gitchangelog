@@ -1351,6 +1351,22 @@ def parse_cmd_line(usage, description, epilog, exname, version):
     return parser.parse_args(argv)
 
 
+def get_log_encoding(repository, config):
+
+    log_encoding = config.get("log_encoding", None)
+    if log_encoding is None:
+        try:
+            log_encoding = repository.config.get("i18n.logOuputEncoding")
+        except ShellError as e:
+            warn(
+                "Error parsing git config: %s."
+                " Couldn't check if 'i18n.logOuputEncoding' was set."
+                % (str(e)))
+
+    ## Final defaults coming from git defaults
+    return log_encoding or DEFAULT_GIT_LOG_ENCODING
+
+
 ##
 ## Main
 ##
@@ -1437,20 +1453,7 @@ def main():
         default_filename=reference_config,
         fail_if_not_present=False)
 
-    log_encoding = config.get("log_encoding", None)
-    if log_encoding is None:
-        try:
-            log_encoding = repository.config.get("i18n.logOuputEncoding")
-        except ShellError as e:
-            stderr(
-                "Error parsing git config: %s."
-                " Won't be able to read 'rc-path' if defined."
-                % (str(e)))
-            gc_rc = None
-
-    ## Final defaults coming from git defaults
-    log_encoding = log_encoding or DEFAULT_GIT_LOG_ENCODING
-
+    log_encoding = get_log_encoding(repository, config)
     manage_obsolete_options(config)
 
     try:
