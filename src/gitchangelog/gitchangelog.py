@@ -1477,6 +1477,18 @@ def get_log_encoding(repository, config):
 
 
 ##
+## Config Manager
+##
+
+class Config(dict):
+
+    def __getitem__(self, label):
+        if label not in self.keys():
+            die("Missing value in config file for key '%s'." % label)
+        return super(Config, self).__getitem__(label)
+
+
+##
 ## Main
 ##
 
@@ -1546,9 +1558,6 @@ def main():
             else:
                 break
 
-    if not os.path.exists(reference_config):
-        die("Config reference file %r not found." % reference_config)
-
     ## config file may lookup for templates relative to the toplevel
     ## of git repository
     os.chdir(repository.toplevel)
@@ -1557,6 +1566,8 @@ def main():
         os.path.expanduser(changelogrc),
         default_filename=reference_config,
         fail_if_not_present=False)
+
+    config = Config(config)
 
     log_encoding = get_log_encoding(repository, config)
     revlist = get_revision(repository, config, opts)

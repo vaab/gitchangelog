@@ -153,13 +153,17 @@ the `changelog of the PyPI page`_.
 Usage
 =====
 
-The `reference configuration file`_ is delivered within ``gitchangelog`` package
-and provides defaults for settings.
+The `reference configuration file`_ is delivered within
+``gitchangelog`` package and is used to provides defaults to
+settings. If you didn't install the package and used the standalone
+file, then chances are that ``gitchangelog`` can't access these
+defaults values. This is not a problem as long as you provided all the
+required values in your config file.
 
-You *may* place a ``gitchangelog.rc`` file somewhere to override the defaults.
-The recommended location is the root of the current git repository with
-the name ``.gitchangelog.rc``.  However you could put it elsewhere,
-and here are the locations checked (first match will prevail):
+The recommended location for ``gitchangelog`` config file is the root
+of the current git repository with the name ``.gitchangelog.rc``.
+However you could put it elsewhere, and here are the locations checked
+(first match will prevail):
 
 - in the path given thanks to the environment variable
   ``GITCHANGELOG_CONFIG_FILENAME``
