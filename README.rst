@@ -379,16 +379,16 @@ only a subpart of your changelog. Usually this makes sense:
     edition if needed.
 
 
-You can use then ``gitchangelog show REVLIST``. Examples follows::
+You can use then ``gitchangelog REVLIST``. Examples follows::
 
     ## will output only tags between 0.0.2 (excluded) and 0.0.3 (included)
-    gitchangelog show 0.0.2..0.0.3
+    gitchangelog 0.0.2..0.0.3
 
     ## will output only tags since 0.0.3 (excluded)
-    gitchangelog show ^0.0.3
+    gitchangelog ^0.0.3
 
     ## will output all tags up to 0.0.3 (included)
-    gitchangelog show 0.0.3
+    gitchangelog 0.0.3
 
 Additionally, ``gitchangelog`` can figure out which revision is the
 last for you (with some little help). This is done by specifying the

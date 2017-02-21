@@ -64,7 +64,7 @@ else:
 usage_msg = """
   %(exname)s {-h|--help}
   %(exname)s {-v|--version}
-  %(exname)s show [REVLIST]"""
+  %(exname)s [--debug|-d] [REVLIST]"""
 
 description_msg = """\
 Run this command in a git repository to output a formatted changelog
@@ -1406,28 +1406,22 @@ def parse_cmd_line(usage, description, epilog, exname, version):
     parser.add_argument('-d', '--debug',
                         help="Enable debug mode (show full tracebacks).",
                         action="store_true", dest="debug")
+    parser.add_argument('revlist', nargs='*', action="store", default=[])
 
-    subparsers = parser.add_subparsers(help='commands', dest='action',
-                                       prog=exname)
-    show_parser = subparsers.add_parser(
-        'show', help='Prints current changelog.',
-        usage='%(exname)s show [REVLIST]' % {'exname': exname})
-    show_parser.add_argument('revlist', nargs='*', action="store", default=[])
+    ## Remove "show" as first argument for compatibility reason.
 
-    ## Python argparse in 2.7 doesn't like --debug to be after
-    ## positional argument.
-    argv = sys.argv[1:]
-    if "--debug" in argv:
-        argv.remove("--debug")
-        argv = ["--debug", ] + argv
-    if "-d" in argv:
-        argv.remove("-d")
-        argv = ["-d", ] + argv
-    if len([action for action in argv if not action.startswith("-")]) == 0:
-        ## Then we don't have positional argument, and this won't be supported
-        ## by argparse from python 2.7. See http://bugs.python.org/issue9253
-        ## so let's cheat and add "show" if no action.
-        argv += ["show", ]
+    argv = []
+    for i, arg in enumerate(sys.argv[1:]):
+        if arg.startswith("-"):
+            argv.append(arg)
+            continue
+        if arg == "show":
+            warn("'show' positional argument is deprecated.")
+            argv += sys.argv[i+2:]
+            break
+        else:
+            argv += sys.argv[i+1:]
+            break
 
     return parser.parse_args(argv)
 
@@ -1501,10 +1495,6 @@ def main():
 
     debug_varname = "DEBUG_%s" % basename.upper()
     DEBUG = os.environ.get(debug_varname, False)
-
-    ## Support legacy call of ``gitchangelog`` without arguments
-    if len(sys.argv) == 1:
-        sys.argv.append("show")
 
     i = lambda x: x % {'exname': basename}
 

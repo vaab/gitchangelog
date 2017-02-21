@@ -19,5 +19,5 @@ build: false
 
 test_script:
   - "python src\\gitchangelog\\gitchangelog.py --debug"
-  - "python src\\gitchangelog\\gitchangelog.py --debug show HEAD^^..HEAD"
+  - "python src\\gitchangelog\\gitchangelog.py --debug HEAD^^..HEAD"
 

@@ -156,14 +156,14 @@ Co-Authored-By: Charly <charly@example.com>
                                              self.REFERENCE.split("\n"),
                                              lineterm="")))
 
-    def test_simple_run_show_call(self):
+    def test_simple_run_show_call_deprecated(self):
         out, err, errlvl = cmd('$tprog show')
         self.assertEqual(
             errlvl, 0,
             msg="Should not fail on simple repo and without config file")
-        self.assertEqual(
-            err, "",
-            msg="There should be no standard error outputed. "
+        self.assertContains(
+            err, "deprecated",
+            msg="There should be a warning about deprecated calls. "
             "Current stderr:\n%r" % err)
         self.assertContains(
             out, "0.0.2",
@@ -177,7 +177,43 @@ Co-Authored-By: Charly <charly@example.com>
                                              self.REFERENCE.split("\n"),
                                              lineterm="")))
 
-    def test_simple_show_with_changelog_python_exception(self):
+    def test_simple_with_changelog_python_exception(self):
+        w("""
+
+            cat <<EOF > .gitchangelog.rc
+
+def raise_exc(data, opts):
+    raise Exception('Test Exception XYZ')
+
+output_engine = raise_exc
+
+EOF
+
+        """)
+
+        out, err, errlvl = cmd('$tprog')
+        self.assertContains(
+            err, "XYZ",
+            msg="The exception message should be displayed and thus contain XYZ... "
+            "Current stderr:\n%s" % err)
+        self.assertEqual(
+            errlvl, 255,
+            msg="Should fail with errlvl 255 if exception in output_engine..."
+            "Current errlvl: %s" % errlvl)
+        self.assertContains(
+            err, "--debug",
+            msg="Message about ``--debug``... "
+            "Current stderr:\n%s" % err)
+        self.assertNotContains(
+            err, "Traceback (most recent call last):",
+            msg="The exception message should NOT contain traceback information... "
+            "Current stderr:\n%s" % err)
+        self.assertEqual(
+            out, "",
+            msg="There should be no standard output. "
+            "Current stdout:\n%r" % out)
+
+    def test_simple_show_with_changelog_python_exception_deprecated(self):
         w("""
 
             cat <<EOF > .gitchangelog.rc
@@ -204,6 +240,10 @@ EOF
             err, "--debug",
             msg="Message about ``--debug``... "
             "Current stderr:\n%s" % err)
+        self.assertContains(
+            err, "deprecated",
+            msg="Message about show being deprecated... "
+            "Current stderr:\n%s" % err)
         self.assertNotContains(
             err, "Traceback (most recent call last):",
             msg="The exception message should NOT contain traceback information... "
@@ -213,79 +253,7 @@ EOF
             msg="There should be no standard output. "
             "Current stdout:\n%r" % out)
 
-    def test_show_with_changelog_python_exc_in_cli_debug_mode(self):
-        w("""
-
-            cat <<EOF > .gitchangelog.rc
-
-def raise_exc(data, opts):
-    raise Exception('Test Exception XYZ')
-
-output_engine = raise_exc
-
-EOF
-
-        """)
-
-        out, err, errlvl = cmd('$tprog --debug show')
-        self.assertContains(
-            err, "XYZ",
-            msg="The exception message should be displayed and thus contain XYZ... "
-            "Current stderr:\n%s" % err)
-        self.assertNotContains(
-            err, "--debug",
-            msg="Should not contain any message about ``--debug``... "
-            "Current stderr:\n%s" % err)
-        self.assertContains(
-            err, "Traceback (most recent call last):",
-            msg="The exception message should contain traceback information... "
-            "Current stderr:\n%s" % err)
-        self.assertEqual(
-            errlvl, 255,
-            msg="Should fail with errlvl 255 if exception in output_engine..."
-            "Current errlvl: %s" % errlvl)
-        self.assertEqual(
-            out, "",
-            msg="There should be no standard output. "
-            "Current stdout:\n%r" % out)
-
-    def test_show_with_changelog_python_exc_in_cli_debug_mode_after(self):
-        w("""
-
-            cat <<EOF > .gitchangelog.rc
-
-def raise_exc(data, opts):
-    raise Exception('Test Exception XYZ')
-
-output_engine = raise_exc
-
-EOF
-
-        """)
-
-        out, err, errlvl = cmd('$tprog show --debug')
-        self.assertContains(
-            err, "XYZ",
-            msg="The exception message should be displayed and thus contain XYZ... "
-            "Current stderr:\n%s" % err)
-        self.assertNotContains(
-            err, "--debug",
-            msg="Should not contain any message about ``--debug``... "
-            "Current stderr:\n%s" % err)
-        self.assertContains(
-            err, "Traceback (most recent call last):",
-            msg="The exception message should contain traceback information... "
-            "Current stderr:\n%s" % err)
-        self.assertEqual(
-            errlvl, 255,
-            msg="Should fail with errlvl 255 if exception in output_engine..."
-            "Current errlvl: %s" % errlvl)
-        self.assertEqual(
-            out, "",
-            msg="There should be no standard output. "
-            "Current stdout:\n%r" % out)
-
-    def test_show_with_changelog_python_exc_in_cli_debug_mode_default_arg(self):
+    def test_with_changelog_python_exc_in_cli_debug_mode(self):
         w("""
 
             cat <<EOF > .gitchangelog.rc
@@ -321,7 +289,7 @@ EOF
             msg="There should be no standard output. "
             "Current stdout:\n%r" % out)
 
-    def test_show_with_changelog_python_exc_in_env_debug_mode(self):
+    def test_show_with_changelog_python_exc_in_cli_debug_mode_deprecated(self):
         w("""
 
             cat <<EOF > .gitchangelog.rc
@@ -335,7 +303,47 @@ EOF
 
         """)
 
-        out, err, errlvl = cmd('DEBUG_GITCHANGELOG=1 $tprog show')
+        out, err, errlvl = cmd('$tprog --debug show')
+        self.assertContains(
+            err, "XYZ",
+            msg="The exception message should be displayed and thus contain XYZ... "
+            "Current stderr:\n%s" % err)
+        self.assertNotContains(
+            err, "--debug",
+            msg="Should not contain any message about ``--debug``... "
+            "Current stderr:\n%s" % err)
+        self.assertContains(
+            err, "deprecated",
+            msg="Should contain message about show being deprecated... "
+            "Current stderr:\n%s" % err)
+        self.assertContains(
+            err, "Traceback (most recent call last):",
+            msg="The exception message should contain traceback information... "
+            "Current stderr:\n%s" % err)
+        self.assertEqual(
+            errlvl, 255,
+            msg="Should fail with errlvl 255 if exception in output_engine..."
+            "Current errlvl: %s" % errlvl)
+        self.assertEqual(
+            out, "",
+            msg="There should be no standard output. "
+            "Current stdout:\n%r" % out)
+
+    def test_with_changelog_python_exc_in_cli_debug_mode_after(self):
+        w("""
+
+            cat <<EOF > .gitchangelog.rc
+
+def raise_exc(data, opts):
+    raise Exception('Test Exception XYZ')
+
+output_engine = raise_exc
+
+EOF
+
+        """)
+
+        out, err, errlvl = cmd('$tprog HEAD --debug')
         self.assertContains(
             err, "XYZ",
             msg="The exception message should be displayed and thus contain XYZ... "
@@ -357,7 +365,47 @@ EOF
             msg="There should be no standard output. "
             "Current stdout:\n%r" % out)
 
-    def test_show_with_changelog_python_exc_in_env_debug_mode_default_arg(self):
+    def test_show_with_changelog_python_exc_in_cli_debug_mode_after_deprecated(self):
+        w("""
+
+            cat <<EOF > .gitchangelog.rc
+
+def raise_exc(data, opts):
+    raise Exception('Test Exception XYZ')
+
+output_engine = raise_exc
+
+EOF
+
+        """)
+
+        out, err, errlvl = cmd('$tprog show --debug')
+        self.assertContains(
+            err, "XYZ",
+            msg="The exception message should be displayed and thus contain XYZ... "
+            "Current stderr:\n%s" % err)
+        self.assertNotContains(
+            err, "--debug",
+            msg="Should not contain any message about ``--debug``... "
+            "Current stderr:\n%s" % err)
+        self.assertContains(
+            err, "deprecated",
+            msg="Should contain message about show being deprecated... "
+            "Current stderr:\n%s" % err)
+        self.assertContains(
+            err, "Traceback (most recent call last):",
+            msg="The exception message should contain traceback information... "
+            "Current stderr:\n%s" % err)
+        self.assertEqual(
+            errlvl, 255,
+            msg="Should fail with errlvl 255 if exception in output_engine..."
+            "Current errlvl: %s" % errlvl)
+        self.assertEqual(
+            out, "",
+            msg="There should be no standard output. "
+            "Current stdout:\n%r" % out)
+
+    def test_with_changelog_python_exc_in_env_debug_mode(self):
         w("""
 
             cat <<EOF > .gitchangelog.rc
@@ -393,8 +441,48 @@ EOF
             msg="There should be no standard output. "
             "Current stdout:\n%r" % out)
 
-    def test_incremental_show_call(self):
-        out, err, errlvl = cmd('$tprog show 0.0.2..0.0.3')
+    def test_show_with_changelog_python_exc_in_env_debug_mode_deprecated(self):
+        w("""
+
+            cat <<EOF > .gitchangelog.rc
+
+def raise_exc(data, opts):
+    raise Exception('Test Exception XYZ')
+
+output_engine = raise_exc
+
+EOF
+
+        """)
+
+        out, err, errlvl = cmd('DEBUG_GITCHANGELOG=1 $tprog show')
+        self.assertContains(
+            err, "XYZ",
+            msg="The exception message should be displayed and thus contain XYZ... "
+            "Current stderr:\n%s" % err)
+        self.assertNotContains(
+            err, "--debug",
+            msg="Should not contain any message about ``--debug``... "
+            "Current stderr:\n%s" % err)
+        self.assertContains(
+            err, "deprecated",
+            msg="Should contain message about show being deprecated... "
+            "Current stderr:\n%s" % err)
+        self.assertContains(
+            err, "Traceback (most recent call last):",
+            msg="The exception message should contain traceback information... "
+            "Current stderr:\n%s" % err)
+        self.assertEqual(
+            errlvl, 255,
+            msg="Should fail with errlvl 255 if exception in output_engine..."
+            "Current errlvl: %s" % errlvl)
+        self.assertEqual(
+            out, "",
+            msg="There should be no standard output. "
+            "Current stdout:\n%r" % out)
+
+    def test_incremental_call(self):
+        out, err, errlvl = cmd('$tprog 0.0.2..0.0.3')
         self.assertEqual(
             errlvl, 0,
             msg="Should not fail on simple repo and without config file")
@@ -416,13 +504,35 @@ EOF
                 lineterm="")))
 
     def test_incremental_call_multirev(self):
-        out, err, errlvl = cmd('$tprog show ^0.0.2 0.0.3 0.0.3')
+        out, err, errlvl = cmd('$tprog ^0.0.2 0.0.3 0.0.3')
         self.assertEqual(
             errlvl, 0,
             msg="Should not fail on simple repo and without config file")
         self.assertEqual(
             err, "",
             msg="There should be no standard error outputed. "
+            "Current stderr:\n%r" % err)
+        self.assertContains(
+            out, "0.0.3",
+            msg="The tag 0.0.3 should be displayed in stdout... "
+            "Current stdout:\n%s" % out)
+        self.assertEqual(
+            out, self.INCR_REFERENCE_002_003,
+            msg="Should match our reference output... "
+            "diff of changelogs:\n%s"
+            % '\n'.join(difflib.unified_diff(
+                out.split("\n"),
+                self.INCR_REFERENCE_002_003.split("\n"),
+                lineterm="")))
+
+    def test_incremental_show_call_deprecated(self):
+        out, err, errlvl = cmd('$tprog show 0.0.2..0.0.3')
+        self.assertEqual(
+            errlvl, 0,
+            msg="Should not fail on simple repo and without config file")
+        self.assertContains(
+            err, "deprecated",
+            msg="There should be a deprecated warning. "
             "Current stderr:\n%r" % err)
         self.assertContains(
             out, "0.0.3",
@@ -592,7 +702,7 @@ output_engine = mustache('restructuredtext')
 
 EOF
         """)
-        changelog = w('$tprog show 0.0.2..0.0.3')
+        changelog = w('$tprog 0.0.2..0.0.3')
         self.assertEqual(
             changelog, self.INCR_REFERENCE_002_003,
             msg="Mustache output should match our reference output... "
@@ -607,7 +717,7 @@ output_engine = makotemplate('restructuredtext')
 
 EOF
         """)
-        changelog = w('$tprog show 0.0.2..0.0.3')
+        changelog = w('$tprog 0.0.2..0.0.3')
         self.assertEqual(
             changelog, self.INCR_REFERENCE_002_003,
             msg="Mako output should match our reference output... "

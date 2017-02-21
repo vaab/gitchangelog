@@ -133,7 +133,7 @@ Changelog
     def test_command_line_overrights_config(self):
         """Test that all 3 commits are in the changelog"""
 
-        out, err, errlvl = cmd('$tprog show HEAD')
+        out, err, errlvl = cmd('$tprog HEAD')
 
         self.assertEqual(
             err, "",
