@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 
 import difflib
 
-from common import BaseGitReposTest, w, cmd, file_put_contents
+from .common import BaseGitReposTest, w, cmd, file_put_contents
 
 
 class TestRevsBadFormat(BaseGitReposTest):

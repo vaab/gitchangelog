@@ -8,7 +8,7 @@ Tests issue #54
 
 from __future__ import unicode_literals
 
-from common import BaseGitReposTest, cmd, file_put_contents
+from .common import BaseGitReposTest, cmd, file_put_contents
 
 
 class TestConfigComplains(BaseGitReposTest):

@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 
 import difflib
 
-from common import BaseGitReposTest, w
+from .common import BaseGitReposTest, w
 
 
 class TestCrossBranchTags(BaseGitReposTest):

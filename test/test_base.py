@@ -7,7 +7,7 @@ import difflib
 import glob
 import os.path
 
-from common import BaseGitReposTest, BaseTmpDirTest, w, cmd
+from .common import BaseGitReposTest, BaseTmpDirTest, w, cmd
 from gitchangelog.gitchangelog import indent
 
 
