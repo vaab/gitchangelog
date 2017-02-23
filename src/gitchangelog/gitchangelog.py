@@ -1237,10 +1237,12 @@ def versions_data_iter(repository, revlist=None,
                        for rev in revlist))) if revlist else None
         new_tags = []
         for tag in tags:
-            if max_rev < tag:
-                break
             new_tags.append(tag)
+            if max_rev <= tag:
+                break
         tags = new_tags
+    else:
+        max_rev = tags[-1]
 
     section_order = [k for k, _v in section_regexps]
 
@@ -1257,7 +1259,7 @@ def versions_data_iter(repository, revlist=None,
 
         sections = collections.defaultdict(list)
         commits = repository.log(
-            includes=[tag],
+            includes=[min(tag, max_rev)],
             excludes=tags[idx + 1:] + excludes,
             include_merge=include_merge,
             encoding=log_encoding)

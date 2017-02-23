@@ -525,6 +525,70 @@ EOF
                 self.INCR_REFERENCE_002_003.split("\n"),
                 lineterm="")))
 
+    def test_incremental_call_one_commit_unreleased(self):
+        out, err, errlvl = cmd('$tprog ^HEAD^')
+        REFERENCE = """\
+%%version%% (unreleased)
+------------------------
+
+Changes
+~~~~~~~
+- Modified ``b`` XXX. [Alice, Charly, Juliet]
+
+
+"""
+        self.assertEqual(
+            errlvl, 0,
+            msg="Should not fail on simple repo and without config file")
+        self.assertEqual(
+            err, "",
+            msg="There should be no standard error outputed. "
+            "Current stderr:\n%r" % err)
+        self.assertContains(
+            out, "%%version%%",
+            msg="The tag %%version%% should be displayed in stdout... "
+            "Current stdout:\n%s" % out)
+        self.assertEqual(
+            out, REFERENCE,
+            msg="Should match our reference output... "
+            "diff of changelogs:\n%s"
+            % '\n'.join(difflib.unified_diff(
+                out.split("\n"),
+                REFERENCE.split("\n"),
+                lineterm="")))
+
+    def test_incremental_call_one_commit_released(self):
+        out, err, errlvl = cmd('$tprog 0.0.3^^^..0.0.3^^')
+        REFERENCE = """\
+0.0.3 (2000-01-05)
+------------------
+
+New
+~~~
+- Add file ``c`` [Charly]
+
+
+"""
+        self.assertEqual(
+            errlvl, 0,
+            msg="Should not fail on simple repo and without config file")
+        self.assertEqual(
+            err, "",
+            msg="There should be no standard error outputed. "
+            "Current stderr:\n%r" % err)
+        self.assertContains(
+            out, "0.0.3",
+            msg="The tag 0.0.3 should be displayed in stdout... "
+            "Current stdout:\n%s" % out)
+        self.assertEqual(
+            out, REFERENCE,
+            msg="Should match our reference output... "
+            "diff of changelogs:\n%s"
+            % '\n'.join(difflib.unified_diff(
+                out.split("\n"),
+                REFERENCE.split("\n"),
+                lineterm="")))
+
     def test_incremental_show_call_deprecated(self):
         out, err, errlvl = cmd('$tprog show 0.0.2..0.0.3')
         self.assertEqual(
@@ -867,5 +931,4 @@ None
             % '\n'.join(difflib.unified_diff(reference.split("\n"),
                                              out.split("\n"),
                                              lineterm="")))
-
 
