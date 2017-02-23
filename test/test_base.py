@@ -5,9 +5,9 @@ from __future__ import unicode_literals
 import os.path
 import difflib
 import glob
-import os.path
+import textwrap
 
-from .common import BaseGitReposTest, BaseTmpDirTest, w, cmd
+from .common import BaseGitReposTest, w, cmd, file_put_contents
 from gitchangelog.gitchangelog import indent
 
 
@@ -178,18 +178,14 @@ Co-Authored-By: Charly <charly@example.com>
                                              lineterm="")))
 
     def test_simple_with_changelog_python_exception(self):
-        w("""
+        file_put_contents(
+            ".gitchangelog.rc",
+            textwrap.dedent("""\
+                def raise_exc(data, opts):
+                    raise Exception('Test Exception XYZ')
 
-            cat <<EOF > .gitchangelog.rc
-
-def raise_exc(data, opts):
-    raise Exception('Test Exception XYZ')
-
-output_engine = raise_exc
-
-EOF
-
-        """)
+                output_engine = raise_exc
+                """))
 
         out, err, errlvl = cmd('$tprog')
         self.assertContains(
@@ -214,18 +210,14 @@ EOF
             "Current stdout:\n%r" % out)
 
     def test_simple_show_with_changelog_python_exception_deprecated(self):
-        w("""
+        file_put_contents(
+            ".gitchangelog.rc",
+            textwrap.dedent("""\
+                def raise_exc(data, opts):
+                    raise Exception('Test Exception XYZ')
 
-            cat <<EOF > .gitchangelog.rc
-
-def raise_exc(data, opts):
-    raise Exception('Test Exception XYZ')
-
-output_engine = raise_exc
-
-EOF
-
-        """)
+                output_engine = raise_exc
+                """))
 
         out, err, errlvl = cmd('$tprog show')
         self.assertContains(
@@ -254,18 +246,14 @@ EOF
             "Current stdout:\n%r" % out)
 
     def test_with_changelog_python_exc_in_cli_debug_mode(self):
-        w("""
+        file_put_contents(
+            ".gitchangelog.rc",
+            textwrap.dedent("""\
+                def raise_exc(data, opts):
+                    raise Exception('Test Exception XYZ')
 
-            cat <<EOF > .gitchangelog.rc
-
-def raise_exc(data, opts):
-    raise Exception('Test Exception XYZ')
-
-output_engine = raise_exc
-
-EOF
-
-        """)
+                output_engine = raise_exc
+                """))
 
         out, err, errlvl = cmd('$tprog --debug')
         self.assertContains(
@@ -290,18 +278,14 @@ EOF
             "Current stdout:\n%r" % out)
 
     def test_show_with_changelog_python_exc_in_cli_debug_mode_deprecated(self):
-        w("""
+        file_put_contents(
+            ".gitchangelog.rc",
+            textwrap.dedent("""\
+                def raise_exc(data, opts):
+                    raise Exception('Test Exception XYZ')
 
-            cat <<EOF > .gitchangelog.rc
-
-def raise_exc(data, opts):
-    raise Exception('Test Exception XYZ')
-
-output_engine = raise_exc
-
-EOF
-
-        """)
+                output_engine = raise_exc
+                """))
 
         out, err, errlvl = cmd('$tprog --debug show')
         self.assertContains(
@@ -330,18 +314,14 @@ EOF
             "Current stdout:\n%r" % out)
 
     def test_with_changelog_python_exc_in_cli_debug_mode_after(self):
-        w("""
+        file_put_contents(
+            ".gitchangelog.rc",
+            textwrap.dedent("""\
+                def raise_exc(data, opts):
+                    raise Exception('Test Exception XYZ')
 
-            cat <<EOF > .gitchangelog.rc
-
-def raise_exc(data, opts):
-    raise Exception('Test Exception XYZ')
-
-output_engine = raise_exc
-
-EOF
-
-        """)
+                output_engine = raise_exc
+                """))
 
         out, err, errlvl = cmd('$tprog HEAD --debug')
         self.assertContains(
@@ -366,18 +346,14 @@ EOF
             "Current stdout:\n%r" % out)
 
     def test_show_with_changelog_python_exc_in_cli_debug_mode_after_deprecated(self):
-        w("""
+        file_put_contents(
+            ".gitchangelog.rc",
+            textwrap.dedent("""\
+                def raise_exc(data, opts):
+                    raise Exception('Test Exception XYZ')
 
-            cat <<EOF > .gitchangelog.rc
-
-def raise_exc(data, opts):
-    raise Exception('Test Exception XYZ')
-
-output_engine = raise_exc
-
-EOF
-
-        """)
+                output_engine = raise_exc
+                """))
 
         out, err, errlvl = cmd('$tprog show --debug')
         self.assertContains(
@@ -406,18 +382,14 @@ EOF
             "Current stdout:\n%r" % out)
 
     def test_with_changelog_python_exc_in_env_debug_mode(self):
-        w("""
+        file_put_contents(
+            ".gitchangelog.rc",
+            textwrap.dedent("""\
+                def raise_exc(data, opts):
+                    raise Exception('Test Exception XYZ')
 
-            cat <<EOF > .gitchangelog.rc
-
-def raise_exc(data, opts):
-    raise Exception('Test Exception XYZ')
-
-output_engine = raise_exc
-
-EOF
-
-        """)
+                output_engine = raise_exc
+                """))
 
         out, err, errlvl = cmd('DEBUG_GITCHANGELOG=1 $tprog')
         self.assertContains(
@@ -442,18 +414,14 @@ EOF
             "Current stdout:\n%r" % out)
 
     def test_show_with_changelog_python_exc_in_env_debug_mode_deprecated(self):
-        w("""
+        file_put_contents(
+            ".gitchangelog.rc",
+            textwrap.dedent("""\
+                def raise_exc(data, opts):
+                    raise Exception('Test Exception XYZ')
 
-            cat <<EOF > .gitchangelog.rc
-
-def raise_exc(data, opts):
-    raise Exception('Test Exception XYZ')
-
-output_engine = raise_exc
-
-EOF
-
-        """)
+                output_engine = raise_exc
+                """))
 
         out, err, errlvl = cmd('DEBUG_GITCHANGELOG=1 $tprog show')
         self.assertContains(
@@ -527,16 +495,16 @@ EOF
 
     def test_incremental_call_one_commit_unreleased(self):
         out, err, errlvl = cmd('$tprog ^HEAD^')
-        REFERENCE = """\
-%%version%% (unreleased)
-------------------------
+        REFERENCE = textwrap.dedent("""\
+            %%version%% (unreleased)
+            ------------------------
 
-Changes
-~~~~~~~
-- Modified ``b`` XXX. [Alice, Charly, Juliet]
+            Changes
+            ~~~~~~~
+            - Modified ``b`` XXX. [Alice, Charly, Juliet]
 
 
-"""
+            """)
         self.assertEqual(
             errlvl, 0,
             msg="Should not fail on simple repo and without config file")
@@ -559,16 +527,16 @@ Changes
 
     def test_incremental_call_one_commit_released(self):
         out, err, errlvl = cmd('$tprog 0.0.3^^^..0.0.3^^')
-        REFERENCE = """\
-0.0.3 (2000-01-05)
-------------------
+        REFERENCE = textwrap.dedent("""\
+            0.0.3 (2000-01-05)
+            ------------------
 
-New
-~~~
-- Add file ``c`` [Charly]
+            New
+            ~~~
+            - Add file ``c`` [Charly]
 
 
-"""
+            """)
         self.assertEqual(
             errlvl, 0,
             msg="Should not fail on simple repo and without config file")
@@ -615,17 +583,13 @@ New
         """We must be able to define a small gitchangelog.rc that adjust only
         one variable of all the builtin defaults."""
 
-        w("""
+        file_put_contents(
+            ".gitchangelog.rc",
+            "tag_filter_regexp = r'^v[0-9]+\\.[0.9]$'")
 
-            cat <<EOF > .gitchangelog.rc
+        w("git tag v7.0 \"HEAD^\"")
+        w("git tag v8.0 \"HEAD\"")
 
-tag_filter_regexp = r'^v[0-9]+\\.[0.9]$'
-
-EOF
-            git tag 'v7.0' HEAD^
-            git tag 'v8.0' HEAD
-
-        """)
         changelog = w('$tprog')
         self.assertContains(
             changelog, "v8.0",
@@ -636,12 +600,9 @@ EOF
         """We must be able to define a small gitchangelog.rc that adjust only
         one variable of all the builtin defaults."""
 
-        w("""cat <<EOF > .gitchangelog.rc
-
-ignore_regexps += [r'XXX', ]
-
-EOF
-        """)
+        file_put_contents(
+            ".gitchangelog.rc",
+            "ignore_regexps += [r'XXX', ]")
         changelog = w('$tprog')
         self.assertNotContains(
             changelog, "XXX",
@@ -681,11 +642,7 @@ EOF
                    lineterm=""))))
 
     def test_with_filename_same_as_tag(self):
-        w("""
-
-            touch 0.0.1
-
-        """)
+        file_put_contents("0.0.1", "")
         out, err, errlvl = cmd('$tprog')
         self.assertEqual(
             errlvl, 0,
@@ -706,11 +663,10 @@ EOF
         """We must be able to define a small gitchangelog.rc that adjust only
         one variable of all the builtin defaults."""
 
-        w("""cat <<EOF > .gitchangelog.rc
-
-include_merge = False
-
-EOF
+        file_put_contents(
+            ".gitchangelog.rc",
+            "include_merge = False")
+        w("""
 
             git checkout -b develop
             git commit -m "made on develop branch" --allow-empty
@@ -727,12 +683,9 @@ EOF
     def test_same_output_with_different_engine(self):
         """Reference implementation should match mustache and mako implem"""
 
-        w("""cat <<EOF > .gitchangelog.rc
-
-output_engine = mustache('restructuredtext')
-
-EOF
-        """)
+        file_put_contents(
+            ".gitchangelog.rc",
+            "output_engine = mustache('restructuredtext')")
         changelog = w('$tprog')
         self.assertEqual(
             changelog, self.REFERENCE,
@@ -742,12 +695,9 @@ EOF
                                              changelog.split("\n"),
                                              lineterm="")))
 
-        w("""cat <<EOF > .gitchangelog.rc
-
-output_engine = makotemplate('restructuredtext')
-
-EOF
-        """)
+        file_put_contents(
+            ".gitchangelog.rc",
+            "output_engine = makotemplate('restructuredtext')")
         changelog = w('$tprog')
         self.assertEqual(
             changelog, self.REFERENCE,
@@ -760,12 +710,7 @@ EOF
     def test_same_output_with_different_engine_incr(self):
         """Reference implementation should match mustache and mako implem"""
 
-        w("""cat <<EOF > .gitchangelog.rc
-
-output_engine = mustache('restructuredtext')
-
-EOF
-        """)
+        file_put_contents(".gitchangelog.rc", "output_engine = mustache('restructuredtext')")
         changelog = w('$tprog 0.0.2..0.0.3')
         self.assertEqual(
             changelog, self.INCR_REFERENCE_002_003,
@@ -775,12 +720,7 @@ EOF
                                              changelog.split("\n"),
                                              lineterm="")))
 
-        w("""cat <<EOF > .gitchangelog.rc
-
-output_engine = makotemplate('restructuredtext')
-
-EOF
-        """)
+        file_put_contents(".gitchangelog.rc", "output_engine = makotemplate('restructuredtext')")
         changelog = w('$tprog 0.0.2..0.0.3')
         self.assertEqual(
             changelog, self.INCR_REFERENCE_002_003,
@@ -802,12 +742,8 @@ EOF
             template_labels = [os.path.basename(f).split(".")[0]
                                for f in templates]
             for tpl in template_labels:
-                w("""cat <<EOF > .gitchangelog.rc
-
-output_engine = %s(%r)
-
-EOF
-                """ % (label, tpl))
+                file_put_contents(".gitchangelog.rc",
+                                  "output_engine = %s(%r)" % (label, tpl))
                 out, err, errlvl = cmd('$tprog')
                 self.assertEqual(
                     errlvl, 0,
@@ -817,12 +753,8 @@ EOF
     def test_unexistent_template_name(self):
         """Unexisting template should get a proper error message"""
 
-        w("""cat <<EOF > .gitchangelog.rc
-
-output_engine = mustache('doesnotexist')
-
-EOF
-        """)
+        file_put_contents(".gitchangelog.rc",
+                          "output_engine = mustache('doesnotexist')")
         out, err, errlvl = cmd('$tprog')
         self.assertEqual(
             errlvl, 1,
@@ -851,19 +783,12 @@ EOF
     def test_file_template_name(self):
         """Existing files should be accepted as valid templates"""
 
-        w("""
-             cat <<EOF > mytemplate.tpl
-check: {{{title}}}
-EOF
-             cat <<EOF > .gitchangelog.rc
+        file_put_contents("mytemplate.tpl",
+                          "check: {{{title}}}")
+        file_put_contents(".gitchangelog.rc",
+                          "output_engine = mustache('mytemplate.tpl')")
 
-output_engine = mustache('mytemplate.tpl')
-
-EOF
-        """)
-
-        reference = """check: Changelog
-"""
+        reference = """check: Changelog"""
 
         out, err, errlvl = cmd('$tprog')
         self.assertEqual(
@@ -884,37 +809,34 @@ EOF
     def test_template_as_access_to_full_commit(self):
         """Existing files should be accepted as valid templates"""
 
-        w("""
-             cat <<'EOF' > mytemplate.tpl
-% for version in data["versions"]:
-${version["tag"]}
-% for section in version["sections"]:
-  ${section["label"]}:
-% for commit in section["commits"]:
-    - ${commit["commit"].subject}
-% endfor
-% endfor
-% endfor
-EOF
-             cat <<EOF > .gitchangelog.rc
+        file_put_contents(
+            "mytemplate.tpl",
+            textwrap.dedent("""\
+                % for version in data["versions"]:
+                ${version["tag"]}
+                % for section in version["sections"]:
+                  ${section["label"]}:
+                % for commit in section["commits"]:
+                    - ${commit["commit"].subject}
+                % endfor
+                % endfor
+                % endfor
+                """))
+        file_put_contents(".gitchangelog.rc",
+                          "output_engine = makotemplate('mytemplate.tpl')")
 
-output_engine = makotemplate('mytemplate.tpl')
-
-EOF
-        """)
-
-        reference = """\
-None
-  Changes:
-    - chg: modified ``b`` XXX
-0.0.3
-  New:
-    - new: add file ``e``, modified ``b``
-    - new: add file ``c``
-0.0.2
-  Other:
-    - add ``b`` with non-ascii chars \xe9\xe8\xe0\xe2\xa7\xb5 and HTML chars ``&<``
-"""
+        reference = textwrap.dedent("""\
+            None
+              Changes:
+                - chg: modified ``b`` XXX
+            0.0.3
+              New:
+                - new: add file ``e``, modified ``b``
+                - new: add file ``c``
+            0.0.2
+              Other:
+                - add ``b`` with non-ascii chars \xe9\xe8\xe0\xe2\xa7\xb5 and HTML chars ``&<``
+            """)
 
         out, err, errlvl = cmd('$tprog')
         self.assertEqual(
