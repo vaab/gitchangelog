@@ -18,6 +18,9 @@ import re
 
 from gitchangelog import gitchangelog
 
+WIN32 = gitchangelog.WIN32
+
+
 def file_put_contents(filename, string):
     """Write string to filename."""
 
@@ -49,6 +52,15 @@ def simple_renderer(data, opts):
     return s
 
 
+def replace_tprog(f):
+
+    def _wrapped(*args, **kwargs):
+        args = list(args)
+        args[0] = args[0].replace('$tprog', tprog)
+        return f(*args, **kwargs)
+    return _wrapped
+
+
 def set_env(**se_kwargs):
 
     def decorator(f):
@@ -66,22 +78,24 @@ BASE_PATH = os.path.normpath(os.path.join(
     ".."))
 tprog = os.path.join(BASE_PATH, "src", "gitchangelog", "gitchangelog.py")
 
-WITH_COVERAGE = gitchangelog.cmd("type coverage")[2] == 0
+WITH_COVERAGE = gitchangelog.cmd(
+    "%s coverage" % ("where" if WIN32 else "type"))[2] == 0
 if WITH_COVERAGE:
+    tprog = ('coverage run -a --source=%(base_path)s '
+             '--omit=%(base_path)s/setup.py,'
+             '%(base_path)s/gitchangelog.rc* '
+             '--rcfile="%(base_path)s/.coveragerc" %(tprog)s'
+             % {'base_path': BASE_PATH,
+                'tprog': tprog})
     tprog_set = set_env(
         COVERAGE_FILE="%s/.coverage.2" % BASE_PATH,
         PYTHONPATH="%s" % BASE_PATH,
-        tprog=('coverage run -a --source=%(base_path)s '
-               '--omit=%(base_path)s/setup.py,'
-                   '%(base_path)s/gitchangelog.rc* '
-               '--rcfile="%(base_path)s/.coveragerc" %(tprog)s'
-               % {'base_path': BASE_PATH,
-                  'tprog': tprog}))
+        tprog=tprog)
 else:
     tprog_set = set_env(tprog=tprog)
 
-w = tprog_set(gitchangelog.wrap)
-cmd = tprog_set(gitchangelog.cmd)
+w = replace_tprog(tprog_set(gitchangelog.wrap))
+cmd = replace_tprog(tprog_set(gitchangelog.cmd))
 
 
 class ExtendedTest(unittest.TestCase):
