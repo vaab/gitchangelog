@@ -121,7 +121,7 @@ Changelog
     def test_matching_reference(self):
         """Test that only last commit is in the changelog"""
 
-        changelog = self.simple_changelog(revlist=['^1.2'])
+        changelog = self.simple_changelog(revlist=['^1.2', 'HEAD'])
         self.assertEqual(
             changelog, self.REFERENCE,
             msg="Should match our reference output... "

@@ -241,5 +241,6 @@ include_merge = True
 #        FileFirstRegexMatch(
 #	    "CHANGELOG.rst",
 #	    r"(?P<rev>[0-9]+\.[0-9]+\.[0-9]+)\s+\([0-9]+-[0-9]{2}-[0-9]{2}\)\n--+\n\n")),
+#    "HEAD"
 #]
 revs = []
