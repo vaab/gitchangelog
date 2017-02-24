@@ -142,4 +142,4 @@ class TestBasicRevs(BaseGitReposTest):
             msg="Should succeed")
         self.assertNoDiff(
             self.REFERENCE2, out,
-            msg="Mako output should match our reference output... ")
+            msg="Output should match our reference output... ")

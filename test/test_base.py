@@ -555,7 +555,7 @@ class GitChangelogTest(BaseGitReposTest):
             "content of changelog:\n%s" % changelog)
 
     def test_reuse_options(self):
-        """We must be able to define a small gitchangelog.rc that adjust only
+        """We must be able to define a small gitchangelog.rc that reuse only
         one variable of all the builtin defaults."""
 
         file_put_contents(
