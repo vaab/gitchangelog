@@ -1228,12 +1228,6 @@ def versions_data_iter(repository, revlist=None,
             for tag in repository.tags(contains=revs[-1] if revs else None)
             if re.match(tag_filter_regexp, tag.identifier)]
 
-    if not tags:
-        warn("no tag %sname matching tag_filter_regexp %r."
-             % ("contained in revlist %r with " % " ".join(revlist)
-                if revlist else "",
-                tag_filter_regexp))
-
     tags.append(repository.commit("HEAD"))
 
     if revlist:

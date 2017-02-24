@@ -10,10 +10,10 @@ from __future__ import unicode_literals
 from .common import BaseGitReposTest, w
 
 
-class TestNoTagWarn(BaseGitReposTest):
+class TestNoTagButCommitNoWarn(BaseGitReposTest):
 
     def setUp(self):
-        super(TestNoTagWarn, self).setUp()
+        super(TestNoTagButCommitNoWarn, self).setUp()
 
         ## Target tree:
         ##
@@ -32,13 +32,14 @@ class TestNoTagWarn(BaseGitReposTest):
         warnings = []
 
         def warn(msg):
-            if "no tag" in msg.lower():
-                warnings.append(msg)
+            warnings.append(msg)
 
-        self.simple_changelog(warn=warn)
+        output = self.simple_changelog(warn=warn)
+        self.assertEqual(
+            output, 'None\n  None:\n    * a [The Committer]\n\n')
         self.assertTrue(
-            len(warnings) != 0,
-            msg="Should have outputed at least one warning about 'no tag'")
+            len(warnings) == 0,
+            msg="Should have outputed no warnings.")
 
     def test_no_tag_revlist(self):
         """if no tags are detected and revlist is provided, check warning"""
@@ -46,14 +47,14 @@ class TestNoTagWarn(BaseGitReposTest):
         warnings = []
 
         def warn(msg):
-            if "no tag" in msg.lower() and "revlist" in msg.lower():
-                warnings.append(msg)
+            warnings.append(msg)
 
-        self.simple_changelog(revlist=["HEAD", ], warn=warn)
+        output = self.simple_changelog(revlist=["HEAD", ], warn=warn)
+        self.assertEqual(
+            output, 'None\n  None:\n    * a [The Committer]\n\n')
         self.assertTrue(
-            len(warnings) != 0,
-            msg="Should have outputed at least one warning about 'no tag'"
-            "and 'revlist'")
+            len(warnings) == 0,
+            msg="Should have outputed no warnings.")
 
 
 class TestEmptyChangelogWarn(BaseGitReposTest):

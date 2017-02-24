@@ -507,11 +507,10 @@ Co-Authored-By: Charly <charly@example.com>
 
 
             """)
-        ## Temporary removal:
-        # self.assertEqual(
-        #     err, "",
-        #     msg="There should be no standard error outputed. "
-        #     "Current stderr:\n%s" % err)
+        self.assertEqual(
+            err, "",
+            msg="There should be no standard error outputed. "
+            "Current stderr:\n%s" % err)
         self.assertEqual(
             errlvl, 0,
             msg="Should not fail on simple repo and without config file")
