@@ -71,9 +71,11 @@ def set_env(**se_kwargs):
     def decorator(f):
 
         def _wrapped(*args, **kwargs):
-            kwargs["env"] = dict(kwargs.get("env") or os.environ)
+            env = dict(os.environ)
             for key, value in se_kwargs.items():
-                kwargs["env"][key] = value
+                env[key] = value
+            env.update(kwargs.get("env") or {})
+            kwargs["env"] = env
             return f(*args, **kwargs)
         return _wrapped
     return decorator

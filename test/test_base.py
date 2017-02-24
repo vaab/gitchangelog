@@ -374,7 +374,7 @@ class GitChangelogTest(BaseGitReposTest):
                 output_engine = raise_exc
                 """))
 
-        out, err, errlvl = cmd('DEBUG_GITCHANGELOG=1 $tprog')
+        out, err, errlvl = cmd('$tprog', env={"DEBUG_GITCHANGELOG": "1"})
         self.assertContains(
             err, "XYZ",
             msg="The exception message should be displayed and thus contain XYZ... "
@@ -406,7 +406,7 @@ class GitChangelogTest(BaseGitReposTest):
                 output_engine = raise_exc
                 """))
 
-        out, err, errlvl = cmd('DEBUG_GITCHANGELOG=1 $tprog show')
+        out, err, errlvl = cmd('$tprog show', env={"DEBUG_GITCHANGELOG": "1"})
         self.assertContains(
             err, "XYZ",
             msg="The exception message should be displayed and thus contain XYZ... "
