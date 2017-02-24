@@ -88,7 +88,7 @@ class TestCrossBranchTags(BaseGitReposTest):
         """Test that all tags in branch history make it into changelog"""
 
         changelog = self.simple_changelog()
-        self.assertEqual(
+        self.assertNoDiff(
             self.REFERENCE, changelog,
             msg="Should match our reference output... ")
 
@@ -137,7 +137,7 @@ class TestLogLinearbility(BaseGitReposTest):
         """Test attribution when commits are already linear"""
 
         changelog = self.simple_changelog()
-        self.assertEqual(
+        self.assertNoDiff(
             self.REFERENCE, changelog,
             msg="Should match our reference output... ")
 
@@ -209,6 +209,6 @@ class TestLogHardLinearbility(BaseGitReposTest):
         """Test attribution for out-of-band releases"""
 
         changelog = self.simple_changelog()
-        self.assertEqual(
+        self.assertNoDiff(
             self.REFERENCE, changelog,
             msg="Should match our reference output... ")

@@ -41,7 +41,7 @@ class TestCrossBranchTags(BaseGitReposTest):
         """Test that all 3 commits are in the changelog"""
 
         changelog = self.simple_changelog()
-        self.assertEqual(
+        self.assertNoDiff(
             self.REFERENCE, changelog,
             msg="Should match our reference output... ")
 

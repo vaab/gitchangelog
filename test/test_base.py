@@ -139,7 +139,7 @@ class GitChangelogTest(BaseGitReposTest):
             out, "0.0.2",
             msg="At least one of the tags should be displayed in stdout... "
             "Current stdout:\n%s" % out)
-        self.assertEqual(
+        self.assertNoDiff(
             self.REFERENCE, out,
             msg="Should match our reference output... ")
 
@@ -156,7 +156,7 @@ class GitChangelogTest(BaseGitReposTest):
             out, "0.0.2",
             msg="At least one of the tags should be displayed in stdout... "
             "Current stdout:\n%s" % out)
-        self.assertEqual(
+        self.assertNoDiff(
             self.REFERENCE, out,
             msg="Should match our reference output... ")
 
@@ -445,7 +445,7 @@ class GitChangelogTest(BaseGitReposTest):
             out, "0.0.3",
             msg="The tag 0.0.3 should be displayed in stdout... "
             "Current stdout:\n%s" % out)
-        self.assertEqual(
+        self.assertNoDiff(
             self.INCR_REFERENCE_002_003, out,
             msg="Should match our reference output... ")
 
@@ -462,7 +462,7 @@ class GitChangelogTest(BaseGitReposTest):
             out, "0.0.3",
             msg="The tag 0.0.3 should be displayed in stdout... "
             "Current stdout:\n%s" % out)
-        self.assertEqual(
+        self.assertNoDiff(
             self.INCR_REFERENCE_002_003, out,
             msg="Should match our reference output... ")
 
@@ -489,7 +489,7 @@ class GitChangelogTest(BaseGitReposTest):
             out, "%%version%%",
             msg="The tag %%version%% should be displayed in stdout... "
             "Current stdout:\n%s" % out)
-        self.assertEqual(
+        self.assertNoDiff(
             REFERENCE, out,
             msg="Should match our reference output... ")
 
@@ -516,7 +516,7 @@ class GitChangelogTest(BaseGitReposTest):
             out, "0.0.3",
             msg="The tag 0.0.3 should be displayed in stdout... "
             "Current stdout:\n%s" % out)
-        self.assertEqual(
+        self.assertNoDiff(
             REFERENCE, out,
             msg="Should match our reference output... ")
 
@@ -533,7 +533,7 @@ class GitChangelogTest(BaseGitReposTest):
             out, "0.0.3",
             msg="The tag 0.0.3 should be displayed in stdout... "
             "Current stdout:\n%s" % out)
-        self.assertEqual(
+        self.assertNoDiff(
             self.INCR_REFERENCE_002_003, out,
             msg="Should match our reference output... ")
 
@@ -589,7 +589,7 @@ class GitChangelogTest(BaseGitReposTest):
                 errlvl, 0,
                 msg="Should not fail with config %r " % (config, ) +
                 "Current stderr:\n%s" % indent(err))
-            self.assertEqual(
+            self.assertNoDiff(
                 self.REFERENCE, out,
                 msg="config %r output should match our reference output... ")
 
@@ -603,7 +603,7 @@ class GitChangelogTest(BaseGitReposTest):
             err, "",
             msg="No error message expected. "
             "Current stderr:\n%s" % err)
-        self.assertEqual(
+        self.assertNoDiff(
             self.REFERENCE, out,
             msg="Should match our reference output... ")
 
@@ -633,7 +633,7 @@ class GitChangelogTest(BaseGitReposTest):
             ".gitchangelog.rc",
             "output_engine = mustache('restructuredtext')")
         changelog = w('$tprog')
-        self.assertEqual(
+        self.assertNoDiff(
             self.REFERENCE, changelog,
             msg="Mustache output should match our reference output... ")
 
@@ -641,7 +641,7 @@ class GitChangelogTest(BaseGitReposTest):
             ".gitchangelog.rc",
             "output_engine = makotemplate('restructuredtext')")
         changelog = w('$tprog')
-        self.assertEqual(
+        self.assertNoDiff(
             self.REFERENCE, changelog,
             msg="Mako output should match our reference output... ")
 
@@ -651,14 +651,14 @@ class GitChangelogTest(BaseGitReposTest):
         file_put_contents(".gitchangelog.rc",
                           "output_engine = mustache('restructuredtext')")
         changelog = w('$tprog 0.0.2..0.0.3')
-        self.assertEqual(
+        self.assertNoDiff(
             self.INCR_REFERENCE_002_003, changelog,
             msg="Mustache output should match our reference output... ")
 
         file_put_contents(".gitchangelog.rc",
                           "output_engine = makotemplate('restructuredtext')")
         changelog = w('$tprog 0.0.2..0.0.3')
-        self.assertEqual(
+        self.assertNoDiff(
             self.INCR_REFERENCE_002_003, changelog,
             msg="Mako output should match our reference output... ")
 
@@ -730,7 +730,7 @@ class GitChangelogTest(BaseGitReposTest):
         self.assertEqual(
             errlvl, 0,
             msg="Should succeed to find template")
-        self.assertEqual(
+        self.assertNoDiff(
             reference, out,
             msg="Mako output should match our reference output... ")
 
@@ -774,6 +774,6 @@ class GitChangelogTest(BaseGitReposTest):
         self.assertEqual(
             errlvl, 0,
             msg="Should succeed to find template")
-        self.assertEqual(
+        self.assertNoDiff(
             reference, out,
             msg="Mako output should match our reference output... ")

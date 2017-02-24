@@ -124,7 +124,7 @@ class TestBasicRevs(BaseGitReposTest):
         """Test that only last commit is in the changelog"""
 
         changelog = self.simple_changelog(revlist=['^1.2', 'HEAD'])
-        self.assertEqual(
+        self.assertNoDiff(
             self.REFERENCE, changelog,
             msg="Should match our reference output... ")
 
@@ -140,6 +140,6 @@ class TestBasicRevs(BaseGitReposTest):
         self.assertEqual(
             errlvl, 0,
             msg="Should succeed")
-        self.assertEqual(
+        self.assertNoDiff(
             self.REFERENCE2, out,
             msg="Mako output should match our reference output... ")

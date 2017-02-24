@@ -115,10 +115,20 @@ class ExtendedTest(unittest.TestCase):
             msg = "%r should match regex %r." % (text, regex)
         self.assertTrue(re.search(regex, text, re.MULTILINE) is not None, msg)
 
+    def assertNoDiff(self, t1, t2, msg=None):
+        if not msg:
+            msg = "%r should match %r." % (t1, t2)
+        if WIN32:
+            t1 = t1.replace('\r\n', '\n')
+            t2 = t2.replace('\r\n', '\n')
+        self.assertEqual(t1, t2, msg)
+
+
 
 class BaseTmpDirTest(ExtendedTest):
 
     def setUp(self):
+        self.maxDiff = None
         ## put an empty tmp directory up
         self.old_cwd = os.getcwd()
         self.tmpdir = tempfile.mkdtemp()
