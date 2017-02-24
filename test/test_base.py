@@ -144,9 +144,10 @@ class GitChangelogTest(BaseGitReposTest):
             out, self.REFERENCE,
             msg="Should match our reference output... "
             "diff of changelogs:\n%s"
-            % '\n'.join(difflib.unified_diff(out.split("\n"),
-                                             self.REFERENCE.split("\n"),
-                                             lineterm="")))
+            % '\n'.join(difflib.unified_diff(
+                self.REFERENCE.split("\n"),
+                out.split("\n"),
+                lineterm="")))
 
     def test_simple_run_show_call_deprecated(self):
         out, err, errlvl = cmd('$tprog show')
@@ -165,9 +166,10 @@ class GitChangelogTest(BaseGitReposTest):
             out, self.REFERENCE,
             msg="Should match our reference output... "
             "diff of changelogs:\n%s"
-            % '\n'.join(difflib.unified_diff(out.split("\n"),
-                                             self.REFERENCE.split("\n"),
-                                             lineterm="")))
+            % '\n'.join(difflib.unified_diff(
+                self.REFERENCE.split("\n"),
+                out.split("\n"),
+                lineterm="")))
 
     def test_simple_with_changelog_python_exception(self):
         file_put_contents(
@@ -459,8 +461,8 @@ class GitChangelogTest(BaseGitReposTest):
             msg="Should match our reference output... "
             "diff of changelogs:\n%s"
             % '\n'.join(difflib.unified_diff(
-                out.split("\n"),
                 self.INCR_REFERENCE_002_003.split("\n"),
+                out.split("\n"),
                 lineterm="")))
 
     def test_incremental_call_multirev(self):
@@ -481,8 +483,8 @@ class GitChangelogTest(BaseGitReposTest):
             msg="Should match our reference output... "
             "diff of changelogs:\n%s"
             % '\n'.join(difflib.unified_diff(
-                out.split("\n"),
                 self.INCR_REFERENCE_002_003.split("\n"),
+                out.split("\n"),
                 lineterm="")))
 
     def test_incremental_call_one_commit_unreleased(self):
@@ -513,8 +515,8 @@ class GitChangelogTest(BaseGitReposTest):
             msg="Should match our reference output... "
             "diff of changelogs:\n%s"
             % '\n'.join(difflib.unified_diff(
-                out.split("\n"),
                 REFERENCE.split("\n"),
+                out.split("\n"),
                 lineterm="")))
 
     def test_incremental_call_one_commit_released(self):
@@ -545,8 +547,8 @@ class GitChangelogTest(BaseGitReposTest):
             msg="Should match our reference output... "
             "diff of changelogs:\n%s"
             % '\n'.join(difflib.unified_diff(
-                out.split("\n"),
                 REFERENCE.split("\n"),
+                out.split("\n"),
                 lineterm="")))
 
     def test_incremental_show_call_deprecated(self):
@@ -567,12 +569,12 @@ class GitChangelogTest(BaseGitReposTest):
             msg="Should match our reference output... "
             "diff of changelogs:\n%s"
             % '\n'.join(difflib.unified_diff(
-                out.split("\n"),
                 self.INCR_REFERENCE_002_003.split("\n"),
+                out.split("\n"),
                 lineterm="")))
 
     def test_overriding_options(self):
-        """We must be able to define a small gitchangelog.rc that adjust only
+        """We must be able to define a small gitchangelog.rc that override only
         one variable of all the builtin defaults."""
 
         file_put_contents(
@@ -647,9 +649,10 @@ class GitChangelogTest(BaseGitReposTest):
             out, self.REFERENCE,
             msg="Should match our reference output... "
             "diff of changelogs:\n%s"
-            % '\n'.join(difflib.unified_diff(out.split("\n"),
-                                             self.REFERENCE.split("\n"),
-                                             lineterm="")))
+            % '\n'.join(difflib.unified_diff(
+                self.REFERENCE.split("\n"),
+                out.split("\n"),
+                lineterm="")))
 
     def test_include_merge_options(self):
         """We must be able to define a small gitchangelog.rc that adjust only
@@ -681,9 +684,10 @@ class GitChangelogTest(BaseGitReposTest):
             changelog, self.REFERENCE,
             msg="Mustache output should match our reference output... "
             "diff of changelogs:\n%s"
-            % '\n'.join(difflib.unified_diff(self.REFERENCE.split("\n"),
-                                             changelog.split("\n"),
-                                             lineterm="")))
+            % '\n'.join(difflib.unified_diff(
+                self.REFERENCE.split("\n"),
+                changelog.split("\n"),
+                lineterm="")))
 
         file_put_contents(
             ".gitchangelog.rc",
@@ -693,32 +697,37 @@ class GitChangelogTest(BaseGitReposTest):
             changelog, self.REFERENCE,
             msg="Mako output should match our reference output... "
             "diff of changelogs:\n%s"
-            % '\n'.join(difflib.unified_diff(self.REFERENCE.split("\n"),
-                                             changelog.split("\n"),
-                                             lineterm="")))
+            % '\n'.join(difflib.unified_diff(
+                self.REFERENCE.split("\n"),
+                changelog.split("\n"),
+                lineterm="")))
 
     def test_same_output_with_different_engine_incr(self):
         """Reference implementation should match mustache and mako implem"""
 
-        file_put_contents(".gitchangelog.rc", "output_engine = mustache('restructuredtext')")
+        file_put_contents(".gitchangelog.rc",
+                          "output_engine = mustache('restructuredtext')")
         changelog = w('$tprog 0.0.2..0.0.3')
         self.assertEqual(
             changelog, self.INCR_REFERENCE_002_003,
             msg="Mustache output should match our reference output... "
             "diff of changelogs:\n%s"
-            % '\n'.join(difflib.unified_diff(self.INCR_REFERENCE_002_003.split("\n"),
-                                             changelog.split("\n"),
-                                             lineterm="")))
+            % '\n'.join(difflib.unified_diff(
+                self.INCR_REFERENCE_002_003.split("\n"),
+                changelog.split("\n"),
+                lineterm="")))
 
-        file_put_contents(".gitchangelog.rc", "output_engine = makotemplate('restructuredtext')")
+        file_put_contents(".gitchangelog.rc",
+                          "output_engine = makotemplate('restructuredtext')")
         changelog = w('$tprog 0.0.2..0.0.3')
         self.assertEqual(
             changelog, self.INCR_REFERENCE_002_003,
             msg="Mako output should match our reference output... "
             "diff of changelogs:\n%s"
-            % '\n'.join(difflib.unified_diff(self.INCR_REFERENCE_002_003.split("\n"),
-                                             changelog.split("\n"),
-                                             lineterm="")))
+            % '\n'.join(difflib.unified_diff(
+                self.INCR_REFERENCE_002_003.split("\n"),
+                changelog.split("\n"),
+                lineterm="")))
 
     def test_provided_templates(self):
         """Run all provided templates at least once"""
@@ -792,9 +801,10 @@ class GitChangelogTest(BaseGitReposTest):
             out, reference,
             msg="Mako output should match our reference output... "
             "diff of changelogs:\n%s"
-            % '\n'.join(difflib.unified_diff(reference.split("\n"),
-                                             out.split("\n"),
-                                             lineterm="")))
+            % '\n'.join(difflib.unified_diff(
+                reference.split("\n"),
+                out.split("\n"),
+                lineterm="")))
 
     def test_template_as_access_to_full_commit(self):
         """Existing files should be accepted as valid templates"""
@@ -840,6 +850,7 @@ class GitChangelogTest(BaseGitReposTest):
             out, reference,
             msg="Mako output should match our reference output... "
             "diff of changelogs:\n%s"
-            % '\n'.join(difflib.unified_diff(reference.split("\n"),
-                                             out.split("\n"),
-                                             lineterm="")))
+            % '\n'.join(difflib.unified_diff(
+                reference.split("\n"),
+                out.split("\n"),
+                lineterm="")))
