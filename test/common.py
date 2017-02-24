@@ -19,12 +19,17 @@ import re
 from gitchangelog import gitchangelog
 
 WIN32 = gitchangelog.WIN32
+PY3 = gitchangelog.PY3
 
 
 def file_put_contents(filename, string):
     """Write string to filename."""
+    if PY3:
+        fopen = open(filename, 'w', newline='')
+    else:
+        fopen = open(filename, 'wb')
 
-    with open(filename, 'w') as f:
+    with fopen as f:
         f.write(string)
 
 
