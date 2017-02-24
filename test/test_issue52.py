@@ -7,7 +7,7 @@ Tests issue #52
 
 from __future__ import unicode_literals
 
-from .common import BaseGitReposTest, w
+from .common import BaseGitReposTest
 
 
 class TestNoTagButCommitNoWarn(BaseGitReposTest):
@@ -15,16 +15,7 @@ class TestNoTagButCommitNoWarn(BaseGitReposTest):
     def setUp(self):
         super(TestNoTagButCommitNoWarn, self).setUp()
 
-        ## Target tree:
-        ##
-        ## (Pdb) print w("git log --all --pretty=tformat:%s\ %d --graph")
-        ## * a  (HEAD, master)
-
-        w("""
-
-            git commit -m 'a' --allow-empty
-
-        """)
+        self.git.commit(message="a", allow_empty=True)
 
     def test_no_tag_no_revlist(self):
         """if no tags are detected it should throw a warning"""
@@ -61,17 +52,7 @@ class TestEmptyChangelogWarn(BaseGitReposTest):
 
     def setUp(self):
         super(TestEmptyChangelogWarn, self).setUp()
-
-        ## Target tree:
-        ##
-        ## (Pdb) print w("git log --all --pretty=tformat:%s\ %d --graph")
-        ## * chg: dev: ignore !minor (HEAD, master)
-
-        w("""
-
-            git commit -m 'chg: dev: ignore !minor' --allow-empty
-
-        """)
+        self.git.commit(message='chg: dev: ignore !minor', allow_empty=True)
 
     def test_no_commit(self):
         """check warning about empty changelog"""

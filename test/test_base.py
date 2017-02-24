@@ -70,72 +70,62 @@ class GitChangelogTest(BaseGitReposTest):
     def setUp(self):
         super(GitChangelogTest, self).setUp()
 
-        w(r"""
+        self.git.commit(
+            message='new: first commit',
+            author='Bob <bob@example.com>',
+            date='2000-01-01 10:00:00',
+            allow_empty=True)
+        self.git.tag("0.0.1")
+        self.git.commit(
+            message=textwrap.dedent("""\
+                add ``b`` with non-ascii chars éèàâ§µ and HTML chars ``&<``
 
-            ## Adding first file
-            echo 'Hello' > a
-            git add a
-            git commit -m 'new: first commit' \
-                --author 'Bob <bob@example.com>' \
-                --date '2000-01-01 10:00:00'
-            git tag 0.0.1
+                Change-Id: Ic8aaa0728a43936cd4c6e1ed590e01ba8f0fbf5b"""),
+            author='Alice <alice@example.com>',
+            date='2000-01-02 11:00:00',
+            allow_empty=True)
+        self.git.tag("0.0.2")
+        self.git.commit(
+            message='new: add file ``c``',
+            author='Charly <charly@example.com>',
+            date='2000-01-03 12:00:00',
+            allow_empty=True)
+        self.git.commit(
+            message=textwrap.dedent("""\
+                new: add file ``e``, modified ``b``
 
-            ## Adding second file
-            echo 'Second file with strange non-ascii char: éèàâ§µ' > b
-            git add b
+                This is a message body.
 
-            ## Notice there are no section here.
-            git commit -m 'add ``b`` with non-ascii chars éèàâ§µ and HTML chars ``&<``
+                With multi-line content:
+                - one
+                - two
 
-Change-Id: Ic8aaa0728a43936cd4c6e1ed590e01ba8f0fbf5b' \
-                --author 'Alice <alice@example.com>' \
-                --date '2000-01-02 11:00:00'
-            git tag 0.0.2
+                Bug: #42
+                Change-Id: Ic8aaa0728a43936cd4c6e1ed590e01ba8f0fbf5b
+                Signed-off-by: A. U. Thor <author@example.com>
+                CC: R. E. Viewer <reviewer@example.com>
+                Subject: This is a fake subject spanning to several lines
+                  as you can see
+                """),
+            author='Bob <bob@example.com>',
+            date='2000-01-04 13:00:00',
+            allow_empty=True)
+        self.git.commit(
+            message='chg: modified ``b`` !minor',
+            author='Bob <bob@example.com>',
+            date='2000-01-05 13:00:00',
+            allow_empty=True)
+        self.git.tag("0.0.3")
+        self.git.commit(
+            message=textwrap.dedent("""\
+                chg: modified ``b`` XXX
 
-            ## Adding more files
-            echo 'Third file' > c
-            git add c
-            git commit -m 'new: add file ``c``' \
-                --author 'Charly <charly@example.com>' \
-                --date '2000-01-03 12:00:00'
-            echo 'Fourth file' > d
-            echo 'With a modification' >> b
-            git add d b
-            git commit -m 'new: add file ``e``, modified ``b``
-
-This is a message body.
-
-With multi-line content:
-- one
-- two
-
-Bug: #42
-Change-Id: Ic8aaa0728a43936cd4c6e1ed590e01ba8f0fbf5b
-Signed-off-by: A. U. Thor <author@example.com>
-CC: R. E. Viewer <reviewer@example.com>
-Subject: This is a fake subject spanning to several lines
-  as you can see
-' \
-                --author 'Bob <bob@example.com>' \
-                --date '2000-01-04 13:00:00'
-
-            echo 'minor addition 1' >> b
-            git commit -am 'chg: modified ``b`` !minor' \
-                --author 'Bob <bob@example.com>' \
-                --date '2000-01-05 13:00:00'
-            git tag 0.0.3
-
-            ## Add untagged commits
-            echo 'addition' >> b
-            git commit -am 'chg: modified ``b`` XXX
-
-Co-Authored-By: Juliet <juliet@example.com>
-Co-Authored-By: Charly <charly@example.com>
-' \
-                --author 'Alice <alice@example.com>' \
-                --date '2000-01-06 11:00:00'
-
-            """)
+                Co-Authored-By: Juliet <juliet@example.com>
+                Co-Authored-By: Charly <charly@example.com>
+                """),
+            author='Alice <alice@example.com>',
+            date='2000-01-06 11:00:00',
+            allow_empty=True)
 
     def test_simple_run_no_args_legacy_call(self):
         out, err, errlvl = cmd('$tprog')
@@ -589,8 +579,8 @@ Co-Authored-By: Charly <charly@example.com>
             ".gitchangelog.rc",
             "tag_filter_regexp = r'^v[0-9]+\\.[0.9]$'")
 
-        w("git tag v7.0 \"HEAD^\"")
-        w("git tag v8.0 \"HEAD\"")
+        self.git.tag("v7.0", "HEAD^")
+        self.git.tag("v8.0", "HEAD")
 
         changelog = w('$tprog')
         self.assertContains(
@@ -668,14 +658,12 @@ Co-Authored-By: Charly <charly@example.com>
         file_put_contents(
             ".gitchangelog.rc",
             "include_merge = False")
-        w("""
+        self.git.checkout(b="develop")
+        self.git.commit(message="made on develop branch",
+                        allow_empty=True)
+        self.git.checkout("master")
+        self.git.merge("develop", no_ff=True)
 
-            git checkout -b develop
-            git commit -m "made on develop branch" --allow-empty
-            git checkout master
-            git merge develop --no-ff
-
-        """)
         changelog = w('$tprog')
         self.assertNotContains(
             changelog, "Merge",

@@ -9,8 +9,9 @@ Tests issue #62
 from __future__ import unicode_literals
 
 import difflib
+import textwrap
 
-from .common import BaseGitReposTest, w, cmd, file_put_contents
+from .common import BaseGitReposTest, cmd, file_put_contents
 
 
 class TestRevsBadFormat(BaseGitReposTest):
@@ -81,42 +82,44 @@ class TestRevsBadFormat(BaseGitReposTest):
 
 class TestBasicRevs(BaseGitReposTest):
 
-    REFERENCE = """\
-None
-  None:
-    * c [The Committer]
+    REFERENCE = textwrap.dedent("""\
+        None
+          None:
+            * c [The Committer]
 
-"""
+        """)
 
-    REFERENCE2 = """\
-Changelog
-=========
-
-
-%%version%% (unreleased)
-------------------------
-- C. [The Committer]
+    REFERENCE2 = textwrap.dedent("""\
+        Changelog
+        =========
 
 
-1.2 (2017-02-20)
-----------------
-- B. [The Committer]
-- A. [The Committer]
+        %%version%% (unreleased)
+        ------------------------
+        - C. [The Committer]
 
 
-"""
+        1.2 (2017-02-20)
+        ----------------
+        - B. [The Committer]
+        - A. [The Committer]
+
+
+        """)
 
     def setUp(self):
         super(TestBasicRevs, self).setUp()
 
-        w("""
-
-            git commit -m 'a' --allow-empty --date "2017-02-20 11:00:00"
-            git commit -m 'b' --allow-empty --date "2017-02-20 11:00:00"
-            git tag 1.2
-            git commit -m 'c' --allow-empty --date "2017-02-20 11:00:00"
-
-        """)
+        self.git.commit(message="a",
+                        date="2017-02-20 11:00:00",
+                        allow_empty=True)
+        self.git.commit(message="b",
+                        date="2017-02-20 11:00:00",
+                        allow_empty=True)
+        self.git.tag("1.2")
+        self.git.commit(message="c",
+                        date="2017-02-20 11:00:00",
+                        allow_empty=True)
 
     def test_matching_reference(self):
         """Test that only last commit is in the changelog"""

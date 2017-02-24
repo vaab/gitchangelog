@@ -19,7 +19,7 @@ from __future__ import unicode_literals
 import difflib
 import textwrap
 
-from .common import BaseGitReposTest, w
+from .common import BaseGitReposTest
 
 
 class TestCrossBranchTags(BaseGitReposTest):
@@ -60,32 +60,30 @@ class TestCrossBranchTags(BaseGitReposTest):
         ## |/
         ## * first commit  (tag: 0.0.1)
 
-        w("""
+        self.git.commit(message='first commit', allow_empty=True)
+        self.git.tag("0.0.1")
 
-            git commit -m 'first commit' --allow-empty
-            git tag 0.0.1
+        ## We are on master branch by default...
+        ## commit, tag
+        self.git.checkout(b="develop")
+        self.git.commit(message='new: first commit on develop branch',
+                        allow_empty=True)
+        self.git.tag("0.0.2")
 
-            ## We are on master branch by default...
-            ## commit, tag
-            git checkout -b develop
-            git commit -m 'new: first commit on develop branch' --allow-empty
-            git tag 0.0.2
+        self.git.commit(message='new: second commit on develop branch',
+                        allow_empty=True)
 
-            git commit -m 'new: second commit on develop branch' --allow-empty
+        ## Back on master, commit tag
+        self.git.checkout("master")
+        self.git.commit(message='fix: hotfix on master', allow_empty=True)
+        self.git.tag("0.0.3")
 
-            ## Back on master, commit tag
-            git checkout master
-            git commit -m 'fix: hotfix on master' --allow-empty
-            git tag 0.0.3
+        self.git.commit(message='new: some new commit', allow_empty=True)
 
-            git commit -m 'new: some new commit' --allow-empty
-
-            ## Merge and tag
-            git checkout develop
-            git merge master --no-ff
-            git tag 0.0.4
-
-        """)
+        ## Merge and tag
+        self.git.checkout("develop")
+        self.git.merge("master", no_ff=True)
+        self.git.tag("0.0.4")
 
     def test_nothing_missed_or_duplicate(self):
         """Test that all tags in branch history make it into changelog"""
@@ -128,22 +126,18 @@ class TestLogLinearbility(BaseGitReposTest):
         ## * fix: something  (tag: 0.0.2)
         ## * first commit  (tag: 0.0.1, master)
 
-        w("""
+        self.git.commit(message='first commit', allow_empty=True)
+        self.git.tag("0.0.1")
 
-            git commit -m 'first commit' --allow-empty
-            git tag 0.0.1
+        ## Branch
+        self.git.checkout(b="develop")
 
-            ## Branch
-            git checkout -b develop
+        self.git.commit(message='fix: something', allow_empty=True)
+        self.git.tag("0.0.2")
 
-            git commit -m 'fix: something' --allow-empty
-            git tag 0.0.2
-
-            git commit -m 'new: commit on develop branch' --allow-empty
-            git tag 0.0.3
-
-        """)
-
+        self.git.commit(message='new: commit on develop branch',
+                        allow_empty=True)
+        self.git.tag("0.0.3")
 
     def test_easy_release_attribution(self):
         """Test attribution when commits are already linear"""
@@ -197,38 +191,33 @@ class TestLogHardLinearbility(BaseGitReposTest):
         ## * first commit  (tag: 0.0.1, master)
         ##
 
-        w("""
+        self.git.commit(message='first commit', allow_empty=True)
+        self.git.tag("0.0.1")
 
-            git commit -m 'first commit' --allow-empty
-            git tag 0.0.1
+        ## Branch
+        self.git.checkout(b="develop")
 
-            ## Branch
-            git checkout -b develop
+        ## Build the tree
+        self.git.commit(message='fix: something', allow_empty=True)
+        self.git.tag("0.1")
 
-            ## Build the tree
-            git commit -m 'fix: something' --allow-empty
-            git tag 0.1
+        self.git.commit(message='chg: continued development', allow_empty=True)
 
-            git commit -m 'chg: continued development' --allow-empty
+        self.git.checkout("0.1")
 
-            git checkout 0.1
+        self.git.commit(message='fix: out-of-band hotfix', allow_empty=True)
+        self.git.tag("0.1.1")
 
-            git commit -m 'fix: out-of-band hotfix' --allow-empty
-            git tag 0.1.1
+        self.git.checkout("develop")
 
-            git checkout develop
+        self.git.merge("0.1.1")
 
-            git merge 0.1.1
-
-            git commit -m 'new: something' --allow-empty
-            git tag 0.2
-
-        """)
+        self.git.commit(message='new: something', allow_empty=True)
+        self.git.tag("0.2")
 
     def test_hard_release_attribution(self):
-        """Test attribution for out-of-band releases
+        """Test attribution for out-of-band releases"""
 
-        """
         changelog = self.simple_changelog()
         self.assertEqual(
             changelog, self.REFERENCE,

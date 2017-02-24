@@ -443,8 +443,8 @@ class Proc(Popen):
         self.stderr = Phile(self.stderr, encoding=encoding)
 
 
-def cmd(command, env=None):
-    p = Popen(command, shell=True,
+def cmd(command, env=None, shell=True):
+    p = Popen(command, shell=shell,
               stdin=PIPE, stdout=PIPE, stderr=PIPE,
               close_fds=PLT_CFG['close_fds'], env=env,
               universal_newlines=False)
@@ -455,7 +455,7 @@ def cmd(command, env=None):
         p.returncode)
 
 
-def wrap(command, ignore_errlvls=[0], env=None):
+def wrap(command, ignore_errlvls=[0], env=None, shell=True):
     """Wraps a shell command and casts an exception on unexpected errlvl
 
     >>> wrap('/tmp/lsdjflkjf') # doctest: +ELLIPSIS +IGNORE_EXCEPTION_DETAIL
@@ -470,7 +470,7 @@ def wrap(command, ignore_errlvls=[0], env=None):
 
     """
 
-    out, err, errlvl = cmd(command, env=env)
+    out, err, errlvl = cmd(command, env=env, shell=shell)
 
     if errlvl not in ignore_errlvls:
 
@@ -858,6 +858,24 @@ class GitConfig(SubGitObjectMixin):
             raise KeyError(label)
 
 
+class GitCmd(SubGitObjectMixin):
+
+    def __getattr__(self, label):
+        def method(*args, **kwargs):
+            cli_args = []
+            for key, value in kwargs.items():
+                cli_key = (("-%s" if len(key) == 1 else "--%s")
+                           % key.replace("_", "-"))
+                if isinstance(value, bool):
+                    cli_args.append(cli_key)
+                else:
+                    cli_args.append(cli_key)
+                    cli_args.append(value)
+            cli_args.extend(args)
+            return self.swrap(['git', label, ] + cli_args, shell=False)
+        return method
+
+
 class GitRepos(object):
 
     def __init__(self, path):
@@ -911,6 +929,10 @@ class GitRepos(object):
         return GitCommit(self, identifier)
 
     @property
+    def cmd(self):
+        return GitCmd(self)
+
+    @property
     def config(self):
         return GitConfig(self)
 
@@ -919,7 +941,6 @@ class GitRepos(object):
         old_dir = os.path.curdir
         os.chdir(self._orig_path)
         try:
-            command = "%s" % (command,)
             return swrap(command, **kwargs)
         finally:
             os.chdir(old_dir)

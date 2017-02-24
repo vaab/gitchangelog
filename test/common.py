@@ -140,6 +140,10 @@ class BaseGitReposTest(BaseTmpDirTest):
             user="The Committer")
 
     @property
+    def git(self):
+        return self.repos.cmd
+
+    @property
     def raw_changelog(self):
         ## Currifyed main function
         return lambda **kw: gitchangelog.changelog(

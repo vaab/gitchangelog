@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 import difflib
 import textwrap
 
-from .common import BaseGitReposTest, w
+from .common import BaseGitReposTest
 
 
 class TestCrossBranchTags(BaseGitReposTest):
@@ -34,13 +34,9 @@ class TestCrossBranchTags(BaseGitReposTest):
         ## * b
         ## * a
 
-        w("""
-
-            git commit -m 'a' --allow-empty
-            git commit -m 'b' --allow-empty
-            git commit -m 'c' --allow-empty
-
-        """)
+        self.git.commit(message='a', allow_empty=True)
+        self.git.commit(message='b', allow_empty=True)
+        self.git.commit(message='c', allow_empty=True)
 
     def test_matching_reference(self):
         """Test that all 3 commits are in the changelog"""
