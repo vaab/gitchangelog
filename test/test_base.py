@@ -14,7 +14,7 @@ from gitchangelog.gitchangelog import indent
 class GitChangelogTest(BaseGitReposTest):
     """Base for all tests needing to start in a new git small repository"""
 
-    REFERENCE = textwrap.dedent(r"""
+    REFERENCE = textwrap.dedent("""\
           Changelog
           =========
 
@@ -47,9 +47,9 @@ class GitChangelogTest(BaseGitReposTest):
           - Add ``b`` with non-ascii chars éèàâ§µ and HTML chars ``&<`` [Alice]
 
 
-          """)[1:]
+          """)
 
-    INCR_REFERENCE_002_003 = textwrap.dedent(r"""
+    INCR_REFERENCE_002_003 = textwrap.dedent("""\
         0.0.3 (2000-01-05)
         ------------------
 
@@ -65,7 +65,7 @@ class GitChangelogTest(BaseGitReposTest):
         - Add file ``c`` [Charly]
 
 
-        """)[1:]
+        """)
 
     def setUp(self):
         super(GitChangelogTest, self).setUp()
@@ -77,7 +77,7 @@ class GitChangelogTest(BaseGitReposTest):
             allow_empty=True)
         self.git.tag("0.0.1")
         self.git.commit(
-            message=textwrap.dedent("""\
+            message=textwrap.dedent("""
                 add ``b`` with non-ascii chars éèàâ§µ and HTML chars ``&<``
 
                 Change-Id: Ic8aaa0728a43936cd4c6e1ed590e01ba8f0fbf5b"""),
@@ -91,7 +91,7 @@ class GitChangelogTest(BaseGitReposTest):
             date='2000-01-03 12:00:00',
             allow_empty=True)
         self.git.commit(
-            message=textwrap.dedent("""\
+            message=textwrap.dedent("""
                 new: add file ``e``, modified ``b``
 
                 This is a message body.
@@ -117,7 +117,7 @@ class GitChangelogTest(BaseGitReposTest):
             allow_empty=True)
         self.git.tag("0.0.3")
         self.git.commit(
-            message=textwrap.dedent("""\
+            message=textwrap.dedent("""
                 chg: modified ``b`` XXX
 
                 Co-Authored-By: Juliet <juliet@example.com>
@@ -172,7 +172,7 @@ class GitChangelogTest(BaseGitReposTest):
     def test_simple_with_changelog_python_exception(self):
         file_put_contents(
             ".gitchangelog.rc",
-            textwrap.dedent("""\
+            textwrap.dedent("""
                 def raise_exc(data, opts):
                     raise Exception('Test Exception XYZ')
 
@@ -204,7 +204,7 @@ class GitChangelogTest(BaseGitReposTest):
     def test_simple_show_with_changelog_python_exception_deprecated(self):
         file_put_contents(
             ".gitchangelog.rc",
-            textwrap.dedent("""\
+            textwrap.dedent("""
                 def raise_exc(data, opts):
                     raise Exception('Test Exception XYZ')
 
@@ -240,7 +240,7 @@ class GitChangelogTest(BaseGitReposTest):
     def test_with_changelog_python_exc_in_cli_debug_mode(self):
         file_put_contents(
             ".gitchangelog.rc",
-            textwrap.dedent("""\
+            textwrap.dedent("""
                 def raise_exc(data, opts):
                     raise Exception('Test Exception XYZ')
 
@@ -272,7 +272,7 @@ class GitChangelogTest(BaseGitReposTest):
     def test_show_with_changelog_python_exc_in_cli_debug_mode_deprecated(self):
         file_put_contents(
             ".gitchangelog.rc",
-            textwrap.dedent("""\
+            textwrap.dedent("""
                 def raise_exc(data, opts):
                     raise Exception('Test Exception XYZ')
 
@@ -308,7 +308,7 @@ class GitChangelogTest(BaseGitReposTest):
     def test_with_changelog_python_exc_in_cli_debug_mode_after(self):
         file_put_contents(
             ".gitchangelog.rc",
-            textwrap.dedent("""\
+            textwrap.dedent("""
                 def raise_exc(data, opts):
                     raise Exception('Test Exception XYZ')
 
@@ -340,7 +340,7 @@ class GitChangelogTest(BaseGitReposTest):
     def test_show_with_changelog_python_exc_in_cli_debug_mode_after_deprecated(self):
         file_put_contents(
             ".gitchangelog.rc",
-            textwrap.dedent("""\
+            textwrap.dedent("""
                 def raise_exc(data, opts):
                     raise Exception('Test Exception XYZ')
 
@@ -376,7 +376,7 @@ class GitChangelogTest(BaseGitReposTest):
     def test_with_changelog_python_exc_in_env_debug_mode(self):
         file_put_contents(
             ".gitchangelog.rc",
-            textwrap.dedent("""\
+            textwrap.dedent("""
                 def raise_exc(data, opts):
                     raise Exception('Test Exception XYZ')
 
@@ -408,7 +408,7 @@ class GitChangelogTest(BaseGitReposTest):
     def test_show_with_changelog_python_exc_in_env_debug_mode_deprecated(self):
         file_put_contents(
             ".gitchangelog.rc",
-            textwrap.dedent("""\
+            textwrap.dedent("""
                 def raise_exc(data, opts):
                     raise Exception('Test Exception XYZ')
 
@@ -801,7 +801,7 @@ class GitChangelogTest(BaseGitReposTest):
 
         file_put_contents(
             "mytemplate.tpl",
-            textwrap.dedent("""\
+            textwrap.dedent("""
                 % for version in data["versions"]:
                 ${version["tag"]}
                 % for section in version["sections"]:
@@ -815,7 +815,7 @@ class GitChangelogTest(BaseGitReposTest):
         file_put_contents(".gitchangelog.rc",
                           "output_engine = makotemplate('mytemplate.tpl')")
 
-        reference = textwrap.dedent("""\
+        reference = textwrap.dedent("""
             None
               Changes:
                 - chg: modified ``b`` XXX
