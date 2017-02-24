@@ -127,7 +127,19 @@ class BaseTmpDirTest(ExtendedTest):
     def tearDown(self):
         ## put an empty tmp directory up
         os.chdir(self.old_cwd)
-        shutil.rmtree(self.tmpdir)
+
+        ## This is due to windows having loads of read-only files
+        ## in unexpected places.
+        def onerror(func, path, exc_info):
+
+            import stat
+            if not os.access(path, os.W_OK):
+                # Is the error an access error ?
+                os.chmod(path, stat.S_IWUSR)
+                func(path)
+            else:
+                raise
+        shutil.rmtree(self.tmpdir, onerror=onerror)
 
 
 class BaseGitReposTest(BaseTmpDirTest):
