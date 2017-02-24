@@ -16,7 +16,6 @@ Run test with: python -m unittest discover -fv -s test
 
 from __future__ import unicode_literals
 
-import difflib
 import textwrap
 
 from .common import BaseGitReposTest
@@ -90,13 +89,8 @@ class TestCrossBranchTags(BaseGitReposTest):
 
         changelog = self.simple_changelog()
         self.assertEqual(
-            changelog, self.REFERENCE,
-            msg="Should match our reference output... "
-            "diff of reference vs current:\n%s"
-            % '\n'.join(difflib.unified_diff(self.REFERENCE.split("\n"),
-                                             changelog.split("\n"),
-                                             lineterm="")))
-
+            self.REFERENCE, changelog,
+            msg="Should match our reference output... ")
 
 class TestLogLinearbility(BaseGitReposTest):
     """Test that commits are attributed to the proper release"""
@@ -144,12 +138,8 @@ class TestLogLinearbility(BaseGitReposTest):
 
         changelog = self.simple_changelog()
         self.assertEqual(
-            changelog, self.REFERENCE,
-            msg="Should match our reference output... "
-            "diff of reference vs current:\n%s"
-            % '\n'.join(difflib.unified_diff(self.REFERENCE.split("\n"),
-                                             changelog.split("\n"),
-                                             lineterm="")))
+            self.REFERENCE, changelog,
+            msg="Should match our reference output... ")
 
 
 class TestLogHardLinearbility(BaseGitReposTest):
@@ -220,9 +210,5 @@ class TestLogHardLinearbility(BaseGitReposTest):
 
         changelog = self.simple_changelog()
         self.assertEqual(
-            changelog, self.REFERENCE,
-            msg="Should match our reference output... "
-            "diff of reference vs current:\n%s"
-            % '\n'.join(difflib.unified_diff(self.REFERENCE.split("\n"),
-                                             changelog.split("\n"),
-                                             lineterm="")))
+            self.REFERENCE, changelog,
+            msg="Should match our reference output... ")

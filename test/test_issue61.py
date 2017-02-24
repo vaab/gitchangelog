@@ -8,7 +8,6 @@ Tests issue #62
 
 from __future__ import unicode_literals
 
-import difflib
 import textwrap
 
 from .common import BaseGitReposTest, cmd, file_put_contents
@@ -126,12 +125,8 @@ class TestBasicRevs(BaseGitReposTest):
 
         changelog = self.simple_changelog(revlist=['^1.2', 'HEAD'])
         self.assertEqual(
-            changelog, self.REFERENCE,
-            msg="Should match our reference output... "
-            "diff of reference vs current:\n%s"
-            % '\n'.join(difflib.unified_diff(self.REFERENCE.split("\n"),
-                                             changelog.split("\n"),
-                                             lineterm="")))
+            self.REFERENCE, changelog,
+            msg="Should match our reference output... ")
 
     def test_command_line_overrights_config(self):
         """Test that all 3 commits are in the changelog"""
@@ -146,9 +141,5 @@ class TestBasicRevs(BaseGitReposTest):
             errlvl, 0,
             msg="Should succeed")
         self.assertEqual(
-            out, self.REFERENCE2,
-            msg="Mako output should match our reference output... "
-            "diff of changelogs:\n%s"
-            % '\n'.join(difflib.unified_diff(self.REFERENCE2.split("\n"),
-                                             out.split("\n"),
-                                             lineterm="")))
+            self.REFERENCE2, out,
+            msg="Mako output should match our reference output... ")

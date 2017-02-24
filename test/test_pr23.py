@@ -7,7 +7,6 @@ Tests issue #23
 
 from __future__ import unicode_literals
 
-import difflib
 import textwrap
 
 from .common import BaseGitReposTest
@@ -43,11 +42,7 @@ class TestCrossBranchTags(BaseGitReposTest):
 
         changelog = self.simple_changelog()
         self.assertEqual(
-            changelog, self.REFERENCE,
-            msg="Should match our reference output... "
-            "diff of reference vs current:\n%s"
-            % '\n'.join(difflib.unified_diff(self.REFERENCE.split("\n"),
-                                             changelog.split("\n"),
-                                             lineterm="")))
+            self.REFERENCE, changelog,
+            msg="Should match our reference output... ")
 
 
