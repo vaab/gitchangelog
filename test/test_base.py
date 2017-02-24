@@ -639,9 +639,9 @@ Co-Authored-By: Charly <charly@example.com>
                 "diff of changelogs:\n%s"
                 % (config,
                    '\n'.join(difflib.unified_diff(
-                   self.REFERENCE.split("\n"),
-                   out.split("\n"),
-                   lineterm=""))))
+                       self.REFERENCE.split("\n"),
+                       out.split("\n"),
+                       lineterm=""))))
 
     def test_with_filename_same_as_tag(self):
         file_put_contents("0.0.1", "")
@@ -795,7 +795,7 @@ Co-Authored-By: Charly <charly@example.com>
         out, err, errlvl = cmd('$tprog')
         self.assertEqual(
             err, "",
-            msg="There should be non error messages. "
+            msg="There should be no error messages. "
             "Current stderr:\n%s" % err)
         self.assertEqual(
             errlvl, 0,
@@ -855,4 +855,3 @@ Co-Authored-By: Charly <charly@example.com>
             % '\n'.join(difflib.unified_diff(reference.split("\n"),
                                              out.split("\n"),
                                              lineterm="")))
-
