@@ -15,6 +15,7 @@ import os
 import os.path
 import shutil
 import re
+import sys
 
 from gitchangelog import gitchangelog
 
@@ -99,7 +100,18 @@ if WITH_COVERAGE:
         PYTHONPATH="%s" % BASE_PATH,
         tprog=tprog)
 else:
-    tprog_set = set_env(tprog=tprog)
+    tprog = ('"%(python)s" "%(tprog)s"'
+             % {'python': sys.executable,
+                'tprog': tprog})
+    if WIN32:
+        ## For some reasons, even on 3.6, outputs in tests are in ``cp1252``.
+        tprog_set = set_env(
+            PYTHONIOENCODING="utf-8",
+            tprog=tprog)
+    else:
+        tprog_set = set_env(
+            tprog=tprog)
+
 
 w = replace_tprog(tprog_set(gitchangelog.wrap))
 cmd = replace_tprog(tprog_set(gitchangelog.cmd))
