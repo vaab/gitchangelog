@@ -17,32 +17,33 @@ Run test with: python -m unittest discover -fv -s test
 from __future__ import unicode_literals
 
 import difflib
+import textwrap
 
 from .common import BaseGitReposTest, w
 
 
 class TestCrossBranchTags(BaseGitReposTest):
 
-    REFERENCE = """\
-0.0.4
-  None:
-    * Merge branch 'master' into develop [The Committer]
-    * new: some new commit [The Committer]
-    * new: second commit on develop branch [The Committer]
+    REFERENCE = textwrap.dedent("""\
+        0.0.4
+          None:
+            * Merge branch 'master' into develop [The Committer]
+            * new: some new commit [The Committer]
+            * new: second commit on develop branch [The Committer]
 
-0.0.3
-  None:
-    * fix: hotfix on master [The Committer]
+        0.0.3
+          None:
+            * fix: hotfix on master [The Committer]
 
-0.0.2
-  None:
-    * new: first commit on develop branch [The Committer]
+        0.0.2
+          None:
+            * new: first commit on develop branch [The Committer]
 
-0.0.1
-  None:
-    * first commit [The Committer]
+        0.0.1
+          None:
+            * first commit [The Committer]
 
-"""
+        """)
 
     def setUp(self):
         super(TestCrossBranchTags, self).setUp()
@@ -102,20 +103,20 @@ class TestCrossBranchTags(BaseGitReposTest):
 class TestLogLinearbility(BaseGitReposTest):
     """Test that commits are attributed to the proper release"""
 
-    REFERENCE = """\
-0.0.3
-  None:
-    * new: commit on develop branch [The Committer]
+    REFERENCE = textwrap.dedent("""\
+        0.0.3
+          None:
+            * new: commit on develop branch [The Committer]
 
-0.0.2
-  None:
-    * fix: something [The Committer]
+        0.0.2
+          None:
+            * fix: something [The Committer]
 
-0.0.1
-  None:
-    * first commit [The Committer]
+        0.0.1
+          None:
+            * first commit [The Committer]
 
-"""
+        """)
 
     def setUp(self):
         super(TestLogLinearbility, self).setUp()
@@ -159,26 +160,26 @@ class TestLogLinearbility(BaseGitReposTest):
 
 class TestLogHardLinearbility(BaseGitReposTest):
 
-    REFERENCE = """\
-0.2
-  None:
-    * new: something [The Committer]
-    * Merge tag '0.1.1' into develop [The Committer]
-    * chg: continued development [The Committer]
+    REFERENCE = textwrap.dedent("""\
+        0.2
+          None:
+            * new: something [The Committer]
+            * Merge tag '0.1.1' into develop [The Committer]
+            * chg: continued development [The Committer]
 
-0.1.1
-  None:
-    * fix: out-of-band hotfix [The Committer]
+        0.1.1
+          None:
+            * fix: out-of-band hotfix [The Committer]
 
-0.1
-  None:
-    * fix: something [The Committer]
+        0.1
+          None:
+            * fix: something [The Committer]
 
-0.0.1
-  None:
-    * first commit [The Committer]
+        0.0.1
+          None:
+            * first commit [The Committer]
 
-"""
+        """)
 
     def setUp(self):
         super(TestLogHardLinearbility, self).setUp()
@@ -187,14 +188,14 @@ class TestLogHardLinearbility(BaseGitReposTest):
         ##
         ## (Pdb) print w("git log --all --pretty=tformat:%s\ %d --graph")
         ## * new: something  (HEAD, tag: 0.2, develop)
-        ## *   Merge tag '0.1.1' into develop 
-        ## |\  
+        ## *   Merge tag '0.1.1' into develop
+        ## |\
         ## | * fix: out-of-band hotfix  (tag: 0.1.1)
-        ## * | chg: continued development 
-        ## |/  
+        ## * | chg: continued development
+        ## |/
         ## * fix: something  (tag: 0.1)
         ## * first commit  (tag: 0.0.1, master)
-        ## 
+        ##
 
         w("""
 

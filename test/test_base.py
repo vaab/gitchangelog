@@ -14,56 +14,58 @@ from gitchangelog.gitchangelog import indent
 class GitChangelogTest(BaseGitReposTest):
     """Base for all tests needing to start in a new git small repository"""
 
-    REFERENCE = r"""Changelog
-=========
+    REFERENCE = textwrap.dedent(r"""
+          Changelog
+          =========
 
 
-%%version%% (unreleased)
-------------------------
+          %%version%% (unreleased)
+          ------------------------
 
-Changes
-~~~~~~~
-- Modified ``b`` XXX. [Alice, Charly, Juliet]
-
-
-0.0.3 (2000-01-05)
-------------------
-
-New
-~~~
-- Add file ``e``, modified ``b`` [Bob]
-
-  This is a message body.
-
-  With multi-line content:
-  - one
-  - two
-- Add file ``c`` [Charly]
+          Changes
+          ~~~~~~~
+          - Modified ``b`` XXX. [Alice, Charly, Juliet]
 
 
-0.0.2 (2000-01-02)
-------------------
-- Add ``b`` with non-ascii chars éèàâ§µ and HTML chars ``&<`` [Alice]
+          0.0.3 (2000-01-05)
+          ------------------
+
+          New
+          ~~~
+          - Add file ``e``, modified ``b`` [Bob]
+
+            This is a message body.
+
+            With multi-line content:
+            - one
+            - two
+          - Add file ``c`` [Charly]
 
 
-"""
-
-    INCR_REFERENCE_002_003 = r"""0.0.3 (2000-01-05)
-------------------
-
-New
-~~~
-- Add file ``e``, modified ``b`` [Bob]
-
-  This is a message body.
-
-  With multi-line content:
-  - one
-  - two
-- Add file ``c`` [Charly]
+          0.0.2 (2000-01-02)
+          ------------------
+          - Add ``b`` with non-ascii chars éèàâ§µ and HTML chars ``&<`` [Alice]
 
 
-"""
+          """)[1:]
+
+    INCR_REFERENCE_002_003 = textwrap.dedent(r"""
+        0.0.3 (2000-01-05)
+        ------------------
+
+        New
+        ~~~
+        - Add file ``e``, modified ``b`` [Bob]
+
+          This is a message body.
+
+          With multi-line content:
+          - one
+          - two
+        - Add file ``c`` [Charly]
+
+
+        """)[1:]
 
     def setUp(self):
         super(GitChangelogTest, self).setUp()

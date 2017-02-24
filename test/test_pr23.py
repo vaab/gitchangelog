@@ -8,20 +8,21 @@ Tests issue #23
 from __future__ import unicode_literals
 
 import difflib
+import textwrap
 
 from .common import BaseGitReposTest, w
 
 
 class TestCrossBranchTags(BaseGitReposTest):
 
-    REFERENCE = """\
-None
-  None:
-    * c [The Committer]
-    * b [The Committer]
-    * a [The Committer]
+    REFERENCE = textwrap.dedent("""\
+        None
+          None:
+            * c [The Committer]
+            * b [The Committer]
+            * a [The Committer]
 
-"""
+        """)
 
     def setUp(self):
         super(TestCrossBranchTags, self).setUp()
