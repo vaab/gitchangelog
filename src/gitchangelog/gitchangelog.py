@@ -919,17 +919,18 @@ class GitRepos(object):
     def init(cls, dir, user=None, email=None):
         with set_cwd(dir):
             wrap("git init .")
-            if user:
-                wrap("git config user.email '%s'" % user)
-            if email:
-                wrap("git config user.name '%s'" % user)
-        return cls(dir)
+        self = cls(dir)
+        if user:
+            self.git.config("user.name", user)
+        if email:
+            self.git.config("user.email", email)
+        return self
 
     def commit(self, identifier):
         return GitCommit(self, identifier)
 
     @property
-    def cmd(self):
+    def git(self):
         return GitCmd(self)
 
     @property

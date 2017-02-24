@@ -170,7 +170,7 @@ class BaseGitReposTest(BaseTmpDirTest):
 
     @property
     def git(self):
-        return self.repos.cmd
+        return self.repos.git
 
     @property
     def raw_changelog(self):

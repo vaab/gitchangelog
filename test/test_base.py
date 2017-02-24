@@ -450,7 +450,7 @@ class GitChangelogTest(BaseGitReposTest):
             msg="Should match our reference output... ")
 
     def test_incremental_call_multirev(self):
-        out, err, errlvl = cmd('$tprog ^0.0.2 0.0.3 0.0.3')
+        out, err, errlvl = cmd('$tprog "^0.0.2" 0.0.3 0.0.3')
         self.assertEqual(
             errlvl, 0,
             msg="Should not fail on simple repo and without config file")
@@ -467,7 +467,7 @@ class GitChangelogTest(BaseGitReposTest):
             msg="Should match our reference output... ")
 
     def test_incremental_call_one_commit_unreleased(self):
-        out, err, errlvl = cmd('$tprog ^HEAD^ HEAD')
+        out, err, errlvl = cmd('$tprog "^HEAD^" HEAD')
         REFERENCE = textwrap.dedent("""\
             %%version%% (unreleased)
             ------------------------
@@ -494,7 +494,7 @@ class GitChangelogTest(BaseGitReposTest):
             msg="Should match our reference output... ")
 
     def test_incremental_call_one_commit_released(self):
-        out, err, errlvl = cmd('$tprog 0.0.3^^^..0.0.3^^')
+        out, err, errlvl = cmd('$tprog "0.0.3^^^..0.0.3^^"')
         REFERENCE = textwrap.dedent("""\
             0.0.3 (2000-01-05)
             ------------------
