@@ -510,6 +510,11 @@ class SubGitObjectMixin(object):
         """Simple delegation to ``repos`` original method."""
         return self._repos.swrap(*args, **kwargs)
 
+    @property
+    def git(self):
+        """Simple delegation to ``repos`` original method."""
+        return self._repos.git
+
 
 GIT_FORMAT_KEYS = {
     'sha1': "%H",
@@ -541,13 +546,8 @@ class GitCommit(SubGitObjectMixin):
 
     Initialization:
 
-        >>> def mock_swrap(str):
-        ...     global BODY, SUBJECT
-        ...     print("Called gitRepos.swrap(%r)" % str)
-        ...     if str.startswith("git rev-list"):
-        ...         return "123456"  ## sha1 of first element of tree
-        ...     elif str.startswith("git log"):
-        ...         dct = {
+        >>> repos.git = Mock("gitRepos.git")
+        >>> repos.git.log.mock_returns_func = lambda *a, **kwargs: "\x00".join([{
         ...             'sha1': "000000",
         ...             'sha1_short': "000",
         ...             'subject': SUBJECT,
@@ -559,11 +559,8 @@ class GitCommit(SubGitObjectMixin):
         ...             'committer_date_timestamp': "0", ## epoch
         ...             'raw_body': "my subject\n\n%s" % BODY,
         ...             'body': BODY,
-        ...         }
-        ...         return "\x00".join([dct[key] for key in GIT_FORMAT_KEYS.keys()])
-        ...     raise NotImplementedError()
-        ...
-        >>> repos.swrap = mock_swrap
+        ...         }[key] for key in GIT_FORMAT_KEYS.keys()])
+        >>> repos.git.rev_list.mock_returns = "123456"
 
     Query, by attributes or items:
 
@@ -572,7 +569,7 @@ class GitCommit(SubGitObjectMixin):
 
         >>> head = GitCommit(repos, "HEAD")
         >>> head.subject
-        Called gitRepos.swrap('git log -n 1 "HEAD" --pretty=format:...')
+        Called gitRepos.git.log(...'HEAD'...)
         'fee fie foh'
         >>> head.author_name
         'John Smith'
@@ -594,7 +591,7 @@ class GitCommit(SubGitObjectMixin):
 
         >>> head = GitCommit(repos, "HEAD")
         >>> head.trailer_change_id
-        Called gitRepos.swrap('git log -n 1 "HEAD" --pretty=format:...')
+        Called gitRepos.git.log(...'HEAD'...)
         '1234'
         >>> head.trailer_value_x
         'Supports multi\nline values'
@@ -611,7 +608,7 @@ class GitCommit(SubGitObjectMixin):
 
         >>> head = GitCommit(repos, "HEAD")
         >>> head.trailer_co_authored_by
-        Called gitRepos.swrap('git log -n 1 "HEAD" --pretty=format:...')
+        Called gitRepos.git.log(...'HEAD'...)
         ['Bob', 'Alice', 'Jack']
 
 
@@ -630,7 +627,7 @@ class GitCommit(SubGitObjectMixin):
 
         >>> head = GitCommit(repos, "HEAD")
         >>> head.author_names
-        Called gitRepos.swrap('git log -n 1 "HEAD" --pretty=format:...')
+        Called gitRepos.git.log(...'HEAD'...)
         ['Alice', 'Bob', 'Jack', 'John Smith']
 
     Notice that they are printed in alphabetical order.
@@ -657,8 +654,8 @@ class GitCommit(SubGitObjectMixin):
 
         identifier = self.identifier
         if identifier == "LAST":
-            identifier = self.swrap(
-                "git rev-list --first-parent --max-parents=0 HEAD")
+            identifier = self.git.rev_list(
+                "HEAD", first_parent=True, max_parents="0")
 
         ## Compute only missing information
         missing_attrs = [l for l in attrs if not l in self.__dict__]
@@ -667,9 +664,8 @@ class GitCommit(SubGitObjectMixin):
             aformat = "%x00".join(GIT_FORMAT_KEYS[l]
                                   for l in missing_attrs)
             try:
-                ret = self.swrap("git log -n 1 %s --pretty=format:%s --"
-                                 % (protect_rev(identifier),
-                                    protect_rev(aformat)))
+                ret = self.git.log([identifier, "--max-count=1",
+                                   "--pretty=format:%s" % aformat, "--"])
             except ShellError:
                 if DEBUG:
                     raise
@@ -727,8 +723,7 @@ class GitCommit(SubGitObjectMixin):
         if not isinstance(value, GitCommit):
             value = self._repos.commit(value)
         try:
-            self.swrap("git merge-base --is-ancestor %s %s"
-                       % (self.sha1, value.sha1))
+            self.git.merge_base(value.sha1, is_ancestor=self.sha1)
             return True
         except ShellError as e:
             if e.errlvl != 1:
@@ -777,18 +772,18 @@ class GitConfig(SubGitObjectMixin):
 
     Query, by attributes or items:
 
-        >>> repos.swrap.mock_returns = "bar"
+        >>> repos.git.config.mock_returns = "bar"
         >>> cfg.foo
-        Called gitRepos.swrap('git config "foo"')
+        Called gitRepos.git.config('foo')
         'bar'
         >>> cfg["foo"]
-        Called gitRepos.swrap('git config "foo"')
+        Called gitRepos.git.config('foo')
         'bar'
         >>> cfg.get("foo")
-        Called gitRepos.swrap('git config "foo"')
+        Called gitRepos.git.config('foo')
         'bar'
         >>> cfg["foo.wiz"]
-        Called gitRepos.swrap('git config "foo.wiz"')
+        Called gitRepos.git.config('foo.wiz')
         'bar'
 
     Notice that you can't use attribute search in subsection as ``cfg.foo.wiz``
@@ -798,7 +793,7 @@ class GitConfig(SubGitObjectMixin):
     Nevertheless, you can do:
 
         >>> getattr(cfg, "foo.wiz")
-        Called gitRepos.swrap('git config "foo.wiz"')
+        Called gitRepos.git.config('foo.wiz')
         'bar'
 
     Default values
@@ -806,12 +801,12 @@ class GitConfig(SubGitObjectMixin):
 
     get item, and getattr default values can be used:
 
-        >>> del repos.swrap.mock_returns
-        >>> repos.swrap.mock_raises = ShellError('Key not found',
-        ...                                      errlvl=1, out="", err="")
+        >>> del repos.git.config.mock_returns
+        >>> repos.git.config.mock_raises = ShellError('Key not found',
+        ...                                           errlvl=1, out="", err="")
 
         >>> getattr(cfg, "foo", "default")
-        Called gitRepos.swrap('git config "foo"')
+        Called gitRepos.git.config('foo')
         'default'
 
         >>> cfg["foo"]  ## doctest: +ELLIPSIS
@@ -825,11 +820,11 @@ class GitConfig(SubGitObjectMixin):
         AttributeError...
 
         >>> cfg.get("foo", "default")
-        Called gitRepos.swrap('git config "foo"')
+        Called gitRepos.git.config('foo')
         'default'
 
         >>> print("%r" % cfg.get("foo"))
-        Called gitRepos.swrap('git config "foo"')
+        Called gitRepos.git.config('foo')
         None
 
     """
@@ -838,9 +833,8 @@ class GitConfig(SubGitObjectMixin):
         super(GitConfig, self).__init__(repos)
 
     def __getattr__(self, label):
-        cmd = "git config %s" % protect_rev(str(label))
         try:
-            res = self.swrap(cmd)
+            res = self.git.config(label)
         except ShellError as e:
             if e.errlvl == 1 and e.out == "":
                 raise AttributeError("key %r is not found in git config."
@@ -861,7 +855,12 @@ class GitConfig(SubGitObjectMixin):
 class GitCmd(SubGitObjectMixin):
 
     def __getattr__(self, label):
+        label = label.replace("_", "-")
+
         def method(*args, **kwargs):
+            if (len(args) == 1 and len(kwargs) == 0 and
+                    not isinstance(args[0], basestring)):
+                return self.swrap(['git', label, ] + args[0], shell=False)
             cli_args = []
             for key, value in kwargs.items():
                 cli_key = (("-%s" if len(key) == 1 else "--%s")
@@ -886,7 +885,7 @@ class GitRepos(object):
 
         ## verify ``git`` command is accessible:
         try:
-            self._git_version = self.swrap("git version")
+            self._git_version = self.git.version()
         except ShellError:
             if DEBUG:
                 raise
@@ -896,19 +895,19 @@ class GitRepos(object):
 
         ## verify that we are in a git repository
         try:
-            self.swrap("git remote")
+            self.git.remote()
         except ShellError:
             if DEBUG:
                 raise
             raise EnvironmentError(
                 "Not in a git repository. (calling ``git remote`` failed.)")
 
-        self.bare = self.swrap("git rev-parse --is-bare-repository") == "true"
-        self.toplevel = None if self.bare else \
-                        self.swrap("git rev-parse --show-toplevel")
+        self.bare = self.git.rev_parse(is_bare_repository=True) == "true"
+        self.toplevel = (None if self.bare else
+                         self.git.rev_parse(show_toplevel=True))
         self.gitdir = normpath(
             os.path.join(self._orig_path,
-                         self.swrap("git rev-parse --git-dir")))
+                         self.git.rev_parse(git_dir=True)))
 
     @classmethod
     def create(cls, dir, *args, **kwargs):
@@ -954,9 +953,9 @@ class GitRepos(object):
 
         """
         if contains:
-            tags = self.swrap("git tag -l --contains %s" % protect_rev(contains)).split("\n")
+            tags = self.git.tag(contains=contains).split("\n")
         else:
-            tags = self.swrap('git tag -l').split("\n")
+            tags = self.git.tag().split("\n")
         ## Should we use new version name sorting ?  refering to :
         ## ``git tags --sort -v:refname`` in git version >2.0.
         ## Sorting and reversing with command line is not available on
@@ -1470,7 +1469,7 @@ def get_revision(repository, config, opts):
                 "'str' type is required, and a %r was given."
                 % type(rev).__name__)
         try:
-            repository.swrap("git rev-parse --rev-only %s --" % protect_rev(rev))
+            repository.git.rev_parse([rev, "--rev_only", "--"])
         except ShellError:
             if DEBUG:
                 raise
