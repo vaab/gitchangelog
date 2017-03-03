@@ -1509,6 +1509,43 @@ class Config(dict):
 
 
 ##
+## Safe print
+##
+
+def safe_print(content):
+    if not PY3:
+        if isinstance(content, unicode):
+            content = content.encode(_preferred_encoding)
+
+    try:
+        print(content, end='')
+    except UnicodeEncodeError:
+        if DEBUG:
+            raise
+        stderr("""\
+UnicodeEncodeError:
+  There was a problem outputing the resulting changelog to your console.
+
+  This probably means that the changelog contains characters that can't
+  be translated to characters in your current charset (%s).
+""" % sys.stdout.encoding)
+        if WIN32 and PY_VERSION < 3.6 and sys.stdout.encoding != 'utf-8':
+            ## As of PY 3.6, encoding is now ``utf-8`` regardless of
+            ## PYTHONIOENCODING
+            ## https://www.python.org/dev/peps/pep-0528/
+            stderr("  You might want to try to fix that by setting "
+                   "PYTHONIOENCODING to 'utf-8'.")
+        exit(1)
+    except IOError as e:
+        if e.errno == 0 and not PY3 and WIN32:
+            ## Yes, had a strange IOError Errno 0 after outputing string
+            ## that contained UTF-8 chars on Windows and PY2.7
+            pass  ## Ignoring exception
+        else:
+            raise
+
+
+##
 ## Main
 ##
 
@@ -1627,31 +1664,12 @@ def main():
                    (debug_varname, ))
         exit(255)
 
-    compat_encode = lambda str: str if PY3 else str.encode(_preferred_encoding)
+    if isinstance(content, collections.Iterator):
+        for chunk in content:
+            safe_print(chunk)
+    else:
+        safe_print(content)
 
-    try:
-        if isinstance(content, collections.Iterator):
-            for chunk in content:
-                print(compat_encode(chunk), end='')
-        else:
-            print(compat_encode(content), end='')
-    except UnicodeEncodeError:
-        if DEBUG:
-            raise
-        stderr("""\
-UnicodeEncodeError:
-  There was a problem outputing the resulting changelog to your console.
-
-  This probably means that the changelog contains characters that can't
-  be translated to characters in your current charset (%s).
-""" % sys.stdout.encoding)
-        if WIN32 and PY_VERSION < 3.6 and sys.stdout.encoding != 'utf-8':
-            ## As of PY 3.6, encoding is now ``utf-8`` regardless of
-            ## PYTHONIOENCODING
-            ## https://www.python.org/dev/peps/pep-0528/
-            stderr("  You might want to try to fix that by setting "
-                   "PYTHONIOENCODING to 'utf-8'.")
-        exit(1)
 
 ##
 ## Launch program
