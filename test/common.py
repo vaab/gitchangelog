@@ -86,18 +86,25 @@ BASE_PATH = os.path.normpath(os.path.join(
     ".."))
 tprog = os.path.join(BASE_PATH, "src", "gitchangelog", "gitchangelog.py")
 
-WITH_COVERAGE = gitchangelog.cmd(
-    "%s coverage" % ("where" if WIN32 else "type"))[2] == 0
+WITH_COVERAGE = gitchangelog.cmd("coverage --version")[2] == 0
 if WITH_COVERAGE:
-    tprog = ('coverage run -a --source=%(base_path)s '
-             '--omit=%(base_path)s/setup.py,'
-             '%(base_path)s/gitchangelog.rc* '
-             '--rcfile="%(base_path)s/.coveragerc" %(tprog)s'
+    source = os.path.join(BASE_PATH, 'src', 'gitchangelog')
+    tprog = ('coverage run -a --source=%(source)s '
+             '--omit="%(omit)s" '
+             '--rcfile="%(rcfile)s" "%(tprog)s"'
              % {'base_path': BASE_PATH,
-                'tprog': tprog})
+                'python': sys.executable,
+                'tprog': tprog,
+                'source': source,
+                'omit': ",".join([
+                    os.path.join(source, '__init__.py'),
+                    os.path.join(BASE_PATH, 'setup.py'),
+                    os.path.join(source, 'gitchangelog.rc.reference')]),
+                'rcfile': os.path.join(BASE_PATH, '.coveragerc'),
+                })
     tprog_set = set_env(
-        COVERAGE_FILE="%s/.coverage.2" % BASE_PATH,
-        PYTHONPATH="%s" % BASE_PATH,
+        COVERAGE_FILE=os.path.join(BASE_PATH, ".coverage.2"),
+        PYTHONPATH=BASE_PATH,
         tprog=tprog)
 else:
     tprog = ('"%(python)s" "%(tprog)s"'
