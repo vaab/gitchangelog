@@ -20,4 +20,5 @@ build: false
 test_script:
   - "python src\\gitchangelog\\gitchangelog.py --debug"
   - "python src\\gitchangelog\\gitchangelog.py --debug HEAD^^..HEAD"
-
+  - pip install nose
+  - nosetests test.test_log_encoding
