@@ -450,25 +450,6 @@ for label in ("Indent", "Wrap", "ReSub", "noop", "final_dot",
     _config_env[label] = locals()[label]
 
 
-def protect_rev(rev):
-    """Protect revision when used on a command line
-
-    This targets ``bash`` and ``CMD.exe``
-
-    In bash environment, interpretation of quotes is made by bash
-    itself.  On CMD, it is passed as-is (with quote) and git on
-    windows support the de-quoting.
-
-    Note that using quotes in reference is valid (at least on linux)::
-
-        $ git check-ref-format --branch "let's\"see" && echo "is valid"
-        let's"see
-        is valid
-
-    """
-    return '"%s"' % rev.replace('"', r'\"')
-
-
 ##
 ## Inferring revision
 ##
@@ -1020,10 +1001,18 @@ class GitCmd(SubGitObjectMixin):
     def __getattr__(self, label):
         label = label.replace("_", "-")
 
+        def dir_swrap(command, **kwargs):
+            old_dir = os.path.curdir
+            os.chdir(self._repos._orig_path)
+            try:
+                return swrap(command, **kwargs)
+            finally:
+                os.chdir(old_dir)
+
         def method(*args, **kwargs):
             if (len(args) == 1 and len(kwargs) == 0 and
                     not isinstance(args[0], basestring)):
-                return self.swrap(['git', label, ] + args[0], shell=False)
+                return dir_swrap(['git', label, ] + args[0], shell=False)
             cli_args = []
             for key, value in kwargs.items():
                 cli_key = (("-%s" if len(key) == 1 else "--%s")
@@ -1033,8 +1022,10 @@ class GitCmd(SubGitObjectMixin):
                 else:
                     cli_args.append(cli_key)
                     cli_args.append(value)
+
             cli_args.extend(args)
-            return self.swrap(['git', label, ] + cli_args, shell=False)
+
+            return dir_swrap(['git', label, ] + cli_args, shell=False)
         return method
 
 
@@ -1098,15 +1089,6 @@ class GitRepos(object):
     @property
     def config(self):
         return GitConfig(self)
-
-    def swrap(self, command, **kwargs):
-        """Essential force the CWD of the command to be in self._orig_path"""
-        old_dir = os.path.curdir
-        os.chdir(self._orig_path)
-        try:
-            return swrap(command, **kwargs)
-        finally:
-            os.chdir(old_dir)
 
     def tags(self, contains=None):
         """String list of repository's tag names
@@ -1394,15 +1376,11 @@ def versions_data_iter(repository, revlist=None,
     ## Hash to speedup lookups
     versions_done = {}
     excludes = [rev[1:]
-                for rev in swrap("git rev-parse --rev-only %s --"
-                                 % " ".join(protect_rev(rev)
-                                            for rev in revlist)).split("\n")
+                for rev in repository.git.rev_parse([
+                    "--rev-only", ] + revlist + ["--", ]).split("\n")
                 if rev.startswith("^")] if revlist else []
 
-    revs = swrap("git rev-list %s"
-                 % " ".join(protect_rev(rev)
-                            for rev in revlist)
-                 ).split("\n") if revlist else []
+    revs = repository.git.rev_list(*revlist).split("\n") if revlist else []
     revs = [rev for rev in revs if rev != ""]
 
     if revlist and not revs:
