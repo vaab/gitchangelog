@@ -51,9 +51,8 @@ Requirements
 
 ``gitchangelog`` published on PyPI works on Linux/BSD/MacOSX and Windows.
 
-To be noted: the windows version is currently not being tested as well as
-the others and you won't be able to easily use it from sources as the tests
-and the sources tools are not yet compatible. Any help on this topic is
+To be noted: the windows version won't be easily useable it from sources as
+the sources tools are not yet compatible. Any help on this topic is
 welcome (as with others).
 
 Please submit an issue if you encounter incompatibilies.

@@ -2,6 +2,8 @@
 # http://www.appveyor.com/docs/installed-software#python
 
 environment:
+  global:
+    PYTHONIOENCODING: utf-8
   matrix:
     - PYTHON: "C:\\Python27"
     - PYTHON: "C:\\Python27-x64"
@@ -9,16 +11,29 @@ environment:
     - PYTHON: "C:\\Python34-x64"
     - PYTHON: "C:\\Python35"
     - PYTHON: "C:\\Python35-x64"
+    - PYTHON: "C:\\Python36"
+    - PYTHON: "C:\\Python36-x64"
 
+## Before repo cloning
 init:
   - set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
-  - set PYTHONIOENCODING=utf-8
   - python -V
+
+## After repo cloning
+install:
 
 build: false
 
+## Before tests
+before_test:
+  - pip install minimock nose pystache mako  ## should use ``python setup.py``
+
+## Custom test script
 test_script:
+
+  ## Fail early on big problems
   - "python src\\gitchangelog\\gitchangelog.py --debug"
   - "python src\\gitchangelog\\gitchangelog.py --debug HEAD^^..HEAD"
-  - pip install nose
-  - nosetests test.test_log_encoding
+
+  ## real tests
+  - nosetests -sx .
