@@ -1740,11 +1740,8 @@ def main():
     for enforce_file_existence, fun in [
         (True, lambda: os.environ.get('GITCHANGELOG_CONFIG_FILENAME')),
         (True, lambda: gc_rc),
-        (False, lambda: ('%s/.%s.rc' % (repository.toplevel, basename)) \
-                        if not repository.bare else None),
-        ## Removed to enforce per-repository gitchangelog file.
-        # (False, lambda: os.path.expanduser('~/.%s.rc' % basename)),
-        # (False, lambda: '/etc/%s.rc' % basename),
+        (False, lambda: (os.path.join(repository.toplevel, ".%s.rc" % basename)) \
+                         if not repository.bare else None),
         ]:
         changelogrc = fun()
         if changelogrc:
