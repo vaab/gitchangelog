@@ -47,13 +47,8 @@ Feature
 Requirements
 ============
 
-``gitchangelog`` is compatible Python 2 and Python 3.
-
-``gitchangelog`` published on PyPI works on Linux/BSD/MacOSX and Windows.
-
-To be noted: the windows version won't be easily useable it from sources as
-the sources tools are not yet compatible. Any help on this topic is
-welcome (as with others).
+``gitchangelog`` is compatible Python 2 and Python 3 on
+Linux/BSD/MacOSX and Windows.
 
 Please submit an issue if you encounter incompatibilies.
 
@@ -61,14 +56,37 @@ Please submit an issue if you encounter incompatibilies.
 Installation
 ============
 
+
+full package
+------------
+
 Gitchangelog is published on PyPI, thus:
 
     pip install gitchangelog
 
-\.. is the way to go for installing it on any platform.
+\.. is the way to go for install the full package on any platform.
 
 If you are installing from source, please note that the development tools
 are not working fully yet on Windows.
+
+The full package provides the ``gitchangelog.py`` executable as long as:
+
+- a `reference configuration file`_ that provides system wide defaults for
+  all values.
+- some example templates in ``mustache`` and ``mako`` templating
+  engine's language. Ideal to bootstrap your variations.
+
+
+from source
+-----------
+
+If you'd rather work from the source repository, it supports the common
+idiom to install it on your system::
+
+    python setup.py install
+
+Note that for linux/BSD, there's a link to the executable in the root of the
+source. This can be a convenient way to work on the source version.
 
 
 Sample

@@ -26,7 +26,9 @@ build: false
 
 ## Before tests
 before_test:
-  - pip install minimock nose pystache mako  ## should use ``python setup.py``
+  - for /f %%i in ('bash .\autogen.sh --get-name') do set PACKAGE_NAME=%%i
+  - python setup.py develop easy_install %PACKAGE_NAME%[test]
+  - pip install coveralls
 
 ## Custom test script
 test_script:
@@ -37,3 +39,8 @@ test_script:
 
   ## real tests
   - nosetests -sx .
+
+  ## installable
+  - python setup.py install
+  - gitchangelog --debug
+  - "gitchangelog HEAD^^..HEAD"
