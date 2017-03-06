@@ -317,7 +317,10 @@ def format_last_exception(prefix="  | "):
 ## config file functions
 ##
 
-_config_env = {}
+_config_env = {
+    'WIN32': WIN32,
+    'PY3': PY3,
+}
 
 
 def available_in_config(f):
@@ -599,6 +602,7 @@ def cmd(command, env=None, shell=True):
         p.returncode)
 
 
+@available_in_config
 def wrap(command, ignore_errlvls=[0], env=None, shell=True):
     """Wraps a shell command and casts an exception on unexpected errlvl
 
@@ -635,6 +639,7 @@ def wrap(command, ignore_errlvls=[0], env=None, shell=True):
     return out
 
 
+@available_in_config
 def swrap(command, **kwargs):
     """Same as ``wrap(...)`` but strips the output."""
 
