@@ -18,8 +18,8 @@ class GitChangelogTest(BaseGitReposTest):
           =========
 
 
-          %%version%% (unreleased)
-          ------------------------
+          (unreleased)
+          ------------
 
           Changes
           ~~~~~~~
@@ -465,8 +465,8 @@ class GitChangelogTest(BaseGitReposTest):
     def test_incremental_call_one_commit_unreleased(self):
         out, err, errlvl = cmd('$tprog "^HEAD^" HEAD')
         REFERENCE = textwrap.dedent("""\
-            %%version%% (unreleased)
-            ------------------------
+            (unreleased)
+            ------------
 
             Changes
             ~~~~~~~
@@ -481,10 +481,6 @@ class GitChangelogTest(BaseGitReposTest):
         self.assertEqual(
             errlvl, 0,
             msg="Should not fail on simple repo and without config file")
-        self.assertContains(
-            out, "%%version%%",
-            msg="The tag %%version%% should be displayed in stdout... "
-            "Current stdout:\n%s" % out)
         self.assertNoDiff(
             REFERENCE, out)
 

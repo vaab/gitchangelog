@@ -15,8 +15,8 @@ class UnicodeCommitMessageTest(BaseGitReposTest):
         =========
 
 
-        %%version%% (unreleased)
-        ------------------------
+        (unreleased)
+        ------------
         - Hć. [The Committer]
 
 

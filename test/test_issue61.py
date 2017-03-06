@@ -93,8 +93,8 @@ class TestBasicRevs(BaseGitReposTest):
         =========
 
 
-        %%version%% (unreleased)
-        ------------------------
+        (unreleased)
+        ------------
         - C. [The Committer]
 
 
