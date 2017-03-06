@@ -1,7 +1,7 @@
 # .coveragerc to control coverage.py
 [run]
 branch = True
-source = gitchangelog
+
 [report]
 # Regexes for lines to exclude from consideration
 exclude_lines =
@@ -18,11 +18,6 @@ exclude_lines =
 
     # Don't complain if non-runnable code isn't run:
     if 0:
-    if __name__ == .__main__.:
-
-    if PY3:
-
-    if not PY3:
 
 ignore_errors = True
 [html]

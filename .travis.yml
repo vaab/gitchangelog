@@ -7,13 +7,15 @@ python:
 install:
   - git fetch --unshallow || true ## required as we need it to make own gitchangelog
   - if [ -e requirements.txt ]; then pip install -r requirements.txt; fi
-script:
+  - pip install coverage
   ## getting test deps
-  - python setup.py develop easy_install "$(./autogen.sh --get-name)[test]"  
+  - python setup.py develop easy_install "$(./autogen.sh --get-name)[test]"
+script:
   ## real tests
   - nosetests -sx .
 after_success:
-  - coveralls
+  - "bash <(curl -s https://codecov.io/bash)  #dovis: ignore"
+
 
 ## Ignored by Travis, but used internally to check packaging
 dist_check:

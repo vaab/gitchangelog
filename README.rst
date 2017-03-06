@@ -18,8 +18,8 @@ gitchangelog
    :target: https://ci.appveyor.com/project/vaab/gitchangelog/branch/master
    :alt: Appveyor CI build status
 
-.. image:: https://img.shields.io/coveralls/vaab/gitchangelog/master.svg?style=flat
-   :target: https://coveralls.io/r/vaab/gitchangelog
+.. image:: https://img.shields.io/codecov/c/github/vaab/gitchangelog.svg
+   :target: https://codecov.io/gh/vaab/gitchangelog
    :alt: Test coverage
 
 

@@ -28,7 +28,7 @@ build: false
 before_test:
   - for /f %%i in ('bash .\autogen.sh --get-name') do set PACKAGE_NAME=%%i
   - python setup.py develop easy_install %PACKAGE_NAME%[test]
-  - pip install coveralls
+  - pip install coverage codecov
 
 ## Custom test script
 test_script:
@@ -44,3 +44,6 @@ test_script:
   - python setup.py install
   - gitchangelog --debug
   - "gitchangelog HEAD^^..HEAD"
+
+after_test:
+  - "codecov & REM  #dovis: ignore"
