@@ -777,3 +777,24 @@ class GitChangelogTest(BaseGitReposTest):
         self.assertNoDiff(
             reference, out,
             msg="Mako output should match our reference output... ")
+
+    def test_unreleased_version_label_callable(self):
+        """Using callable in unreleased_version_label should work"""
+
+        file_put_contents(
+            ".gitchangelog.rc",
+            "unreleased_version_label = lambda : 'foo'")
+        changelog = w('$tprog "^HEAD^" HEAD')
+        self.assertNoDiff(
+            textwrap.dedent("""\
+                foo
+                ---
+
+                Changes
+                ~~~~~~~
+                - Modified ``b`` XXX. [Alice, Charly, Juliet]
+
+
+                """),
+            changelog)
+

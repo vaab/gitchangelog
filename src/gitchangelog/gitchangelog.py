@@ -1587,19 +1587,21 @@ def parse_cmd_line(usage, description, epilog, exname, version):
     return parser.parse_args(argv)
 
 
+eval_if_callable = lambda v: v() if callable(v) else v
+
+
 def get_revision(repository, config, opts):
     if opts.revlist:
         revs = opts.revlist
     else:
         revs = config.get("revs")
         if revs:
-            if callable(revs):
-                revs = revs()
+            revs = eval_if_callable(revs)
             if not isinstance(revs, list):
                 die("Invalid type for 'revs' in config file. "
                     "A 'list' type is required, and a %r was given."
                     % type(revs).__name__)
-            revs = [rev() if callable(rev) else rev
+            revs = [eval_if_callable(rev)
                     for rev in revs]
         else:
             revs = []
@@ -1766,6 +1768,8 @@ def main():
 
     log_encoding = get_log_encoding(repository, config)
     revlist = get_revision(repository, config, opts)
+    config['unreleased_version_label'] = eval_if_callable(
+        config['unreleased_version_label'])
     manage_obsolete_options(config)
 
     try:
