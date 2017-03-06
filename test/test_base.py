@@ -140,8 +140,7 @@ class GitChangelogTest(BaseGitReposTest):
             msg="At least one of the tags should be displayed in stdout... "
             "Current stdout:\n%s" % out)
         self.assertNoDiff(
-            self.REFERENCE, out,
-            msg="Should match our reference output... ")
+            self.REFERENCE, out)
 
     def test_simple_run_show_call_deprecated(self):
         out, err, errlvl = cmd('$tprog show')
@@ -157,8 +156,7 @@ class GitChangelogTest(BaseGitReposTest):
             msg="At least one of the tags should be displayed in stdout... "
             "Current stdout:\n%s" % out)
         self.assertNoDiff(
-            self.REFERENCE, out,
-            msg="Should match our reference output... ")
+            self.REFERENCE, out)
 
     def test_simple_with_changelog_python_exception(self):
         file_put_contents(
@@ -446,8 +444,7 @@ class GitChangelogTest(BaseGitReposTest):
             msg="The tag 0.0.3 should be displayed in stdout... "
             "Current stdout:\n%s" % out)
         self.assertNoDiff(
-            self.INCR_REFERENCE_002_003, out,
-            msg="Should match our reference output... ")
+            self.INCR_REFERENCE_002_003, out)
 
     def test_incremental_call_multirev(self):
         out, err, errlvl = cmd('$tprog "^0.0.2" 0.0.3 0.0.3')
@@ -463,8 +460,7 @@ class GitChangelogTest(BaseGitReposTest):
             msg="The tag 0.0.3 should be displayed in stdout... "
             "Current stdout:\n%s" % out)
         self.assertNoDiff(
-            self.INCR_REFERENCE_002_003, out,
-            msg="Should match our reference output... ")
+            self.INCR_REFERENCE_002_003, out)
 
     def test_incremental_call_one_commit_unreleased(self):
         out, err, errlvl = cmd('$tprog "^HEAD^" HEAD')
@@ -490,8 +486,7 @@ class GitChangelogTest(BaseGitReposTest):
             msg="The tag %%version%% should be displayed in stdout... "
             "Current stdout:\n%s" % out)
         self.assertNoDiff(
-            REFERENCE, out,
-            msg="Should match our reference output... ")
+            REFERENCE, out)
 
     def test_incremental_call_one_commit_released(self):
         out, err, errlvl = cmd('$tprog "0.0.3^^^..0.0.3^^"')
@@ -517,8 +512,7 @@ class GitChangelogTest(BaseGitReposTest):
             msg="The tag 0.0.3 should be displayed in stdout... "
             "Current stdout:\n%s" % out)
         self.assertNoDiff(
-            REFERENCE, out,
-            msg="Should match our reference output... ")
+            REFERENCE, out)
 
     def test_incremental_show_call_deprecated(self):
         out, err, errlvl = cmd('$tprog show 0.0.2..0.0.3')
@@ -534,8 +528,7 @@ class GitChangelogTest(BaseGitReposTest):
             msg="The tag 0.0.3 should be displayed in stdout... "
             "Current stdout:\n%s" % out)
         self.assertNoDiff(
-            self.INCR_REFERENCE_002_003, out,
-            msg="Should match our reference output... ")
+            self.INCR_REFERENCE_002_003, out)
 
     def test_overriding_options(self):
         """We must be able to define a small gitchangelog.rc that override only
@@ -590,8 +583,7 @@ class GitChangelogTest(BaseGitReposTest):
                 msg="Should not fail with config %r " % (config, ) +
                 "Current stderr:\n%s" % indent(err))
             self.assertNoDiff(
-                self.REFERENCE, out,
-                msg="config %r output should match our reference output... ")
+                self.REFERENCE, out)
 
     def test_with_filename_same_as_tag(self):
         file_put_contents("0.0.1", "")
@@ -604,8 +596,7 @@ class GitChangelogTest(BaseGitReposTest):
             msg="No error message expected. "
             "Current stderr:\n%s" % err)
         self.assertNoDiff(
-            self.REFERENCE, out,
-            msg="Should match our reference output... ")
+            self.REFERENCE, out)
 
     def test_include_merge_options(self):
         """We must be able to define a small gitchangelog.rc that adjust only
@@ -634,16 +625,14 @@ class GitChangelogTest(BaseGitReposTest):
             "output_engine = mustache('restructuredtext')")
         changelog = w('$tprog')
         self.assertNoDiff(
-            self.REFERENCE, changelog,
-            msg="Mustache output should match our reference output... ")
+            self.REFERENCE, changelog)
 
         file_put_contents(
             ".gitchangelog.rc",
             "output_engine = makotemplate('restructuredtext')")
         changelog = w('$tprog')
         self.assertNoDiff(
-            self.REFERENCE, changelog,
-            msg="Mako output should match our reference output... ")
+            self.REFERENCE, changelog)
 
     def test_same_output_with_different_engine_incr(self):
         """Reference implementation should match mustache and mako implem"""
@@ -652,15 +641,13 @@ class GitChangelogTest(BaseGitReposTest):
                           "output_engine = mustache('restructuredtext')")
         changelog = w('$tprog 0.0.2..0.0.3')
         self.assertNoDiff(
-            self.INCR_REFERENCE_002_003, changelog,
-            msg="Mustache output should match our reference output... ")
+            self.INCR_REFERENCE_002_003, changelog)
 
         file_put_contents(".gitchangelog.rc",
                           "output_engine = makotemplate('restructuredtext')")
         changelog = w('$tprog 0.0.2..0.0.3')
         self.assertNoDiff(
-            self.INCR_REFERENCE_002_003, changelog,
-            msg="Mako output should match our reference output... ")
+            self.INCR_REFERENCE_002_003, changelog)
 
     def test_provided_templates(self):
         """Run all provided templates at least once"""
@@ -731,8 +718,7 @@ class GitChangelogTest(BaseGitReposTest):
             errlvl, 0,
             msg="Should succeed to find template")
         self.assertNoDiff(
-            reference, out,
-            msg="Mako output should match our reference output... ")
+            reference, out)
 
     def test_template_as_access_to_full_commit(self):
         """Existing files should be accepted as valid templates"""
@@ -775,8 +761,7 @@ class GitChangelogTest(BaseGitReposTest):
             errlvl, 0,
             msg="Should succeed to find template")
         self.assertNoDiff(
-            reference, out,
-            msg="Mako output should match our reference output... ")
+            reference, out)
 
     def test_unreleased_version_label_callable(self):
         """Using callable in unreleased_version_label should work"""

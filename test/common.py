@@ -142,8 +142,6 @@ class ExtendedTest(unittest.TestCase):
         self.assertTrue(re.search(regex, text, re.MULTILINE) is not None, msg)
 
     def assertNoDiff(self, t1, t2, msg=None):
-        if not msg:
-            msg = "%r should match %r." % (t1, t2)
         if WIN32:
             t1 = t1.replace('\r\n', '\n')
             t2 = t2.replace('\r\n', '\n')

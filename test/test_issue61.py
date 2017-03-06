@@ -125,8 +125,7 @@ class TestBasicRevs(BaseGitReposTest):
 
         changelog = self.simple_changelog(revlist=['^1.2', 'HEAD'])
         self.assertNoDiff(
-            self.REFERENCE, changelog,
-            msg="Should match our reference output... ")
+            self.REFERENCE, changelog)
 
     def test_command_line_overrights_config(self):
         """Test that all 3 commits are in the changelog"""
@@ -141,5 +140,4 @@ class TestBasicRevs(BaseGitReposTest):
             errlvl, 0,
             msg="Should succeed")
         self.assertNoDiff(
-            self.REFERENCE2, out,
-            msg="Output should match our reference output... ")
+            self.REFERENCE2, out)

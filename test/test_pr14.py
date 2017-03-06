@@ -89,8 +89,7 @@ class TestCrossBranchTags(BaseGitReposTest):
 
         changelog = self.simple_changelog()
         self.assertNoDiff(
-            self.REFERENCE, changelog,
-            msg="Should match our reference output... ")
+            self.REFERENCE, changelog)
 
 class TestLogLinearbility(BaseGitReposTest):
     """Test that commits are attributed to the proper release"""
@@ -138,8 +137,7 @@ class TestLogLinearbility(BaseGitReposTest):
 
         changelog = self.simple_changelog()
         self.assertNoDiff(
-            self.REFERENCE, changelog,
-            msg="Should match our reference output... ")
+            self.REFERENCE, changelog)
 
 
 class TestLogHardLinearbility(BaseGitReposTest):
@@ -210,5 +208,4 @@ class TestLogHardLinearbility(BaseGitReposTest):
 
         changelog = self.simple_changelog()
         self.assertNoDiff(
-            self.REFERENCE, changelog,
-            msg="Should match our reference output... ")
+            self.REFERENCE, changelog)

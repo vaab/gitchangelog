@@ -42,7 +42,6 @@ class TestCrossBranchTags(BaseGitReposTest):
 
         changelog = self.simple_changelog()
         self.assertNoDiff(
-            self.REFERENCE, changelog,
-            msg="Should match our reference output... ")
+            self.REFERENCE, changelog)
 
 
