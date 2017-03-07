@@ -15,6 +15,7 @@ import collections
 import traceback
 import contextlib
 import itertools
+import errno
 
 from subprocess import Popen, PIPE
 
@@ -1359,7 +1360,7 @@ def versions_data_iter(repository, revlist=None,
                        ):
     """Returns an iterator through versions data structures
 
-    (see ``gitchangelog.rc.sample`` file for more info)
+    (see ``gitchangelog.rc.reference`` file for more info)
 
     :param repository: target ``GitRepos`` object
     :param revlist: list of strings that git log understands as revlist
@@ -1667,16 +1668,21 @@ def safe_print(content):
 
     try:
         print(content, end='')
+        sys.stdout.flush()
     except UnicodeEncodeError:
         if DEBUG:
             raise
-        stderr("""\
-UnicodeEncodeError:
-  There was a problem outputing the resulting changelog to your console.
+        ## XXXvlab: should use $COLUMNS in bash and for windows:
+        ## http://stackoverflow.com/questions/14978548
+        stderr(paragraph_wrap(textwrap.dedent("""\
+            UnicodeEncodeError:
+              There was a problem outputing the resulting changelog to
+              your console.
 
-  This probably means that the changelog contains characters that can't
-  be translated to characters in your current charset (%s).
-""" % sys.stdout.encoding)
+              This probably means that the changelog contains characters
+              that can't be translated to characters in your current charset
+              (%s).
+            """) % sys.stdout.encoding))
         if WIN32 and PY_VERSION < 3.6 and sys.stdout.encoding != 'utf-8':
             ## As of PY 3.6, encoding is now ``utf-8`` regardless of
             ## PYTHONIOENCODING
@@ -1689,6 +1695,22 @@ UnicodeEncodeError:
             ## Yes, had a strange IOError Errno 0 after outputing string
             ## that contained UTF-8 chars on Windows and PY2.7
             pass  ## Ignoring exception
+        elif ((WIN32 and e.errno == 22) or              ## Invalid argument
+              (not WIN32 and e.errno == errno.EPIPE)):  ## Broken Pipe
+            ## Nobody is listening anymore to stdout it seems. Let's bailout.
+            if PY3:
+                try:
+                    ## Called only to generate exception and have a chance at
+                    ## ignoring it. Otherwise this happens upon exit, and gets
+                    ## some error message printed on stderr.
+                    sys.stdout.close()
+                except BrokenPipeError:  ## expected outcome on linux
+                    pass
+                except OSError as e2:
+                    if e2.errno != 22:   ## expected outcome on WIN32
+                        raise
+            ## Yay ! stdout is closed we can now exit safely.
+            exit(0)
         else:
             raise
 
