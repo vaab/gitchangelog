@@ -66,5 +66,6 @@ class TestEmptyChangelogWarn(BaseGitReposTest):
         self.simple_changelog(warn=warn, ignore_regexps=['!minor'])
         self.assertTrue(
             len(warnings) != 0,
-            msg="Should have outputed at least one warning about 'empty changelog'")
+            msg="Should have outputed at least one warning about "
+            "'empty changelog'")
 

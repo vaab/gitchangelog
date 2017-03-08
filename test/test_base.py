@@ -171,7 +171,7 @@ class GitChangelogTest(BaseGitReposTest):
         out, err, errlvl = cmd('$tprog')
         self.assertContains(
             err, "XYZ",
-            msg="The exception message should be displayed and thus contain XYZ... "
+            msg="The exception message should be displayed and contain XYZ... "
             "Current stderr:\n%s" % err)
         self.assertEqual(
             errlvl, 255,
@@ -183,7 +183,7 @@ class GitChangelogTest(BaseGitReposTest):
             "Current stderr:\n%s" % err)
         self.assertNotContains(
             err, "Traceback (most recent call last):",
-            msg="The exception message should NOT contain traceback information... "
+            msg="The exception msg should NOT contain traceback information... "
             "Current stderr:\n%s" % err)
         self.assertEqual(
             out, "",
@@ -203,7 +203,7 @@ class GitChangelogTest(BaseGitReposTest):
         out, err, errlvl = cmd('$tprog show')
         self.assertContains(
             err, "XYZ",
-            msg="The exception message should be displayed and thus contain XYZ... "
+            msg="The exception msg should be displayed and thus contain XYZ... "
             "Current stderr:\n%s" % err)
         self.assertEqual(
             errlvl, 255,
@@ -219,7 +219,7 @@ class GitChangelogTest(BaseGitReposTest):
             "Current stderr:\n%s" % err)
         self.assertNotContains(
             err, "Traceback (most recent call last):",
-            msg="The exception message should NOT contain traceback information... "
+            msg="The exception msg should NOT contain traceback information... "
             "Current stderr:\n%s" % err)
         self.assertEqual(
             out, "",
@@ -239,7 +239,7 @@ class GitChangelogTest(BaseGitReposTest):
         out, err, errlvl = cmd('$tprog --debug')
         self.assertContains(
             err, "XYZ",
-            msg="The exception message should be displayed and thus contain XYZ... "
+            msg="The exception msg should be displayed and thus contain XYZ... "
             "Current stderr:\n%s" % err)
         self.assertNotContains(
             err, "--debug",
@@ -271,7 +271,7 @@ class GitChangelogTest(BaseGitReposTest):
         out, err, errlvl = cmd('$tprog --debug show')
         self.assertContains(
             err, "XYZ",
-            msg="The exception message should be displayed and thus contain XYZ... "
+            msg="The exception msg should be displayed and thus contain XYZ... "
             "Current stderr:\n%s" % err)
         self.assertNotContains(
             err, "--debug",
@@ -307,7 +307,7 @@ class GitChangelogTest(BaseGitReposTest):
         out, err, errlvl = cmd('$tprog HEAD --debug')
         self.assertContains(
             err, "XYZ",
-            msg="The exception message should be displayed and thus contain XYZ... "
+            msg="The exception msg should be displayed and thus contain XYZ... "
             "Current stderr:\n%s" % err)
         self.assertNotContains(
             err, "--debug",
@@ -339,7 +339,7 @@ class GitChangelogTest(BaseGitReposTest):
         out, err, errlvl = cmd('$tprog show --debug')
         self.assertContains(
             err, "XYZ",
-            msg="The exception message should be displayed and thus contain XYZ... "
+            msg="The exception msg should be displayed and thus contain XYZ... "
             "Current stderr:\n%s" % err)
         self.assertNotContains(
             err, "--debug",
@@ -375,7 +375,7 @@ class GitChangelogTest(BaseGitReposTest):
         out, err, errlvl = cmd('$tprog', env={"DEBUG_GITCHANGELOG": "1"})
         self.assertContains(
             err, "XYZ",
-            msg="The exception message should be displayed and thus contain XYZ... "
+            msg="The exception msg should be displayed and thus contain XYZ... "
             "Current stderr:\n%s" % err)
         self.assertNotContains(
             err, "--debug",
@@ -407,7 +407,7 @@ class GitChangelogTest(BaseGitReposTest):
         out, err, errlvl = cmd('$tprog show', env={"DEBUG_GITCHANGELOG": "1"})
         self.assertContains(
             err, "XYZ",
-            msg="The exception message should be displayed and thus contain XYZ... "
+            msg="The exception msg should be displayed and thus contain XYZ... "
             "Current stderr:\n%s" % err)
         self.assertNotContains(
             err, "--debug",
@@ -705,7 +705,7 @@ class GitChangelogTest(BaseGitReposTest):
 
         reference = """check: Changelog"""
 
-        out, err, errlvl = cmd('$tprog')
+        out, err, errlvl = cmd('$tprog --debug')
         self.assertEqual(
             err, "",
             msg="There should be no error messages. "

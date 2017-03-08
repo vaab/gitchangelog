@@ -32,7 +32,7 @@ class TestConfigComplains(BaseGitReposTest):
             "Current stderr:\n%s" % err)
         self.assertContains(
             err.lower(), "section_regexps",
-            msg="There should be an error message containing 'section_regexps'. "
+            msg="There should be an error msg containing 'section_regexps'. "
             "Current stderr:\n%s" % err)
         self.assertEqual(
             errlvl, 1,

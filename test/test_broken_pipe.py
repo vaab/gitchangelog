@@ -34,8 +34,6 @@ will prevent the normal failing behavior upon SIGPIPE.
 
 from __future__ import unicode_literals
 
-import textwrap
-
 from .common import BaseGitReposTest, cmd, WIN32
 
 

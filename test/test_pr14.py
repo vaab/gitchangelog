@@ -91,6 +91,7 @@ class TestCrossBranchTags(BaseGitReposTest):
         self.assertNoDiff(
             self.REFERENCE, changelog)
 
+
 class TestLogLinearbility(BaseGitReposTest):
     """Test that commits are attributed to the proper release"""
 

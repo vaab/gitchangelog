@@ -299,7 +299,8 @@ def format_last_exception(prefix="  | "):
     ...     f()
     ... except Exception:
     ...     formated_exception = format_last_exception()
-    ...     raise ValueError('Oups, an error occured:\\n%s' % formated_exception)
+    ...     raise ValueError('Oups, an error occured:\\n%s'
+    ...         % formated_exception)
     Traceback (most recent call last):
     ...
     ValueError: Oups, an error occured:
@@ -352,6 +353,7 @@ def load_config_file(filename, default_filename=None,
                 die('%s config file is not found and is required.' % (fname, ))
 
     return config
+
 
 ##
 ## Text functions
@@ -598,8 +600,10 @@ def cmd(command, env=None, shell=True):
               universal_newlines=False)
     stdout, stderr = p.communicate()
     return (
-        stdout.decode(getattr(sys.stdout, "encoding", None) or _preferred_encoding),
-        stderr.decode(getattr(sys.stderr, "encoding", None) or _preferred_encoding),
+        stdout.decode(getattr(sys.stdout, "encoding", None) or
+                      _preferred_encoding),
+        stderr.decode(getattr(sys.stderr, "encoding", None) or
+                      _preferred_encoding),
         p.returncode)
 
 
@@ -682,8 +686,10 @@ GIT_FORMAT_KEYS = {
 
 GIT_FULL_FORMAT_STRING = "%x00".join(GIT_FORMAT_KEYS.values())
 
-REGEX_RFC822_KEY_VALUE = r'(^|\n)(?P<key>[A-Z]\w+(-\w+)*): (?P<value>[^\n]*(\n\s+[^\n]*)*)'
-REGEX_RFC822_POSTFIX = r'(%s)+$' % REGEX_RFC822_KEY_VALUE
+REGEX_RFC822_KEY_VALUE = \
+    r'(^|\n)(?P<key>[A-Z]\w+(-\w+)*): (?P<value>[^\n]*(\n\s+[^\n]*)*)'
+REGEX_RFC822_POSTFIX = \
+    r'(%s)+$' % REGEX_RFC822_KEY_VALUE
 
 
 class GitCommit(SubGitObjectMixin):
@@ -697,7 +703,8 @@ class GitCommit(SubGitObjectMixin):
     Initialization:
 
         >>> repos.git = Mock("gitRepos.git")
-        >>> repos.git.log.mock_returns_func = lambda *a, **kwargs: "\x00".join([{
+        >>> repos.git.log.mock_returns_func = \
+        ...     lambda *a, **kwargs: "\x00".join([{
         ...             'sha1': "000000",
         ...             'sha1_short': "000",
         ...             'subject': SUBJECT,
@@ -808,7 +815,7 @@ class GitCommit(SubGitObjectMixin):
                 "HEAD", first_parent=True, max_parents="0")
 
         ## Compute only missing information
-        missing_attrs = [l for l in attrs if not l in self.__dict__]
+        missing_attrs = [l for l in attrs if l not in self.__dict__]
         ## some commit can be already fully specified (see ``mk_commit``)
         if missing_attrs:
             aformat = "%x00".join(GIT_FORMAT_KEYS[l]
@@ -837,7 +844,8 @@ class GitCommit(SubGitObjectMixin):
                     key = dct["key"].replace("-", "_").lower()
                     if "\n" in dct["value"]:
                         first_line, remaining = dct["value"].split('\n', 1)
-                        value = "%s\n%s" % (first_line, textwrap.dedent(remaining))
+                        value = "%s\n%s" % (first_line,
+                                            textwrap.dedent(remaining))
                     else:
                         value = dct["value"]
                     try:
@@ -860,8 +868,10 @@ class GitCommit(SubGitObjectMixin):
     @property
     def authors(self):
         co_authors = getattr(self, 'trailer_co_authored_by', [])
-        co_authors = co_authors if isinstance(co_authors, list) else [co_authors]
-        return sorted(co_authors + ["%s <%s>" % (self.author_name, self.author_email)])
+        co_authors = co_authors if isinstance(co_authors, list) \
+                     else [co_authors]
+        return sorted(co_authors +
+                      ["%s <%s>" % (self.author_name, self.author_email)])
 
     @property
     def date(self):
@@ -1769,9 +1779,9 @@ def main():
     for enforce_file_existence, fun in [
         (True, lambda: os.environ.get('GITCHANGELOG_CONFIG_FILENAME')),
         (True, lambda: gc_rc),
-        (False, lambda: (os.path.join(repository.toplevel, ".%s.rc" % basename)) \
-                         if not repository.bare else None),
-        ]:
+        (False,
+             lambda: (os.path.join(repository.toplevel, ".%s.rc" % basename))
+                      if not repository.bare else None)]:
         changelogrc = fun()
         if changelogrc:
             if not os.path.exists(changelogrc):

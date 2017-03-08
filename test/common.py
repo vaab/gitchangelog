@@ -148,7 +148,6 @@ class ExtendedTest(unittest.TestCase):
         self.assertEqual(t1, t2, msg)
 
 
-
 class BaseTmpDirTest(ExtendedTest):
 
     def setUp(self):
