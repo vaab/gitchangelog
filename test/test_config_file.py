@@ -119,10 +119,8 @@ class BasicCallOnSimpleGit(BaseGitReposTest):
 
         os.mkdir(".gitchangelog.rc")
         out, err, errlvl = cmd('$tprog')
-        self.assertEqual(
-            errlvl, 1)
-        self.assertContains(
-            err, "is not a file")
+        self.assertEqual(errlvl, 1)
+        self.assertContains(err, "is not a file")
 
     def test_config_file_syntax_error(self):
 
@@ -130,10 +128,8 @@ class BasicCallOnSimpleGit(BaseGitReposTest):
             ".gitchangelog.rc",
             "abc: ; test")
         out, err, errlvl = cmd('$tprog')
-        self.assertEqual(
-            errlvl, 1)
-        self.assertContains(
-            err.lower(), "syntax error")
+        self.assertEqual(errlvl, 1)
+        self.assertContains(err.lower(), "syntax error")
 
     def test_subject_process_syntax_error(self):
 
@@ -141,10 +137,8 @@ class BasicCallOnSimpleGit(BaseGitReposTest):
             ".gitchangelog.rc",
             "subject_process = ucfirst | False")
         out, err, errlvl = cmd('$tprog')
-        self.assertEqual(
-            errlvl, 1)
-        self.assertContains(
-            err.lower(), "syntax error")
+        self.assertEqual(errlvl, 1)
+        self.assertContains(err.lower(), "syntax error")
 
 
 class TestOnUnreleased(BaseGitReposTest):
@@ -185,7 +179,7 @@ class TestOnUnreleased(BaseGitReposTest):
             changelog)
 
     def test_unreleased_version_label_string(self):
-        """Using callable in unreleased_version_label should work"""
+        """Using string in unreleased_version_label should work"""
 
         file_put_contents(
             ".gitchangelog.rc",

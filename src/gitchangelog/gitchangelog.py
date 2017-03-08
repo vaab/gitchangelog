@@ -501,9 +501,10 @@ def Caret(l):
 ##
 
 ## Note that locale.getpreferredencoding() does NOT follow
-## PYTHONIOENCODING by default. But ``sys.stdout.encoding``
-## does. In PY2, however, if _preferred_encoding is not
-## set to utf-8, it leads to encoding errors.
+## PYTHONIOENCODING by default, but ``sys.stdout.encoding`` does. In
+## PY2, ``sys.stdout.encoding`` without PYTHONIOENCODING set does not
+## get any values set in subshells.  However, if _preferred_encoding
+## is not set to utf-8, it leads to encoding errors.
 _preferred_encoding = os.environ.get("PYTHONIOENCODING") or \
                       locale.getpreferredencoding()
 DEFAULT_GIT_LOG_ENCODING = 'utf-8'
