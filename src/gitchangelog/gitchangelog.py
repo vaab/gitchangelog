@@ -345,9 +345,11 @@ def load_config_file(filename, default_filename=None,
                     code = compile(f.read(), fname, 'exec')
                     exec(code, config)
             except SyntaxError as e:
-                die('Syntax error in config file: %s\n'
-                    'Line %i offset %i\n'
-                    % (fname, e.lineno, e.offset))
+                die('Syntax error in config file: %s\n%s'
+                    'File %s, line %i'
+                    % (str(e),
+                       (indent(e.text.rstrip(), "  | ") + "\n")  if e.text else "",
+                       e.filename, e.lineno))
         else:
             if fail_if_not_present:
                 die('%s config file is not found and is required.' % (fname, ))
@@ -373,7 +375,13 @@ class TextProc(object):
     def __or__(self, value):
         if isinstance(value, TextProc):
             return TextProc(lambda text: value.fun(self.fun(text)))
-        raise SyntaxError
+        import inspect
+        (_frame, filename, lineno, _function_name, lines, _index) = \
+                inspect.stack()[1]
+        raise SyntaxError("Invalid syntax in config file",
+            (filename, lineno, 0,
+             "Invalid chain with a non TextProc element %r:\n%s"
+             % (value, indent("".join(lines).strip(), "  | "))))
 
 
 @TextProc
@@ -383,9 +391,7 @@ def ucfirst(msg):
 
 @TextProc
 def final_dot(msg):
-    if len(msg) == 0:
-        return "No commit message."
-    if msg[-1].isalnum():
+    if len(msg) and msg[-1].isalnum():
         return msg + "."
     return msg
 
@@ -470,9 +476,8 @@ def FileFirstRegexMatch(filename, pattern):
 
         match = re.search(pattern, file_content)
         if match is None:
-            warn("Regex %s did not match any substring in '%s'."
+            die("Regex %s did not match any substring in '%s'."
                  % (pattern, filename))
-            return None
         dct = match.groupdict()
         if dct:
             if "rev" not in dct:
@@ -488,10 +493,9 @@ def FileFirstRegexMatch(filename, pattern):
 
 @available_in_config
 def Caret(l):
-    if callable(l):
-        l = l()
-    return "^%s" % l
-
+    def _call():
+        return "^%s" % eval_if_callable(l)
+    return _call
 ##
 ## System functions
 ##
@@ -621,6 +625,14 @@ def wrap(command, ignore_errlvls=[0], env=None, shell=True):
     >>> print(wrap('echo hello'),  end='')
     hello
 
+    >>> print(wrap('echo hello && false'),
+    ...       end='')  # doctest: +ELLIPSIS +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+    ...
+    ShellError: Wrapped command 'echo hello && false' exited with errorlevel 1.
+      stdout:
+      | hello
+
     """
 
     out, err, errlvl = cmd(command, env=env, shell=shell)
@@ -659,10 +671,6 @@ class SubGitObjectMixin(object):
 
     def __init__(self, repos):
         self._repos = repos
-
-    def swrap(self, *args, **kwargs):
-        """Simple delegation to ``repos`` original method."""
-        return self._repos.swrap(*args, **kwargs)
 
     @property
     def git(self):
@@ -805,14 +813,8 @@ class GitCommit(SubGitObjectMixin):
             except KeyError:
                 if self._trailer_parsed:
                     raise AttributeError(label)
-                ## let's force the reading of all data from the commit
-                ## to look through body for additional RFC822's header keys
-                pass
 
         identifier = self.identifier
-        if identifier == "LAST":
-            identifier = self.git.rev_list(
-                "HEAD", first_parent=True, max_parents="0")
 
         ## Compute only missing information
         missing_attrs = [l for l in attrs if l not in self.__dict__]
@@ -838,25 +840,24 @@ class GitCommit(SubGitObjectMixin):
             pos = match.start()
             postfix = self.body[pos:]
             self.body = self.body[:pos]
-            if postfix:
-                for match in re.finditer(REGEX_RFC822_KEY_VALUE, postfix):
-                    dct = match.groupdict()
-                    key = dct["key"].replace("-", "_").lower()
-                    if "\n" in dct["value"]:
-                        first_line, remaining = dct["value"].split('\n', 1)
-                        value = "%s\n%s" % (first_line,
-                                            textwrap.dedent(remaining))
-                    else:
-                        value = dct["value"]
-                    try:
-                        prev_value = self.__dict__["trailer_%s" % key]
-                    except KeyError:
-                        setattr(self, "trailer_%s" % key, value)
-                    else:
-                        setattr(self, "trailer_%s" % key,
-                                prev_value + [value, ]
-                                if isinstance(prev_value, list)
-                                else [prev_value, value, ])
+            for match in re.finditer(REGEX_RFC822_KEY_VALUE, postfix):
+                dct = match.groupdict()
+                key = dct["key"].replace("-", "_").lower()
+                if "\n" in dct["value"]:
+                    first_line, remaining = dct["value"].split('\n', 1)
+                    value = "%s\n%s" % (first_line,
+                                        textwrap.dedent(remaining))
+                else:
+                    value = dct["value"]
+                try:
+                    prev_value = self.__dict__["trailer_%s" % key]
+                except KeyError:
+                    setattr(self, "trailer_%s" % key, value)
+                else:
+                    setattr(self, "trailer_%s" % key,
+                            prev_value + [value, ]
+                            if isinstance(prev_value, list)
+                            else [prev_value, value, ])
         self._trailer_parsed = True
         return getattr(self, label)
 
@@ -1075,9 +1076,8 @@ class GitRepos(object):
         self.bare = self.git.rev_parse(is_bare_repository=True) == "true"
         self.toplevel = (None if self.bare else
                          self.git.rev_parse(show_toplevel=True))
-        self.gitdir = normpath(
-            os.path.join(self._orig_path,
-                         self.git.rev_parse(git_dir=True)))
+        self.gitdir = normpath(self.git.rev_parse(git_dir=True),
+                               cwd=self._orig_path)
 
     @classmethod
     def create(cls, dir, *args, **kwargs):

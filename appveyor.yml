@@ -16,6 +16,9 @@ environment:
 
 ## Before repo cloning
 init:
+  ## without this, temporary directory could be created in current dir
+  ## which will make some tests fail.
+  - mkdir C:\TMP
   - set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
   - python -V
 

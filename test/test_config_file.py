@@ -2,6 +2,7 @@
 
 from __future__ import unicode_literals
 
+import os
 import textwrap
 
 from .common import BaseGitReposTest, w, cmd, file_put_contents
@@ -113,6 +114,37 @@ class BasicCallOnSimpleGit(BaseGitReposTest):
             changelog, "Merge",
             msg="Should not contain commit with 'Merge' in it... "
             "content of changelog:\n%s" % changelog)
+
+    def test_config_file_is_not_a_file(self):
+
+        os.mkdir(".gitchangelog.rc")
+        out, err, errlvl = cmd('$tprog')
+        self.assertEqual(
+            errlvl, 1)
+        self.assertContains(
+            err, "is not a file")
+
+    def test_config_file_syntax_error(self):
+
+        file_put_contents(
+            ".gitchangelog.rc",
+            "abc: ; test")
+        out, err, errlvl = cmd('$tprog')
+        self.assertEqual(
+            errlvl, 1)
+        self.assertContains(
+            err.lower(), "syntax error")
+
+    def test_subject_process_syntax_error(self):
+
+        file_put_contents(
+            ".gitchangelog.rc",
+            "subject_process = ucfirst | False")
+        out, err, errlvl = cmd('$tprog')
+        self.assertEqual(
+            errlvl, 1)
+        self.assertContains(
+            err.lower(), "syntax error")
 
 
 class TestOnUnreleased(BaseGitReposTest):

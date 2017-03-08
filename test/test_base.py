@@ -258,18 +258,16 @@ class GitChangelogTest(BaseGitReposTest):
         """Check provided reference with older name for perfect same result."""
 
         config_dir = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "..")
+            os.path.dirname(os.path.realpath(__file__)),
+            "..", "src", "gitchangelog")
         configs = glob.glob(os.path.join(config_dir,
                                          "gitchangelog.rc.reference.v*"))
+        self.assertNotEqual(len(configs), 0)
         for config in configs:
             out, err, errlvl = cmd(
-                'GITCHANGELOG_CONFIG_FILENAME="%s" $tprog' % config)
-            self.assertEqual(
-                errlvl, 0,
-                msg="Should not fail with config %r " % (config, ) +
-                "Current stderr:\n%s" % indent(err))
-            self.assertNoDiff(
-                self.REFERENCE, out)
+                '$tprog', env={'GITCHANGELOG_CONFIG_FILENAME': config})
+            self.assertEqual(errlvl, 0)
+            self.assertNoDiff(self.REFERENCE, out)
 
     def test_same_output_with_different_engine(self):
         """Reference implementation should match mustache and mako implem"""
