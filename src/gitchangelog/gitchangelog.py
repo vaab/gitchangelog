@@ -45,7 +45,7 @@ PY3 = PY_VERSION >= 3
 try:
     basestring
 except NameError:
-    basestring = str
+    basestring = str  ## pylint: disable=redefined-builtin
 
 WIN32 = sys.platform == 'win32'
 if WIN32:
@@ -278,9 +278,9 @@ class ShellError(Exception):
 
 
 @contextlib.contextmanager
-def set_cwd(dir):
+def set_cwd(directory):
     curdir = os.getcwd()
-    os.chdir(dir)
+    os.chdir(directory)
     try:
         yield
     finally:
@@ -343,7 +343,7 @@ def load_config_file(filename, default_filename=None,
             try:
                 with open(fname) as f:
                     code = compile(f.read(), fname, 'exec')
-                    exec(code, config)
+                    exec(code, config)  ## pylint: disable=exec-used
             except SyntaxError as e:
                 die('Syntax error in config file: %s\n%s'
                     'File %s, line %i'
@@ -457,9 +457,9 @@ ReSub = lambda p, r, **k: TextProc(lambda txt: re.sub(p, r, txt, **k))
 noop = TextProc(lambda txt: txt)
 strip = TextProc(lambda txt: txt.strip())
 
-for label in ("Indent", "Wrap", "ReSub", "noop", "final_dot",
+for _label in ("Indent", "Wrap", "ReSub", "noop", "final_dot",
               "ucfirst", "strip"):
-    _config_env[label] = locals()[label]
+    _config_env[_label] = locals()[_label]
 
 
 ##
@@ -552,8 +552,8 @@ class Phile(object):
 
     """
 
-    def __init__(self, file, buffersize=4096, encoding=_preferred_encoding):
-        self._file = file
+    def __init__(self, filename, buffersize=4096, encoding=_preferred_encoding):
+        self._file = filename
         self._buffersize = buffersize
         self._encoding = encoding
 
@@ -602,11 +602,11 @@ def cmd(command, env=None, shell=True):
               stdin=PIPE, stdout=PIPE, stderr=PIPE,
               close_fds=PLT_CFG['close_fds'], env=env,
               universal_newlines=False)
-    stdout, stderr = p.communicate()
+    out, err = p.communicate()
     return (
-        stdout.decode(getattr(sys.stdout, "encoding", None) or
+        out.decode(getattr(sys.stdout, "encoding", None) or
                       _preferred_encoding),
-        stderr.decode(getattr(sys.stderr, "encoding", None) or
+        err.decode(getattr(sys.stderr, "encoding", None) or
                       _preferred_encoding),
         p.returncode)
 
@@ -648,10 +648,10 @@ def wrap(command, ignore_errlvls=[0], env=None, shell=True):
             if err.endswith('\n'):
                 err = err[:-1]
             formatted.append("stderr:\n%s" % indent(err, "| "))
-        formatted = '\n'.join(formatted)
+        msg = '\n'.join(formatted)
 
         raise ShellError("Wrapped command %r exited with errorlevel %d.\n%s"
-                         % (command, errlvl, indent(formatted, chars="  ")),
+                         % (command, errlvl, indent(msg, chars="  ")),
                          errlvl=errlvl, command=command, out=out, err=err)
     return out
 
@@ -894,7 +894,7 @@ class GitCommit(SubGitObjectMixin):
     def __lt__(self, value):
         if not isinstance(value, GitCommit):
             value = self._repos.commit(value)
-        return self <= value and not self == value
+        return self <= value and self != value
 
     def __eq__(self, value):
         if not isinstance(value, GitCommit):
@@ -1080,15 +1080,15 @@ class GitRepos(object):
                                cwd=self._orig_path)
 
     @classmethod
-    def create(cls, dir, *args, **kwargs):
-        os.mkdir(dir)
-        return cls.init(dir, *args, **kwargs)
+    def create(cls, directory, *args, **kwargs):
+        os.mkdir(directory)
+        return cls.init(directory, *args, **kwargs)
 
     @classmethod
-    def init(cls, dir, user=None, email=None):
-        with set_cwd(dir):
+    def init(cls, directory, user=None, email=None):
+        with set_cwd(directory):
             wrap("git init .")
-        self = cls(dir)
+        self = cls(directory)
         if user:
             self.git.config("user.name", user)
         if email:
@@ -1493,8 +1493,8 @@ def changelog(output_engine=rest_py,
 
     ## Setting main container of changelog elements
     title = None if kwargs.get("revlist") else "Changelog"
-    changelog = {"title": title,
-                 "versions": []}
+    data = {"title": title,
+            "versions": []}
 
     versions = versions_data_iter(warn=warn, **kwargs)
 
@@ -1503,11 +1503,11 @@ def changelog(output_engine=rest_py,
         first_version = next(versions)
     except StopIteration:
         warn("Empty changelog. No commits were elected to be used as entry.")
-        changelog["versions"] = []
+        data["versions"] = []
     else:
-        changelog["versions"] = itertools.chain([first_version], versions)
+        data["versions"] = itertools.chain([first_version], versions)
 
-    return output_engine(data=changelog, opts=opts)
+    return output_engine(data=data, opts=opts)
 
 ##
 ## Manage obsolete options

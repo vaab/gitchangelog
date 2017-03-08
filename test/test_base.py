@@ -270,7 +270,7 @@ class GitChangelogTest(BaseGitReposTest):
             self.assertNoDiff(self.REFERENCE, out)
 
     def test_same_output_with_different_engine(self):
-        """Reference implementation should match mustache and mako implem"""
+        """Reference implem should match mustache and mako implem"""
 
         file_put_contents(
             ".gitchangelog.rc",
@@ -287,7 +287,7 @@ class GitChangelogTest(BaseGitReposTest):
             self.REFERENCE, changelog)
 
     def test_same_output_with_different_engine_incr(self):
-        """Reference implementation should match mustache and mako implem (incr)"""
+        """Reference implem should match mustache and mako implem (incr)"""
 
         file_put_contents(".gitchangelog.rc",
                           "output_engine = mustache('restructuredtext')")
