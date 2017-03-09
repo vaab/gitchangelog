@@ -129,12 +129,12 @@ class GitChangelogTest(BaseGitReposTest):
     def test_simple_run_no_args_legacy_call(self):
         out, err, errlvl = cmd('$tprog')
         self.assertEqual(
-            errlvl, 0,
-            msg="Should not fail on simple repo and without config file")
-        self.assertEqual(
             err, "",
             msg="There should be no standard error outputed. "
             "Current stderr:\n%r" % err)
+        self.assertEqual(
+            errlvl, 0,
+            msg="Should not fail on simple repo and without config file")
         self.assertContains(
             out, "0.0.2",
             msg="At least one of the tags should be displayed in stdout... "
@@ -143,13 +143,13 @@ class GitChangelogTest(BaseGitReposTest):
 
     def test_simple_run_show_call_deprecated(self):
         out, err, errlvl = cmd('$tprog show')
-        self.assertEqual(
-            errlvl, 0,
-            msg="Should not fail on simple repo and without config file")
         self.assertContains(
             err, "deprecated",
             msg="There should be a warning about deprecated calls. "
             "Current stderr:\n%r" % err)
+        self.assertEqual(
+            errlvl, 0,
+            msg="Should not fail on simple repo and without config file")
         self.assertContains(
             out, "0.0.2",
             msg="At least one of the tags should be displayed in stdout... "
@@ -159,12 +159,12 @@ class GitChangelogTest(BaseGitReposTest):
     def test_incremental_call(self):
         out, err, errlvl = cmd('$tprog 0.0.2..0.0.3')
         self.assertEqual(
-            errlvl, 0,
-            msg="Should not fail on simple repo and without config file")
-        self.assertEqual(
             err, "",
             msg="There should be no standard error outputed. "
             "Current stderr:\n%r" % err)
+        self.assertEqual(
+            errlvl, 0,
+            msg="Should not fail on simple repo and without config file")
         self.assertContains(
             out, "0.0.3",
             msg="The tag 0.0.3 should be displayed in stdout... "
