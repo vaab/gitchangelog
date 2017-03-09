@@ -1561,22 +1561,16 @@ def manage_obsolete_options(config):
 def parse_cmd_line(usage, description, epilog, exname, version):
 
     import argparse
+    kwargs = dict(usage=usage,
+                  description=description,
+                  epilog="\n" + epilog,
+                  prog=exname,
+                  formatter_class=argparse.RawTextHelpFormatter)
 
     try:
-        parser = argparse.ArgumentParser(
-            usage=usage,
-            description=description,
-            epilog="\n" + epilog,
-            prog=exname,
-            formatter_class=argparse.RawTextHelpFormatter,
-            version=version)
+        parser = argparse.ArgumentParser(version=version, **kwargs)
     except TypeError:  ## compat with argparse from python 3.4
-        parser = argparse.ArgumentParser(
-            usage=usage,
-            description=description,
-            epilog="\n" + epilog,
-            prog=exname,
-            formatter_class=argparse.RawTextHelpFormatter)
+        parser = argparse.ArgumentParser(**kwargs)
         parser.add_argument('-v', '--version',
                             help="show program's version number and exit",
                             action="version", version=version)
