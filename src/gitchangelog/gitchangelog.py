@@ -1824,7 +1824,7 @@ def main():
             stderr(format_last_exception())
         else:
             err("Keyboard Interrupt. Bailing out.")
-        exit(254)
+        exit(130)  ## Actual SIGINT as bash process convention.
     except Exception as e:  ## pylint: disable=broad-except
         if DEBUG:
             err("Exception while running '%s':"
