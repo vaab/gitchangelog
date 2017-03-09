@@ -40,6 +40,8 @@ Feature
 - support full or incremental changelog generation to match your needs.
 - support easy access to `trailers key values`_ (if you use them)
 - support of multi-authors for one commit through ``Co-Authored-By`` `trailers key values`_
+- support standard python installation or dep-free single executable.
+  (this last feature is not yet completely pain free to use on Windows)
 
 .. _trailers key values: https://git.wiki.kernel.org/index.php/CommitMessageConventions
 
@@ -87,6 +89,28 @@ idiom to install it on your system::
 
 Note that for linux/BSD, there's a link to the executable in the root of the
 source. This can be a convenient way to work on the source version.
+
+
+single executable installation
+------------------------------
+
+The file ``gitchangelog.py`` is a full blown executable and can be used
+without any other files. This is easier to use naturally on Linux/BSD
+systems. For instance, you could type in::
+
+    curl -sSL https://raw.githubusercontent.com/vaab/gitchangelog/master/src/gitchangelog/gitchangelog.py > /usr/local/bin/gitchangelog &&
+    chmod +x /usr/local/bin/gitchangelog
+
+It'll install ``gitchangelog`` to be accessible for all users and will
+use the default python interpreter of your running session.
+
+Please note: if you choose to install it in this standalone mode, then
+you must make sure to value at least all the required configuration
+keys in your config file. As a good start you should probably copy the
+`reference configuration file`_ as you base configuration file.
+
+This is due to the fact that ``gitchangelog`` can not anymore reach
+the reference configuration file to get default values.
 
 
 Sample
