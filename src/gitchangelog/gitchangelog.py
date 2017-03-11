@@ -341,10 +341,10 @@ def load_config_file(filename, default_filename=None,
             if not os.path.isfile(fname):
                 die("config file path '%s' exists but is not a file !"
                     % (fname, ))
+            content = file_get_contents(fname)
             try:
-                with open(fname) as f:
-                    code = compile(f.read(), fname, 'exec')
-                    exec(code, config)  ## pylint: disable=exec-used
+                code = compile(content, fname, 'exec')
+                exec(code, config)  ## pylint: disable=exec-used
             except SyntaxError as e:
                 die('Syntax error in config file: %s\n%s'
                     'File %s, line %i'
@@ -464,8 +464,24 @@ for _label in ("Indent", "Wrap", "ReSub", "noop", "final_dot",
 
 
 ##
-## Inferring revision
+## File
 ##
+
+def file_get_contents(filename):
+    with open(filename) as f:
+        out = f.read()
+    if not PY3:
+        if not isinstance(out, unicode):
+            out = out.decode(_preferred_encoding)
+        ## remove encoding declaration (for some reason, python 2.7
+        ## don't like it).
+        out = re.sub(r"^(\s*#.*\s*)coding[:=]\s*([-\w.]+\s*;?\s*)",
+                     r"\1", out, re.DOTALL)
+
+    return out
+
+
+
 
 @available_in_config
 def FileFirstRegexMatch(filename, pattern):
@@ -1282,8 +1298,7 @@ if pystache:
         """
         template_path = ensure_template_file_exists("mustache", template_name)
 
-        with open(template_path) as f:
-            template = f.read()
+        template = file_get_contents(template_path)
 
         def stuffed_versions(versions, opts):
             for version in versions:
