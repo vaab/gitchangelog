@@ -56,7 +56,7 @@ class BasicCallOnSimpleGit(BaseGitReposTest):
             date='2000-01-01 10:00:00',
             allow_empty=True)
         self.git.commit(
-            message='new: YYY commit',
+            message='new: XYZ commit',
             author='Bob <bob@example.com>',
             date='2000-01-01 10:00:00',
             allow_empty=True)
@@ -76,8 +76,8 @@ class BasicCallOnSimpleGit(BaseGitReposTest):
             msg="Should not contain commit with XXX in it... "
             "content of changelog:\n%s" % changelog)
         self.assertContains(
-            changelog, "YYY",
-            msg="Should contain commit with YYY in it... "
+            changelog, "XYZ",
+            msg="Should contain commit with XYZ in it... "
             "content of changelog:\n%s" % changelog)
         self.assertNotContains(
             changelog, "!minor",
