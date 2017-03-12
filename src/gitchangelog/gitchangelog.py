@@ -1352,13 +1352,13 @@ if pystache:
 else:
 
     @available_in_config
-    def mustache(template_name):
+    def mustache(template_name):  ## pylint: disable=unused-argument
         die("Required 'pystache' python module not found.")
 
 
 if mako:
 
-    import mako.template
+    import mako.template ## pylint: disable=wrong-import-position
 
     mako_env = dict((f.__name__, f) for f in (ucfirst, indent, textwrap,
                                               paragraph_wrap))
@@ -1385,7 +1385,7 @@ if mako:
 else:
 
     @available_in_config
-    def makotemplate(template_name):
+    def makotemplate(template_name):  ## pylint: disable=unused-argument
         die("Required 'mako' python module not found.")
 
 
