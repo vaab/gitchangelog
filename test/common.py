@@ -23,17 +23,6 @@ WIN32 = gitchangelog.WIN32
 PY3 = gitchangelog.PY3
 
 
-def file_put_contents(filename, string):
-    """Write string to filename."""
-    if PY3:
-        fopen = open(filename, 'w', newline='')
-    else:
-        fopen = open(filename, 'wb')
-
-    with fopen as f:
-        f.write(string)
-
-
 def raw_renderer(data, opts):
     return data
 
@@ -187,6 +176,12 @@ class BaseGitReposTest(BaseTmpDirTest):
     @property
     def git(self):
         return self.repos.git
+
+    @property
+    def changelog(self):
+        ## Currifyed main function
+        return lambda **kw: gitchangelog.changelog(
+            repository=self.repos, **kw)
 
     @property
     def raw_changelog(self):

@@ -8,7 +8,7 @@ Tests issue #54
 
 from __future__ import unicode_literals
 
-from .common import BaseGitReposTest, cmd, file_put_contents
+from .common import BaseGitReposTest, cmd, gitchangelog
 
 
 class TestConfigComplains(BaseGitReposTest):
@@ -16,7 +16,7 @@ class TestConfigComplains(BaseGitReposTest):
     def test_missing_option(self):
         super(TestConfigComplains, self).setUp()
 
-        file_put_contents(
+        gitchangelog.file_put_contents(
             ".gitchangelog.rc",
             "del section_regexps"
         )

@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 
 import textwrap
 
-from .common import BaseGitReposTest, cmd, file_put_contents
+from .common import BaseGitReposTest, cmd, gitchangelog
 
 
 class TestRevsBadFormat(BaseGitReposTest):
@@ -18,7 +18,7 @@ class TestRevsBadFormat(BaseGitReposTest):
     def test_bad_revs_format(self):
         super(TestRevsBadFormat, self).setUp()
 
-        file_put_contents(
+        gitchangelog.file_put_contents(
             ".gitchangelog.rc",
             "revs = '1.2'"
         )
@@ -39,7 +39,7 @@ class TestRevsBadFormat(BaseGitReposTest):
     def test_bad_revs_format_callable(self):
         super(TestRevsBadFormat, self).setUp()
 
-        file_put_contents(
+        gitchangelog.file_put_contents(
             ".gitchangelog.rc",
             "revs = lambda: '1.2'"
         )
@@ -60,7 +60,7 @@ class TestRevsBadFormat(BaseGitReposTest):
     def test_bad_rev_in_revs_format(self):
         super(TestRevsBadFormat, self).setUp()
 
-        file_put_contents(
+        gitchangelog.file_put_contents(
             ".gitchangelog.rc",
             "revs = [[]]"
         )
@@ -129,7 +129,7 @@ class TestBasicRevs(BaseGitReposTest):
 
     def test_cli_over_file_precedence(self):
 
-        file_put_contents(
+        gitchangelog.file_put_contents(
             ".gitchangelog.rc",
             textwrap.dedent(r"""
                 revs = [
@@ -153,7 +153,7 @@ class TestBasicRevs(BaseGitReposTest):
 
     def test_callable_rev_file_first_regex_match_no_file(self):
 
-        file_put_contents(
+        gitchangelog.file_put_contents(
             ".gitchangelog.rc",
             textwrap.dedent(r"""
                 revs = [
@@ -172,7 +172,7 @@ class TestBasicRevs(BaseGitReposTest):
 
     def test_callable_rev_file_first_regex_match_fails(self):
 
-        file_put_contents(
+        gitchangelog.file_put_contents(
             ".gitchangelog.rc",
             textwrap.dedent(r"""
                 revs = [
@@ -183,7 +183,7 @@ class TestBasicRevs(BaseGitReposTest):
                     "HEAD"
                 ]
                 """))
-        file_put_contents(
+        gitchangelog.file_put_contents(
             "CHANGELOG.rst",
             textwrap.dedent("""\
                 Changelog
@@ -205,7 +205,7 @@ class TestBasicRevs(BaseGitReposTest):
 
     def test_callable_rev_file_first_regex_match_working(self):
 
-        file_put_contents(
+        gitchangelog.file_put_contents(
             ".gitchangelog.rc",
             textwrap.dedent(r"""
                 revs = [
@@ -216,7 +216,7 @@ class TestBasicRevs(BaseGitReposTest):
                     "HEAD"
                 ]
                 """))
-        file_put_contents(
+        gitchangelog.file_put_contents(
             "CHANGELOG.rst",
             textwrap.dedent("""\
                 Changelog
@@ -248,7 +248,7 @@ class TestBasicRevs(BaseGitReposTest):
 
     def test_callable_rev_file_first_regex_match_missing_pattern(self):
 
-        file_put_contents(
+        gitchangelog.file_put_contents(
             ".gitchangelog.rc",
             textwrap.dedent(r"""
                 revs = [
@@ -259,7 +259,7 @@ class TestBasicRevs(BaseGitReposTest):
                     "HEAD"
                 ]
                 """))
-        file_put_contents(
+        gitchangelog.file_put_contents(
             "CHANGELOG.rst",
             textwrap.dedent("""\
                 Changelog

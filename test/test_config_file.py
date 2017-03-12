@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import os
 import textwrap
 
-from .common import BaseGitReposTest, w, cmd, file_put_contents
+from .common import BaseGitReposTest, w, cmd, gitchangelog
 
 
 class BasicCallOnSimpleGit(BaseGitReposTest):
@@ -36,7 +36,7 @@ class BasicCallOnSimpleGit(BaseGitReposTest):
             allow_empty=True)
         self.git.tag("v8.0")
 
-        file_put_contents(
+        gitchangelog.file_put_contents(
             ".gitchangelog.rc",
             "tag_filter_regexp = r'^v[0-9]+\\.[0.9]$'")
 
@@ -66,7 +66,7 @@ class BasicCallOnSimpleGit(BaseGitReposTest):
             date='2000-01-01 10:00:00',
             allow_empty=True)
 
-        file_put_contents(
+        gitchangelog.file_put_contents(
             ".gitchangelog.rc",
             "ignore_regexps += [r'XXX', ]")
 
@@ -85,7 +85,7 @@ class BasicCallOnSimpleGit(BaseGitReposTest):
             "content of changelog:\n%s" % changelog)
 
     def test_with_filename_same_as_tag(self):
-        file_put_contents("0.0.1", "")
+        gitchangelog.file_put_contents("0.0.1", "")
         self.git.tag("0.0.1")
         out, err, errlvl = cmd('$tprog')
         self.assertEqual(
@@ -100,7 +100,7 @@ class BasicCallOnSimpleGit(BaseGitReposTest):
         """We must be able to define a small gitchangelog.rc that adjust only
         one variable of all the builtin defaults."""
 
-        file_put_contents(
+        gitchangelog.file_put_contents(
             ".gitchangelog.rc",
             "include_merge = False")
         self.git.checkout(b="develop")
@@ -124,7 +124,7 @@ class BasicCallOnSimpleGit(BaseGitReposTest):
 
     def test_config_file_syntax_error(self):
 
-        file_put_contents(
+        gitchangelog.file_put_contents(
             ".gitchangelog.rc",
             "abc: ; test")
         out, err, errlvl = cmd('$tprog')
@@ -133,7 +133,7 @@ class BasicCallOnSimpleGit(BaseGitReposTest):
 
     def test_subject_process_syntax_error(self):
 
-        file_put_contents(
+        gitchangelog.file_put_contents(
             ".gitchangelog.rc",
             "subject_process = ucfirst | False")
         out, err, errlvl = cmd('$tprog')
@@ -161,7 +161,7 @@ class TestOnUnreleased(BaseGitReposTest):
     def test_unreleased_version_label_callable(self):
         """Using callable in unreleased_version_label should work"""
 
-        file_put_contents(
+        gitchangelog.file_put_contents(
             ".gitchangelog.rc",
             "unreleased_version_label = lambda : 'foo'")
         changelog = w('$tprog "HEAD^..HEAD"')
@@ -181,7 +181,7 @@ class TestOnUnreleased(BaseGitReposTest):
     def test_unreleased_version_label_string(self):
         """Using string in unreleased_version_label should work"""
 
-        file_put_contents(
+        gitchangelog.file_put_contents(
             ".gitchangelog.rc",
             "unreleased_version_label = 'bar'")
         changelog = w('$tprog "HEAD^..HEAD"')

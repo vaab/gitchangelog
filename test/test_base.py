@@ -6,7 +6,7 @@ import os.path
 import glob
 import textwrap
 
-from .common import BaseGitReposTest, w, cmd, file_put_contents
+from .common import BaseGitReposTest, w, cmd, gitchangelog
 from gitchangelog.gitchangelog import indent
 
 
@@ -266,14 +266,14 @@ class GitChangelogTest(BaseGitReposTest):
     def test_same_output_with_different_engine(self):
         """Reference implem should match mustache and mako implem"""
 
-        file_put_contents(
+        gitchangelog.file_put_contents(
             ".gitchangelog.rc",
             "output_engine = mustache('restructuredtext')")
         changelog = w('$tprog')
         self.assertNoDiff(
             self.REFERENCE, changelog)
 
-        file_put_contents(
+        gitchangelog.file_put_contents(
             ".gitchangelog.rc",
             "output_engine = makotemplate('restructuredtext')")
         changelog = w('$tprog')
@@ -282,12 +282,12 @@ class GitChangelogTest(BaseGitReposTest):
     def test_same_output_with_different_engine_incr(self):
         """Reference implem should match mustache and mako implem (incr)"""
 
-        file_put_contents(".gitchangelog.rc",
+        gitchangelog.file_put_contents(".gitchangelog.rc",
                           "output_engine = mustache('restructuredtext')")
         changelog = w('$tprog 0.0.2..0.0.3')
         self.assertNoDiff(self.INCR_REFERENCE_002_003, changelog)
 
-        file_put_contents(".gitchangelog.rc",
+        gitchangelog.file_put_contents(".gitchangelog.rc",
                           "output_engine = makotemplate('restructuredtext')")
         changelog = w('$tprog 0.0.2..0.0.3')
         self.assertNoDiff(self.INCR_REFERENCE_002_003, changelog)
@@ -304,7 +304,7 @@ class GitChangelogTest(BaseGitReposTest):
             template_labels = [os.path.basename(f).split(".")[0]
                                for f in templates]
             for tpl in template_labels:
-                file_put_contents(".gitchangelog.rc",
+                gitchangelog.file_put_contents(".gitchangelog.rc",
                                   "output_engine = %s(%r)" % (label, tpl))
                 out, err, errlvl = cmd('$tprog')
                 self.assertEqual(

@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 
 import textwrap
 
-from .common import BaseGitReposTest, cmd, file_put_contents
+from .common import BaseGitReposTest, cmd, gitchangelog
 
 
 class ExceptionHandlingTest(BaseGitReposTest):
@@ -18,7 +18,7 @@ class ExceptionHandlingTest(BaseGitReposTest):
             author='Bob <bob@example.com>',
             date='2000-01-01 10:00:00',
             allow_empty=True)
-        file_put_contents(
+        gitchangelog.file_put_contents(
             ".gitchangelog.rc",
             textwrap.dedent("""
                 def raise_exc(data, opts):

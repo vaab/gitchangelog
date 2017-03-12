@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 
 import textwrap
 
-from .common import BaseGitReposTest, cmd, file_put_contents
+from .common import BaseGitReposTest, cmd, gitchangelog
 
 
 class TemplatingTest(BaseGitReposTest):
@@ -22,7 +22,7 @@ class TemplatingTest(BaseGitReposTest):
     def test_unexistent_template_name(self):
         """Unexisting template should get a proper error message"""
 
-        file_put_contents(".gitchangelog.rc",
+        gitchangelog.file_put_contents(".gitchangelog.rc",
                           "output_engine = mustache('doesnotexist')")
         out, err, errlvl = cmd('$tprog')
         self.assertEqual(
@@ -52,9 +52,9 @@ class TemplatingTest(BaseGitReposTest):
     def test_file_template_name(self):
         """Existing files should be accepted as valid templates"""
 
-        file_put_contents("mytemplate.tpl",
+        gitchangelog.file_put_contents("mytemplate.tpl",
                           "check: {{{title}}}")
-        file_put_contents(".gitchangelog.rc",
+        gitchangelog.file_put_contents(".gitchangelog.rc",
                           "output_engine = mustache('mytemplate.tpl')")
 
         reference = """check: Changelog"""
@@ -73,7 +73,7 @@ class TemplatingTest(BaseGitReposTest):
     def test_template_has_access_to_full_commit(self):
         """Existing files should be accepted as valid templates"""
 
-        file_put_contents(
+        gitchangelog.file_put_contents(
             "mytemplate.tpl",
             textwrap.dedent("""
                 % for version in data["versions"]:
@@ -86,7 +86,7 @@ class TemplatingTest(BaseGitReposTest):
                 % endfor
                 % endfor
                 """))
-        file_put_contents(".gitchangelog.rc",
+        gitchangelog.file_put_contents(".gitchangelog.rc",
                           "output_engine = makotemplate('mytemplate.tpl')")
 
         reference = textwrap.dedent("""

@@ -481,6 +481,17 @@ def file_get_contents(filename):
     return out
 
 
+def file_put_contents(filename, string):
+    """Write string to filename."""
+    if PY3:
+        fopen = open(filename, 'w', newline='')
+    else:
+        fopen = open(filename, 'wb')
+
+    with fopen as f:
+        f.write(string)
+
+
 
 
 @available_in_config
