@@ -406,9 +406,10 @@ used for sectionning from the commit's summary.
 Incremental changelog
 ---------------------
 
-Also known as partial changelog generation, this feature allows to generate
-only a subpart of your changelog. Usually this makes sense:
-
+Also known as partial changelog generation, this feature allows to
+generate only a subpart of your changelog, and combined with
+configurable publishing actions, you can insert the result inside
+an existing changelog. Usually this makes sense:
 
 - When wanting to switch to ``gitchangelog``, or change your
   conventions:
@@ -416,7 +417,7 @@ only a subpart of your changelog. Usually this makes sense:
   - part of your history is not following conventions.
   - you have a previous CHANGELOG you want to blend in.
 
-- You'd rather commit your changelog file:
+- You'd rather commit changes to your changelog file for each release:
 
   - For performance reason, you can then generate changelog only for
     the new commit and save the result.
@@ -424,7 +425,8 @@ only a subpart of your changelog. Usually this makes sense:
     edition if needed.
 
 
-You can use then ``gitchangelog REVLIST``. Examples follows::
+Generating partial changelog is as simple as ``gitchangelog
+REVLIST``. Examples follows::
 
     ## will output only tags between 0.0.2 (excluded) and 0.0.3 (included)
     gitchangelog 0.0.2..0.0.3
@@ -435,10 +437,11 @@ You can use then ``gitchangelog REVLIST``. Examples follows::
     ## will output all tags up to 0.0.3 (included)
     gitchangelog 0.0.3
 
-Additionally, ``gitchangelog`` can figure out which revision is the
-last for you (with some little help). This is done by specifying the
-``revs`` config option. This config file option will be used as if
-specified on the command line.
+
+Additionally, ``gitchangelog`` can figure out automatically which
+revision is the last for you (with some little help). This is done by
+specifying the ``revs`` config option. This config file option will be
+used as if specified on the command line.
 
 Here is an example that fits the current changelog format::
 
@@ -446,24 +449,48 @@ Here is an example that fits the current changelog format::
         Caret(
             FileFirstRegexMatch(
     	        "CHANGELOG.rst",
-    	        r"(?P<rev>[0-9]+\.[0-9]+\.[0-9]+)\s+\([0-9]+-[0-9]{2}-[0-9]{2}\)\n--+\n\n")),
+    	        r"(?P<rev>[0-9]+\.[0-9]+(\.[0-9]+))\s+\([0-9]+-[0-9]{2}-[0-9]{2}\)\n--+\n")),
     ]
 
 This will look into the file ``CHANGELOG.rst`` for the first match of
 the given regex and return the match of the ``rev`` regex sub-pattern
 it as a string. The ``Caret`` function will simply prefix the given
 string with a ``^``. As a consequence, this code will prevent
-recreating any previously generated changelog (more information
+recreating any previously generated changelog section (more information
 about the `REVLIST syntax`_ from ``git rev-list`` arguments.)
 
 .. _REVLIST syntax: https://git-scm.com/docs/git-rev-list#_description
-
 
 Note that the data structure provided to the template will set the
 ``title`` to ``None`` if you provided no REVLIST through command-line
 or the config file (or if the revlist was equivalently set to
 ``["HEAD", ]``).  This a good way to make your template detect it is
 in "incremental mode".
+
+By default, this will only output to standard output the new sections
+of your changelog, you might want to insert it directly in your existing
+changelog. This is where ``publish`` parameters will help you. By default
+it is set to ``stdout``, and you might want to set it to::
+
+    publish = FileInsertIntoFirstRegexMatch(
+        "CHANGELOG.rst",
+        r'/(?P<rev>[0-9]+\.[0-9]+(\.[0-9]+)?)\s+\([0-9]+-[0-9]{2}-[0-9]{2}\)\n--+\n/',
+        idx=lambda m: m.start(1)
+    )
+
+The full recipe could be::
+
+    OUTPUT_FILE = "CHANGELOG.rst"
+    INSERT_POINT = r"\b(?P<rev>[0-9]+\.[0-9]+)\s+\([0-9]+-[0-9]{2}-[0-9]{2}\)\n--+\n"
+    revs = [
+            Caret(FileFirstRegexMatch(OUTPUT_FILE, INSERT_POINT)),
+            "HEAD"
+    ]
+
+    action = FileInsertAtFirstRegexMatch(
+        OUTPUT_FILE, INSERT_POINT,
+        idx=lambda m: m.start(1)
+    )
 
 
 Contributing

@@ -492,20 +492,27 @@ def file_put_contents(filename, string):
         f.write(string)
 
 
+##
+## Inferring revision
+##
+
+def _file_regex_match(filename, pattern, **kw):
+    if not os.path.isfile(filename):
+        raise IOError("Can't open file '%s'." % filename)
+    file_content = file_get_contents(filename)
+    match = re.search(pattern, file_content, **kw)
+    if match is None:
+        stderr("file content: %r" % file_content)
+        raise ValueError(
+            "Regex %s did not match any substring in '%s'."
+            % (pattern, filename))
+    return match
 
 
 @available_in_config
 def FileFirstRegexMatch(filename, pattern):
     def _call():
-        if not os.path.isfile(filename):
-            die("FileFirstRegexMatch: Can't open file '%s'." % filename)
-        with open(filename) as f:
-            file_content = f.read()
-
-        match = re.search(pattern, file_content)
-        if match is None:
-            die("Regex %s did not match any substring in '%s'."
-                 % (pattern, filename))
+        match = _file_regex_match(filename, pattern)
         dct = match.groupdict()
         if dct:
             if "rev" not in dct:
@@ -1383,6 +1390,51 @@ else:
 
 
 ##
+## Publish action
+##
+
+@available_in_config
+def stdout(content):
+    for chunk in content:
+        safe_print(chunk)
+@available_in_config
+def FileInsertAtFirstRegexMatch(filename, pattern, flags=0,
+                            idx=lambda m: m.start()):
+
+    def write_content(f, content):
+        for content_line in content:
+            f.write(content_line)
+
+    def _wrapped(content):
+        index = idx(_file_regex_match(filename, pattern, flags=flags))
+        offset = 0
+        new_offset = 0
+        postfix = False
+
+        with open(filename + "~", "w") as dst:
+            with open(filename, "r") as src:
+                for line in src:
+                    if postfix:
+                        dst.write(line)
+                        continue
+                    new_offset = offset + len(line)
+                    if new_offset < index:
+                        offset = new_offset
+                        dst.write(line)
+                        continue
+                    dst.write(line[0:index - offset])
+                    write_content(dst, content)
+                    dst.write(line[index - offset:])
+                    postfix = True
+            if not postfix:
+                write_content(dst, content)
+        if WIN32:
+            os.remove(filename)
+        os.rename(filename + "~", filename)
+
+    return _wrapped
+
+
 ## Data Structure
 ##
 
@@ -1844,6 +1896,12 @@ def main():
             subject_process=config.get("subject_process", noop),
             log_encoding=log_encoding,
         )
+
+        if isinstance(content, basestring):
+            content = content.splitlines(True)
+
+        config.get("publish", stdout)(content)
+
     except KeyboardInterrupt:
         if DEBUG:
             err("Keyboard interrupt received while running '%s':"
@@ -1865,11 +1923,6 @@ def main():
                    (debug_varname, ))
         exit(255)
 
-    if isinstance(content, collections.Iterator):
-        for chunk in content:
-            safe_print(chunk)
-    else:
-        safe_print(content)
 
 
 ##
