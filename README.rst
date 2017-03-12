@@ -493,6 +493,42 @@ The full recipe could be::
     )
 
 
+Alternatively, you can use this other recipe, using ``FileRegexSubst``, that has
+the added advantage of being able to update the unreleased part if you had it already
+generated and need a re-fresh because you added new commits or amended some commits::
+
+    OUTPUT_FILE = "CHANGELOG.rst"
+    INSERT_POINT_REGEX = r'''(?isxu)
+    ^
+    (
+      \s*Changelog\s*(\n|\r\n|\r)        ## ``Changelog`` line
+      ==+\s*(\n|\r\n|\r){2}              ## ``=========`` rest underline
+    )
+
+    (                     ## Match all between changelog and release rev
+        (
+          (?!
+             (?<=(\n|\r))                ## look back for newline
+             %(rev)s                     ## revision
+             \s+
+             \([0-9]+-[0-9]{2}-[0-9]{2}\)(\n|\r\n|\r)   ## date
+               --+(\n|\r\n|\r)                          ## ``---`` underline
+          )
+          .
+        )*
+    )
+
+    (?P<rev>%(rev)s)
+    ''' % {'rev': r"[0-9]+\.[0-9]+(\.[0-9]+)?"}
+
+    revs = [
+        Caret(FileFirstRegexMatch(OUTPUT_FILE, INSERT_POINT_REGEX)),
+        "HEAD"
+    ]
+
+    publish = FileRegexSubst(OUTPUT_FILE, INSERT_POINT_REGEX, r"\1\o\g<rev>")
+
+
 Contributing
 ============
 

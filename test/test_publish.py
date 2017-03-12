@@ -87,6 +87,79 @@ class FullIncrementalRecipeTest(BaseGitReposTest):
         self.assertNoDiff(gitchangelog.file_get_contents("CHANGELOG.rst"),
                           self.REFERENCE)
 
+    def test_insert_changelog_recipe2(self):
+        """Full incremental recipe with subst"""
+
+        gitchangelog.file_put_contents(
+            ".gitchangelog.rc",
+            textwrap.dedent(
+                r"""
+                OUTPUT_FILE = "CHANGELOG.rst"
+                REV_REGEX=r"[0-9]+\.[0-9]+(\.[0-9]+)?"
+                INSERT_POINT_REGEX = r'''(?isxu)
+                ^
+                (
+                  \s*Changelog\s*(\n|\r\n|\r)        ## ``Changelog`` line
+                  ==+\s*(\n|\r\n|\r){2}              ## ``=========`` rest underline
+                )
+
+                (
+                    (
+                      (?!
+                         (?<=(\n|\r))                ## look back for newline
+                         %(rev)s                     ## revision
+                         \s+
+                         \([0-9]+-[0-9]{2}-[0-9]{2}\)(\n|\r\n|\r)   ## date
+                           --+(\n|\r\n|\r)                          ## ``---`` underline
+                      )
+                      .
+                    )*
+                )
+
+                (?P<rev>%(rev)s)
+                ''' % {'rev': REV_REGEX}
+
+                revs = [
+                    Caret(FileFirstRegexMatch(OUTPUT_FILE, INSERT_POINT_REGEX)),
+                    "HEAD"
+                ]
+
+                publish = FileRegexSubst(
+                    OUTPUT_FILE, INSERT_POINT_REGEX, r"\1\o\g<rev>"
+                )
+                """))
+        gitchangelog.file_put_contents(
+            "CHANGELOG.rst",
+            textwrap.dedent("""\
+                Changelog
+                =========
+
+
+                XXX Garbage
+
+                1.2 (2017-02-20)
+                ----------------
+                - Previous content
+
+                """))
+
+        out, err, errlvl = cmd('$tprog')
+        self.assertEqual(
+            err, "",
+            msg="There should be non error messages. "
+            "Current stderr:\n%s" % err)
+        self.assertEqual(
+            errlvl, 0,
+            msg="Should succeed")
+        self.assertNoDiff(
+            self.REFERENCE,
+            gitchangelog.file_get_contents("CHANGELOG.rst"))
+        ## Re-applying will change nothing
+        out, err, errlvl = cmd('$tprog')
+        self.assertNoDiff(
+            self.REFERENCE,
+            gitchangelog.file_get_contents("CHANGELOG.rst"))
+
 
 class FileInsertAtFirstRegexMatchTest(BaseTmpDirTest):
 
