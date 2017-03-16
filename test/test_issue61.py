@@ -246,6 +246,51 @@ class TestBasicRevs(BaseGitReposTest):
 
             """), out)
 
+    def test_callable_rev_file_first_regex_reg_support(self):
+
+        gitchangelog.file_put_contents(
+            ".gitchangelog.rc",
+            textwrap.dedent(r"""
+                import re
+                REGEX = re.compile(r"(?P<rev>[0-9]+\.[0-9]+)\s+\([0-9]+-[0-9]{2}-[0-9]{2}\)\n--+\n")
+                revs = [
+                    Caret(
+                        FileFirstRegexMatch(
+                            "CHANGELOG.rst",
+                            REGEX)),
+                    "HEAD"
+                ]
+                """))
+        gitchangelog.file_put_contents(
+            "CHANGELOG.rst",
+            textwrap.dedent("""\
+                Changelog
+                =========
+
+
+                1.2 (2017-02-20)
+                ----------------
+                - B. [The Committer]
+                - A. [The Committer]
+
+                """))
+
+        out, err, errlvl = cmd('$tprog')
+        self.assertEqual(
+            err, "",
+            msg="There should be non error messages. "
+            "Current stderr:\n%s" % err)
+        self.assertEqual(
+            errlvl, 0,
+            msg="Should succeed")
+        self.assertNoDiff(textwrap.dedent("""\
+            (unreleased)
+            ------------
+            - C. [The Committer]
+
+
+            """), out)
+
     def test_callable_rev_file_first_regex_match_missing_pattern(self):
 
         gitchangelog.file_put_contents(

@@ -503,6 +503,8 @@ def _file_regex_match(filename, pattern, **kw):
     match = re.search(pattern, file_content, **kw)
     if match is None:
         stderr("file content: %r" % file_content)
+        if isinstance(pattern, type(re.compile(''))):
+            pattern = pattern.pattern
         raise ValueError(
             "Regex %s did not match any substring in '%s'."
             % (pattern, filename))
