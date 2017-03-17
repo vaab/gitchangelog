@@ -2,6 +2,7 @@
 
 from __future__ import unicode_literals
 
+import os
 import textwrap
 
 from .common import BaseGitReposTest, cmd, gitchangelog
@@ -59,6 +60,30 @@ class TemplatingTest(BaseGitReposTest):
         gitchangelog.file_put_contents(
             ".gitchangelog.rc",
             "output_engine = mustache('mytemplate.tpl')")
+
+        reference = """check: Changelog"""
+
+        out, err, errlvl = cmd('$tprog --debug')
+        self.assertEqual(
+            err, "",
+            msg="There should be no error messages. "
+            "Current stderr:\n%s" % err)
+        self.assertEqual(
+            errlvl, 0,
+            msg="Should succeed to find template")
+        self.assertNoDiff(
+            reference, out)
+
+    def test_file_template_name_with_git_config_path(self):
+
+        os.mkdir('XYZ')
+        gitchangelog.file_put_contents(
+            os.path.join('XYZ', "mytemplate.tpl"),
+            "check: {{{title}}}")
+        gitchangelog.file_put_contents(
+            ".gitchangelog.rc",
+            "output_engine = mustache('mytemplate.tpl')")
+        self.git.config('gitchangelog.template-path', 'XYZ')
 
         reference = """check: Changelog"""
 

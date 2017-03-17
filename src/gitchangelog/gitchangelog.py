@@ -1253,30 +1253,40 @@ def ensure_template_file_exists(label, template_name):
 
     """
 
-    if os.path.isfile(template_name):
-        return template_name
+    try:
+        template_path = GitRepos(os.getcwd()).config.get(
+            "gitchangelog.template-path")
+    except ShellError as e:
+        stderr(
+            "Error parsing git config: %s."
+            " Won't be able to read 'template-path' if defined."
+            % (str(e)))
+        template_path = None
 
-    template_dir = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        "templates", label)
+    if template_path:
+        path_file = path_label = template_path
+    else:
+        path_file = os.getcwd()
+        path_label = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                  "templates", label)
 
-    template_path = os.path.join(template_dir, "%s.tpl" % template_name)
+    for ftn in [os.path.join(path_file, template_name),
+                os.path.join(path_label, "%s.tpl" % template_name)]:
+        if os.path.isfile(ftn):
+            return ftn
 
-    if not os.path.exists(template_path):
-        templates = glob.glob(os.path.join(template_dir, "*.tpl"))
-        if len(templates) > 0:
-            msg = ("These are the available %s templates:" % label)
-            msg += "\n - " + \
-                   "\n - ".join(os.path.basename(f).split(".")[0]
-                                for f in templates)
-            msg += "\nTemplates are located in %r" % template_dir
-        else:
-            msg = "No available %s templates found in %r." \
-                  % (label, template_dir)
-        die("Error: Invalid %s template name %r.\n" % (label, template_name) +
-            "%s" % msg)
-
-    return template_path
+    templates = glob.glob(os.path.join(path_label, "*.tpl"))
+    if len(templates) > 0:
+        msg = ("These are the available %s templates:" % label)
+        msg += "\n - " + \
+               "\n - ".join(os.path.basename(f).split(".")[0]
+                            for f in templates)
+        msg += "\nTemplates are located in %r" % path_label
+    else:
+        msg = "No available %s templates found in %r." \
+              % (label, path_label)
+    die("Error: Invalid %s template name %r.\n" % (label, template_name) +
+        "%s" % msg)
 
 
 ##

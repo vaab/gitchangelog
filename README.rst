@@ -272,16 +272,20 @@ of gitchangelog. These can be called by providing a simple label to the
 
     output_engine = mustache("markdown")
 
-Or you could provide your own mustache template by specifying an absolute
-path (or a relative one, starting from the git toplevel of your project) to
-your template file, for instance::
+Or you could provide your own mustache template by specifying an
+absolute path (or a relative one, starting from the git toplevel of
+your project by default, or if set, the
+``git config gitchangelog.template-path``
+location) to your template file, for instance::
 
     output_engine = mustache(".gitchangelog.tpl")
 
-And feel free to copy the bundled templates to use them as bases for your
-own variations. These are located in ``src/gitchangelog/templates/mustache``
-directory in the source and are installed in ``templates/mustache`` directory
-starting from where your ``gitchangelog.py`` was installed.
+And feel free to copy the bundled templates to use them as bases for
+your own variations. In the source code, these are located in
+``src/gitchangelog/templates/mustache`` directory, once installed they
+are in ``templates/mustache`` directory starting from where your
+``gitchangelog.py`` was installed.
+
 
 .. _mustache: http://mustache.github.io
 .. _pystache: https://pypi.python.org/pypi/pystache
@@ -302,16 +306,19 @@ of gitchangelog. These can be called by providing a simple label to the
 
     output_engine = makotemplate("markdown")
 
-Or you could provide your own mako template by specifying an absolute
-path (or a relative one, starting from the git toplevel of your project) to
-your template file, for instance::
+Or you could provide your own mustache template by specifying an
+absolute path (or a relative one, starting from the git toplevel of
+your project by default, or if set, the
+``git config gitchangelog.template-path``
+location) to your template file, for instance::
 
     output_engine = makotemplate(".gitchangelog.tpl")
 
-And feel free to copy the bundled templates to use them as bases for your
-own variations. These are located in ``src/gitchangelog/templates/mako``
-directory in the source and are installed in ``templates/mako`` directory
-starting from where your ``gitchangelog.py`` was installed.
+And feel free to copy the bundled templates to use them as bases for
+your own variations. In the source code, these are located in
+``src/gitchangelog/templates/mako`` directory, once installed they
+are in ``templates/mako`` directory starting from where your
+``gitchangelog.py`` was installed.
 
 .. _mako: http://www.makotemplates.org
 
