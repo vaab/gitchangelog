@@ -1468,10 +1468,6 @@ def FileRegexSubst(filename, pattern, replace, flags=0):
 
     replace = re.sub(r'\\([0-9+])', r'\\g<\1>', replace)
 
-    def get_content(f, content):
-        for content_line in content:
-            f.write(content_line)
-
     def _wrapped(content):
         src = file_get_contents(filename)
         ## Protect replacement pattern against the following expansion of '\o'
