@@ -65,6 +65,7 @@ ignore_regexps = [
     r'^([cC]hg|[fF]ix|[nN]ew)\s*:\s*[p|P]kg:',
     r'^([cC]hg|[fF]ix|[nN]ew)\s*:\s*[d|D]ev:',
     r'^(.{3,3}\s*:)?\s*[fF]irst commit.?\s*$',
+    r'^$',  ## ignore commits with empty messages
 ]
 
 
@@ -124,6 +125,9 @@ section_regexps = [
 ##
 ##   - strip: remove any spaces before or after the content of the string
 ##
+##   - SetIfEmpty(msg="No commit message."): will set the text to
+##     whatever given ``msg`` if the current text is empty.
+##
 ## Additionally, you can `pipe` the provided filters, for instance:
 #body_process = Wrap(regexp=r'\n(?=\w+\s*:)') | Indent(chars="  ")
 #body_process = Wrap(regexp=r'\n(?=\w+\s*:)')
@@ -139,7 +143,7 @@ body_process = ReSub(r'((^|\n)[A-Z]\w+(-\w+)*: .*(\n\s+.*)*)+$', r'') | strip
 ## Available constructs are those listed in ``body_process`` doc.
 subject_process = (strip |
     ReSub(r'^([cC]hg|[fF]ix|[nN]ew)\s*:\s*((dev|use?r|pkg|test|doc)\s*:\s*)?([^\n@]*)(@[a-z]+\s+)*$', r'\4') |
-    ucfirst | final_dot)
+    SetIfEmpty("No commit message.") | ucfirst | final_dot)
 
 
 ## ``tag_filter_regexp`` is a regexp

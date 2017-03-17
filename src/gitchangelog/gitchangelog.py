@@ -385,8 +385,16 @@ class TextProc(object):
              % (value, indent("".join(lines).strip(), "  | "))))
 
 
+def set_if_empty(text, msg="No commit message."):
+    if len(text):
+        return text
+    return msg
+
+
 @TextProc
 def ucfirst(msg):
+    if len(msg) == 0:
+        return msg
     return msg[0].upper() + msg[1:]
 
 
@@ -457,9 +465,10 @@ Wrap = curryfy(paragraph_wrap)
 ReSub = lambda p, r, **k: TextProc(lambda txt: re.sub(p, r, txt, **k))
 noop = TextProc(lambda txt: txt)
 strip = TextProc(lambda txt: txt.strip())
+SetIfEmpty = curryfy(set_if_empty)
 
 for _label in ("Indent", "Wrap", "ReSub", "noop", "final_dot",
-              "ucfirst", "strip"):
+              "ucfirst", "strip", "SetIfEmpty"):
     _config_env[_label] = locals()[_label]
 
 ##
