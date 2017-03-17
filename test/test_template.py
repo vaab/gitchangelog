@@ -22,8 +22,9 @@ class TemplatingTest(BaseGitReposTest):
     def test_unexistent_template_name(self):
         """Unexisting template should get a proper error message"""
 
-        gitchangelog.file_put_contents(".gitchangelog.rc",
-                          "output_engine = mustache('doesnotexist')")
+        gitchangelog.file_put_contents(
+            ".gitchangelog.rc",
+            "output_engine = mustache('doesnotexist')")
         out, err, errlvl = cmd('$tprog')
         self.assertEqual(
             errlvl, 1,
@@ -52,10 +53,12 @@ class TemplatingTest(BaseGitReposTest):
     def test_file_template_name(self):
         """Existing files should be accepted as valid templates"""
 
-        gitchangelog.file_put_contents("mytemplate.tpl",
-                          "check: {{{title}}}")
-        gitchangelog.file_put_contents(".gitchangelog.rc",
-                          "output_engine = mustache('mytemplate.tpl')")
+        gitchangelog.file_put_contents(
+            "mytemplate.tpl",
+            "check: {{{title}}}")
+        gitchangelog.file_put_contents(
+            ".gitchangelog.rc",
+            "output_engine = mustache('mytemplate.tpl')")
 
         reference = """check: Changelog"""
 
@@ -86,8 +89,9 @@ class TemplatingTest(BaseGitReposTest):
                 % endfor
                 % endfor
                 """))
-        gitchangelog.file_put_contents(".gitchangelog.rc",
-                          "output_engine = makotemplate('mytemplate.tpl')")
+        gitchangelog.file_put_contents(
+            ".gitchangelog.rc",
+            "output_engine = makotemplate('mytemplate.tpl')")
 
         reference = textwrap.dedent("""
             None

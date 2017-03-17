@@ -462,7 +462,6 @@ for _label in ("Indent", "Wrap", "ReSub", "noop", "final_dot",
               "ucfirst", "strip"):
     _config_env[_label] = locals()[_label]
 
-
 ##
 ## File
 ##
@@ -1331,6 +1330,7 @@ def rest_py(data, opts={}):
         if len(version["sections"]) > 0:
             yield render_version(version) + "\n\n"
 
+
 ## formatter engines
 
 if pystache:
@@ -1427,7 +1427,7 @@ def stdout(content):
         safe_print(chunk)
 @available_in_config
 def FileInsertAtFirstRegexMatch(filename, pattern, flags=0,
-                            idx=lambda m: m.start()):
+                                idx=lambda m: m.start()):
 
     def write_content(f, content):
         for content_line in content:
@@ -1977,7 +1977,6 @@ def main():
                    "or use ``--debug`` to see full traceback)" %
                    (debug_varname, ))
         exit(255)
-
 
 
 ##

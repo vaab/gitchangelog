@@ -82,7 +82,7 @@ ignore_regexps = [
 ##
 section_regexps = [
     ('New', [
-	r'^[nN]ew\s*:\s*((dev|use?r|pkg|test|doc)\s*:\s*)?([^\n]*)$',
+        r'^[nN]ew\s*:\s*((dev|use?r|pkg|test|doc)\s*:\s*)?([^\n]*)$',
      ]),
     ('Changes', [
         r'^[cC]hg\s*:\s*((dev|use?r|pkg|test|doc)\s*:\s*)?([^\n]*)$',
@@ -157,7 +157,7 @@ import os.path
 unreleased_version_label = lambda: swrap(
     (["bash"] if WIN32 else []) +
     [os.path.join(".", "autogen.sh"), "--get-version"],
-	shell=False)
+shell=False)
 
 
 
@@ -245,8 +245,8 @@ include_merge = True
 #revs = [
 #    Caret(
 #        FileFirstRegexMatch(
-#	    "CHANGELOG.rst",
-#	    r"(?P<rev>[0-9]+\.[0-9]+\.[0-9]+)\s+\([0-9]+-[0-9]{2}-[0-9]{2}\)\n--+\n\n")),
+#          "CHANGELOG.rst",
+#          r"(?P<rev>[0-9]+\.[0-9]+\.[0-9]+)\s+\([0-9]+-[0-9]{2}-[0-9]{2}\)\n--+\n\n")),
 #    "HEAD"
 #]
 revs = []
