@@ -918,6 +918,30 @@ class GitCommit(SubGitObjectMixin):
             float(self.author_date_timestamp))
         return d.strftime('%Y-%m-%d')
 
+    @property
+    def has_annotated_tag(self):
+        try:
+            self.git.rev_parse(['%s^{tag}' % self.identifier, "--"])
+            return True
+        except ShellError as e:
+            if e.errlvl != 128:
+                raise
+            return False
+
+    @property
+    def tagger_date_timestamp(self):
+        if not self.has_annotated_tag:
+            raise ValueError("Can't access 'tagger_date_timestamp' on commit without annotated tag.")
+        tagger_date_utc = self.git.for_each_ref(
+            'refs/tags/%s' % self.identifier, format='%(taggerdate:raw)')
+        return tagger_date_utc.split(" ", 1)[0]
+
+    @property
+    def tagger_date(self):
+        d = datetime.datetime.utcfromtimestamp(
+            float(self.tagger_date_timestamp))
+        return d.strftime('%Y-%m-%d')
+
     def __le__(self, value):
         if not isinstance(value, GitCommit):
             value = self._repos.commit(value)
@@ -1065,9 +1089,11 @@ class GitCmd(SubGitObjectMixin):
                 os.chdir(old_dir)
 
         def method(*args, **kwargs):
-            if (len(args) == 1 and len(kwargs) == 0 and
-                    not isinstance(args[0], basestring)):
-                return dir_swrap(['git', label, ] + args[0], shell=False)
+            if (len(args) == 1 and not isinstance(args[0], basestring)):
+                return dir_swrap(
+                    ['git', label, ] + args[0],
+                    shell=False,
+                    env=kwargs.get("env", None))
             cli_args = []
             for key, value in kwargs.items():
                 cli_key = (("-%s" if len(key) == 1 else "--%s")
@@ -1533,10 +1559,13 @@ def versions_data_iter(repository, revlist=None,
     for idx, tag in enumerate(tags):
 
         ## New version
-        current_version = {"date": tag.date}
-        current_version["tag"] = tag.identifier \
-                                 if tag.identifier != "HEAD" else \
-                                 None
+        current_version = {
+            "date": tag.tagger_date if tag.has_annotated_tag else tag.date,
+            "commit_date": tag.date,
+            "tagger_date": tag.tagger_date if tag.has_annotated_tag else None,
+            "tag": tag.identifier if tag.identifier != "HEAD" else None,
+            "commit": tag,
+        }
 
         sections = collections.defaultdict(list)
         commits = repository.log(
