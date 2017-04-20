@@ -172,6 +172,7 @@ class BaseGitReposTest(BaseTmpDirTest):
             "repos",
             email="committer@example.com",
             user="The Committer")
+        os.chdir("repos")
 
     @property
     def git(self):

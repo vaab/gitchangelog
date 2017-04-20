@@ -1089,12 +1089,8 @@ class GitCmd(SubGitObjectMixin):
         label = label.replace("_", "-")
 
         def dir_swrap(command, **kwargs):
-            old_dir = os.path.curdir
-            os.chdir(self._repos._orig_path)
-            try:
+            with set_cwd(self._repos._orig_path):
                 return swrap(command, **kwargs)
-            finally:
-                os.chdir(old_dir)
 
         def method(*args, **kwargs):
             if (len(args) == 1 and not isinstance(args[0], basestring)):
