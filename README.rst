@@ -536,6 +536,38 @@ generated and need a re-fresh because you added new commits or amended some comm
     publish = FileRegexSubst(OUTPUT_FILE, INSERT_POINT_REGEX, r"\1\o\g<rev>")
 
 
+As a second example, here is the same recipe for mustache markdown format::
+
+    OUTPUT_FILE = "CHANGELOG.rst"
+    INSERT_POINT_REGEX = r'''(?isxu)
+    ^
+    (
+      \s*\#\s+Changelog\s*(\n|\r\n|\r)        ## ``Changelog`` line
+    )
+
+    (                     ## Match all between changelog and release rev
+        (
+          (?!
+             (?<=(\n|\r))                ## look back for newline
+             \#\#\s+%(rev)s                     ## revision
+             \s+
+             \([0-9]+-[0-9]{2}-[0-9]{2}\)(\n|\r\n|\r)   ## date
+          )
+          .
+        )*
+    )
+
+    (?P<tail>\#\#\s+(?P<rev>%(rev)s))
+    ''' % {'rev': r"[0-9]+\.[0-9]+(\.[0-9]+)?"}
+
+    revs = [
+        Caret(FileFirstRegexMatch(OUTPUT_FILE, INSERT_POINT_REGEX)),
+        "HEAD"
+    ]
+
+    publish = FileRegexSubst(OUTPUT_FILE, INSERT_POINT_REGEX, r"\1\o\n\g<tail>")
+
+
 Contributing
 ============
 
