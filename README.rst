@@ -439,7 +439,7 @@ REVLIST``. Examples follows::
     gitchangelog 0.0.2..0.0.3
 
     ## will output only tags since 0.0.3 (excluded)
-    gitchangelog ^0.0.3
+    gitchangelog ^0.0.3 HEAD
 
     ## will output all tags up to 0.0.3 (included)
     gitchangelog 0.0.3
