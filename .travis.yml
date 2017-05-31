@@ -15,6 +15,11 @@ script:
   - nosetests -sx .
 after_success:
   - "bash <(curl -s https://codecov.io/bash)  #dovis: ignore"
+  - |
+    if [ "$DOVIS" -a -d "$ARTIFACT_DIR" ]; then
+        cp ".coverage" "$ARTIFACT_DIR"
+        echo "$PWD" > "$ARTIFACT_DIR/cover_path"
+    fi
 
 
 ## Ignored by Travis, but used internally to check packaging

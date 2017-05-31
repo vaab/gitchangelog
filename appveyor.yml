@@ -50,3 +50,8 @@ test_script:
 
 after_test:
   - "codecov & REM  #dovis: ignore"
+  - |
+    IF DEFINED DOVIS IF DEFINED ARTIFACT_DIR (
+        cp .coverage %ARTIFACT_DIR%
+        echo %cd% > %ARTIFACT_DIR%/cover_path
+    )
