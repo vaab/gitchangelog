@@ -951,6 +951,13 @@ class GitCommit(SubGitObjectMixin):
         return d.strftime('%Y-%m-%d')
 
     def __le__(self, value):
+        """Order notion between commit
+
+        This is comparable to the ``git log`` order output, ancestorship
+        is first used, and if on parallel branches, using date order.
+        When date are equal, as a last resort, use sha1.
+
+        """
         if not isinstance(value, GitCommit):
             value = self._repos.commit(value)
         try:
@@ -959,7 +966,23 @@ class GitCommit(SubGitObjectMixin):
         except ShellError as e:
             if e.errlvl != 1:
                 raise
+        try:
+            self.git.merge_base(value.sha1, self.sha1)
+        except ShellError as e:
+            raise ValueError("Unrelated commits %r and %r."
+                             % (self, value))
+        try:
+            self.git.merge_base(self.sha1, is_ancestor=value.sha1)
             return False
+        except ShellError as e:
+            if e.errlvl != 1:
+                raise
+        ## neither ``self`` nor ``value`` is ancestor of the other,
+        ## they have a merge base, so they are in different branches
+        ## so we need to check their tag dates
+        if self.author_date_timestamp == value.author_date_timestamp:
+            return self.sha1 <= value.sha1  ## arbitrary
+        return self.author_date_timestamp <= value.author_date_timestamp
 
     def __lt__(self, value):
         if not isinstance(value, GitCommit):
