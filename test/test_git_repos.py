@@ -101,6 +101,7 @@ class TestCrossBranchReleasesOrder(BaseGitReposTest):
         0.0.2
           None:
             * new: first commit on develop branch [The Committer]
+            * new: branch split [The Committer]
 
         0.0.1
           None:
@@ -129,6 +130,10 @@ class TestCrossBranchReleasesOrder(BaseGitReposTest):
                         allow_empty=True,
                         date='2000-01-02 11:00:00')
         self.git.tag("0.0.1")
+
+        self.git.commit(message='new: branch split',
+                        allow_empty=True,
+                        date='2000-01-02 11:00:02')
 
         ## We are on master branch by default...
         ## commit, tag
