@@ -31,7 +31,7 @@ except ImportError:  ## pragma: no cover
     mako = None
 
 
-__version__ = "%%version%%"  ## replaced by autogen.sh
+__version__ = "3.0.3.dev201706231753"  ## replaced by autogen.sh
 
 DEBUG = None
 
@@ -1446,7 +1446,7 @@ def FileInsertAtFirstRegexMatch(filename, pattern, flags=0,
 
     def write_content(f, content):
         for content_line in content:
-            f.write(content_line)
+            f.write(content_line.encode(_preferred_encoding))
 
     def _wrapped(content):
         index = idx(_file_regex_match(filename, pattern, flags=flags))
