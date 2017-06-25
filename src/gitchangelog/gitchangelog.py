@@ -1446,7 +1446,10 @@ def FileInsertAtFirstRegexMatch(filename, pattern, flags=0,
 
     def write_content(f, content):
         for content_line in content:
-            f.write(content_line.encode(_preferred_encoding))
+            if PY3:
+                f.write(content_line)
+            else:
+                f.write(content_line.encode(_preferred_encoding))
 
     def _wrapped(content):
         index = idx(_file_regex_match(filename, pattern, flags=flags))
