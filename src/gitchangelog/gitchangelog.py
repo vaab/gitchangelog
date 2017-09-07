@@ -632,8 +632,7 @@ class Proc(Popen):
 
     def __init__(self, command, env=None, encoding=_preferred_encoding):
         super(Proc, self).__init__(
-            command, shell=True,
-            stdin=PIPE, stdout=PIPE, stderr=PIPE,
+            command, stdin=PIPE, stdout=PIPE, stderr=PIPE,
             close_fds=PLT_CFG['close_fds'], env=env,
             universal_newlines=False)
 
@@ -1230,11 +1229,13 @@ class GitRepos(object):
                 if not isinstance(ref, GitCommit):
                     refs[ref_type][idx] = self.commit(ref)
 
-        ## --topo-order: don't mix commits from separate branches.
-        plog = Proc("git log --stdin -z --topo-order --pretty=format:%s %s --"
-                    % (GIT_FULL_FORMAT_STRING,
-                       '--no-merges' if not include_merge else ''),
-                    encoding=encoding)
+        plog = Proc(
+            ["git", "log", "--stdin", "-z",
+             "--topo-order",  ## don't mix commits from separate branches.
+             "--pretty=format:%s" % GIT_FULL_FORMAT_STRING] +
+            (["--no-merges"] if not include_merge else []) +
+            ["--", ],
+            encoding=encoding)
         for ref in refs["includes"]:
             plog.stdin.write("%s\n" % ref.sha1)
 
