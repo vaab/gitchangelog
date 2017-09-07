@@ -208,5 +208,4 @@ class TestLogHardLinearbility(BaseGitReposTest):
         """Test attribution for out-of-band releases"""
 
         changelog = self.simple_changelog()
-        self.assertNoDiff(
-            self.REFERENCE, changelog)
+        self.assertNoDiff(self.REFERENCE, changelog)

@@ -59,7 +59,7 @@ else:
     }
 
 ##
-##
+## Python 2 and WIN32 bug correction
 ##
 
 if WIN32 and not PY3:
@@ -134,7 +134,6 @@ if WIN32 and not PY3:
         LPSTARTUPINFOW, LPPROCESS_INFORMATION,
     ]
     CreateProcessW.restype = BOOL
-
 
     ##
     ## Patched functions/classes
@@ -213,7 +212,8 @@ if WIN32 and not PY3:
                     args = unicode('"%s" %s') % (w9xpopen, args)
                     creationflags |= _subprocess.CREATE_NEW_CONSOLE
 
-            super(Popen, self)._execute_child(args, executable,
+            super(Popen, self)._execute_child(
+                args, executable,
                 preexec_fn, close_fds, cwd, env, universal_newlines,
                 startupinfo, creationflags, False, to_close, p2cread,
                 p2cwrite, c2pread, c2pwrite, errread, errwrite)
@@ -379,7 +379,8 @@ class TextProc(object):
         import inspect
         (_frame, filename, lineno, _function_name, lines, _index) = \
                 inspect.stack()[1]
-        raise SyntaxError("Invalid syntax in config file",
+        raise SyntaxError(
+            "Invalid syntax in config file",
             (filename, lineno, 0,
              "Invalid chain with a non TextProc element %r:\n%s"
              % (value, indent("".join(lines).strip(), "  | "))))
@@ -468,8 +469,9 @@ strip = TextProc(lambda txt: txt.strip())
 SetIfEmpty = curryfy(set_if_empty)
 
 for _label in ("Indent", "Wrap", "ReSub", "noop", "final_dot",
-              "ucfirst", "strip", "SetIfEmpty"):
+               "ucfirst", "strip", "SetIfEmpty"):
     _config_env[_label] = locals()[_label]
+
 
 ##
 ## File
@@ -541,6 +543,8 @@ def Caret(l):
     def _call():
         return "^%s" % eval_if_callable(l)
     return _call
+
+
 ##
 ## System functions
 ##
@@ -1254,8 +1258,7 @@ class GitRepos(object):
 
         try:
             while True:  ## next(values) will eventualy raise a StopIteration
-                yield mk_commit(dict([(key, next(values))
-                                      for key in GIT_FORMAT_KEYS]))
+                yield mk_commit({key: next(values) for key in GIT_FORMAT_KEYS})
         finally:
             plog.stdout.close()
             plog.stderr.close()

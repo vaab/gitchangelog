@@ -58,10 +58,6 @@ class ExceptionHandlingTest(BaseGitReposTest):
             err, "XYZ",
             msg="The exception msg should be displayed and thus contain XYZ... "
             "Current stderr:\n%s" % err)
-        self.assertEqual(
-            errlvl, 255,
-            msg="Should fail with errlvl 255 if exception in output_engine..."
-            "Current errlvl: %s" % errlvl)
         self.assertContains(
             err, "--debug",
             msg="Message about ``--debug``... "
@@ -78,6 +74,10 @@ class ExceptionHandlingTest(BaseGitReposTest):
             out, "",
             msg="There should be no standard output. "
             "Current stdout:\n%r" % out)
+        self.assertEqual(
+            errlvl, 255,
+            msg="Should fail with errlvl 255 if exception in output_engine..."
+            "Current errlvl: %s" % errlvl)
 
     def test_with_changelog_python_exc_in_cli_debug_mode(self):
 

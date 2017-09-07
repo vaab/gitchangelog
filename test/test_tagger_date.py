@@ -96,7 +96,7 @@ class TaggerDateAutoDateTest(BaseGitReposTest):
     REFERENCE = textwrap.dedent("""\
         1.3 (2017-02-20)
           None:
-            * b [The Committer]
+            * c [The Committer]
 
         1.2 (2017-03-17)
           None:
@@ -112,7 +112,7 @@ class TaggerDateAutoDateTest(BaseGitReposTest):
                         allow_empty=True)
         self.git.tag(['-a', "1.2", '--message="tag message"'],
                      env={'GIT_COMMITTER_DATE': "2017-03-17 11:00:00"})
-        self.git.commit(message="b",
+        self.git.commit(message="c",
                         date="2017-02-20 11:00:00",
                         allow_empty=True)
         self.git.tag(["1.3"])
