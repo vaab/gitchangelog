@@ -738,6 +738,7 @@ GIT_FORMAT_KEYS = {
     'committer_date_timestamp': "%ct",
     'raw_body': "%B",
     'body': "%b",
+    'decorate_string': "%D",
 }
 
 GIT_FULL_FORMAT_STRING = "%x00".join(GIT_FORMAT_KEYS.values())
@@ -772,6 +773,7 @@ class GitCommit(SubGitObjectMixin):
         ...             'committer_date_timestamp': "0", ## epoch
         ...             'raw_body': "my subject\n\n%s" % BODY,
         ...             'body': BODY,
+        ...             'decorate_string': 'HEAD -> master, tag: 0.1.4, origin/master',
         ...         }[key] for key in GIT_FORMAT_KEYS.keys()])
         >>> repos.git.rev_list.mock_returns = "123456"
 
@@ -786,6 +788,9 @@ class GitCommit(SubGitObjectMixin):
         'fee fie foh'
         >>> head.author_name
         'John Smith'
+        >>> list(head.tags)
+        Called gitRepos.git.rev_parse(['0.1.4^{tag}', '--'])
+        [<GitTag '0.1.4' (annotated)>]
 
     Notice that on the second call, there's no need to call again git log as
     all the values have already been computed.
@@ -929,28 +934,34 @@ class GitCommit(SubGitObjectMixin):
         return d.strftime('%Y-%m-%d')
 
     @property
-    def has_annotated_tag(self):
-        try:
-            self.git.rev_parse(['%s^{tag}' % self.identifier, "--"])
-            return True
-        except ShellError as e:
-            if e.errlvl != 128:
-                raise
-            return False
+    def tags_name(self):
+        """Return list of tag names"""
+
+        if self.decorate_string == "%D":  ## old version of git
+            try:
+                output = self._repos.git.tag(["-l", "--points-at", self.sha1])
+            except ShellError:
+                raise  ## unexpected errlvl
+            return output.split('\n')
+
+        tag_list = []
+        for decoration in self.decorate_string.split(','):
+            decoration = decoration.strip()
+            if decoration.startswith('tag: '):
+                tag_list.append(decoration[5:])
+        return tag_list
 
     @property
-    def tagger_date_timestamp(self):
-        if not self.has_annotated_tag:
-            raise ValueError("Can't access 'tagger_date_timestamp' on commit without annotated tag.")
-        tagger_date_utc = self.git.for_each_ref(
-            'refs/tags/%s' % self.identifier, format='%(taggerdate:raw)')
-        return tagger_date_utc.split(" ", 1)[0]
+    def tags(self):
+        for tag_name in self.tags_name:
+            yield GitTag(self._repos, tag_name)
 
-    @property
-    def tagger_date(self):
-        d = datetime.datetime.utcfromtimestamp(
-            float(self.tagger_date_timestamp))
-        return d.strftime('%Y-%m-%d')
+    def tag(self, label):
+        for tag in self.tags:
+            if tag.label == label:
+                return tag
+        raise ValueError("No tag labelled %r in current commit."
+                         % (label, ))
 
     def __le__(self, value):
         """Order notion between commit
@@ -1008,6 +1019,56 @@ class GitCommit(SubGitObjectMixin):
 
     def __repr__(self):
         return "<%s %r>" % (self.__class__.__name__, self.identifier)
+
+
+class GitTag(SubGitObjectMixin):
+
+    def __init__(self, repos, label):
+        super(GitTag, self).__init__(repos)
+        self.label = label
+
+    @property
+    def is_annotated(self):
+        try:
+            self.git.rev_parse(['%s^{tag}' % self.label, "--"])
+            return True
+        except ShellError as e:
+            if e.errlvl != 128:
+                raise
+        return False
+
+    @property
+    def content(self):
+        if self.is_annotated:
+            return self.git.for_each_ref(
+                'refs/tags/%s' % self.label, format='%(contents)')
+        return None
+
+    @property
+    def date_timestamp(self):
+        if self.is_annotated:
+            date_utc = self.git.for_each_ref(
+                'refs/tags/%s' % self.label, format='%(taggerdate:raw)')
+            return date_utc.split(" ", 1)[0]
+        return None
+
+    @property
+    def date(self):
+        ts = self.date_timestamp
+        if ts is None:
+            return None
+        d = datetime.datetime.utcfromtimestamp(float(ts))
+        return d.strftime('%Y-%m-%d')
+
+    @property
+    def commit(self):
+        return GitCommit(self._repos, self.identifier)
+
+    def __repr__(self):
+        return "<%s %r (%s)>" % (
+            self.__class__.__name__,
+            self.label,
+            "annotated" if self.is_annotated else "lightweight")
 
 
 def normpath(path, cwd=None):
@@ -1197,6 +1258,9 @@ class GitRepos(object):
 
     def Commit(self, identifier):
         return GitCommit(self, identifier)
+
+    def Tag(self, label):
+        return GitTag(self, label)
 
     @property
     def git(self):
@@ -1602,11 +1666,13 @@ def versions_data_iter(repository, revlist=None,
     ## Get the changes between tags (releases)
     for idx, tag in enumerate(tags):
 
+        tag_obj = tag.tag(tag.identifier) if tag.identifier != "HEAD" else None
+
         ## New version
         current_version = {
-            "date": tag.tagger_date if tag.has_annotated_tag else tag.date,
+            "date": tag_obj.date if tag_obj and tag_obj.is_annotated else tag.date,
             "commit_date": tag.date,
-            "tagger_date": tag.tagger_date if tag.has_annotated_tag else None,
+            "tagger_date": tag_obj.date if tag_obj else None,
             "tag": tag.identifier if tag.identifier != "HEAD" else None,
             "commit": tag,
         }

@@ -15,7 +15,7 @@ from .common import BaseGitReposTest
 def simple_renderer_using_commit_internal(data, opts):
     s = ""
     for version in data["versions"]:
-        s += "%s (%s)\n" % (version["tag"], version["commit"].tagger_date)
+        s += "%s (%s)\n" % (version["tag"], version["commit"].tag(version["tag"]).date)
         for section in version["sections"]:
             s += "  %s:\n" % section["label"]
             for commit in section["commits"]:
@@ -78,6 +78,13 @@ class TaggerDateTest(BaseGitReposTest):
 
 class TaggerDateNonAnnotatedTest(BaseGitReposTest):
 
+    REFERENCE = textwrap.dedent("""\
+        1.2 (None)
+          None:
+            * b [The Committer]
+
+        """)
+
     def setUp(self):
         super(TaggerDateNonAnnotatedTest, self).setUp()
 
@@ -87,8 +94,9 @@ class TaggerDateNonAnnotatedTest(BaseGitReposTest):
         self.git.tag(["1.2"])
 
     def test_checking_tagger_date_in_non_tag_with_commit_object(self):
-        with self.assertRaises(ValueError):
-            self.changelog(output_engine=simple_renderer_using_commit_internal)
+        out = self.changelog(
+            output_engine=simple_renderer_using_commit_internal)
+        self.assertNoDiff(self.REFERENCE, out)
 
 
 class TaggerDateAutoDateTest(BaseGitReposTest):
