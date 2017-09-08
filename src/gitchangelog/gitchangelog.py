@@ -962,7 +962,7 @@ class GitCommit(SubGitObjectMixin):
 
         """
         if not isinstance(value, GitCommit):
-            value = self._repos.commit(value)
+            value = self._repos.Commit(value)
         try:
             self.git.merge_base(value.sha1, is_ancestor=self.sha1)
             return True
@@ -989,12 +989,12 @@ class GitCommit(SubGitObjectMixin):
 
     def __lt__(self, value):
         if not isinstance(value, GitCommit):
-            value = self._repos.commit(value)
+            value = self._repos.Commit(value)
         return self <= value and self != value
 
     def __eq__(self, value):
         if not isinstance(value, GitCommit):
-            value = self._repos.commit(value)
+            value = self._repos.Commit(value)
         return self.sha1 == value.sha1
 
     def __hash__(self):
@@ -1189,7 +1189,7 @@ class GitRepos(object):
             self.git.config("user.email", email)
         return self
 
-    def commit(self, identifier):
+    def Commit(self, identifier):
         return GitCommit(self, identifier)
 
     @property
@@ -1215,7 +1215,7 @@ class GitRepos(object):
         ## ``git tags --sort -v:refname`` in git version >2.0.
         ## Sorting and reversing with command line is not available on
         ## git version <2.0
-        return sorted([self.commit(tag) for tag in tags if tag != ''],
+        return sorted([self.Commit(tag) for tag in tags if tag != ''],
                       key=lambda x: int(x.committer_date_timestamp))
 
     def log(self, includes=["HEAD", ], excludes=[], include_merge=True,
@@ -1231,7 +1231,7 @@ class GitRepos(object):
         for ref_type in ('includes', 'excludes'):
             for idx, ref in enumerate(refs[ref_type]):
                 if not isinstance(ref, GitCommit):
-                    refs[ref_type][idx] = self.commit(ref)
+                    refs[ref_type][idx] = self.Commit(ref)
 
         plog = Proc(
             ["git", "log", "--stdin", "-z",
@@ -1249,7 +1249,7 @@ class GitRepos(object):
 
         def mk_commit(dct):
             """Creates an already set commit from a dct"""
-            c = self.commit(dct["sha1"])
+            c = self.Commit(dct["sha1"])
             for k, v in dct.items():
                 setattr(c, k, v)
             return c
@@ -1576,10 +1576,10 @@ def versions_data_iter(repository, revlist=None,
             for tag in repository.tags(contains=revs[-1] if revs else None)
             if re.match(tag_filter_regexp, tag.identifier)]
 
-    tags.append(repository.commit("HEAD"))
+    tags.append(repository.Commit("HEAD"))
 
     if revlist:
-        max_rev = repository.commit(revs[0])
+        max_rev = repository.Commit(revs[0])
         new_tags = []
         for tag in tags:
             new_tags.append(tag)

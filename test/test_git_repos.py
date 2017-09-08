@@ -46,24 +46,24 @@ class GitReposTest(BaseGitReposTest):
             allow_empty=True)
 
     def test_get_commit(self):
-        commit = self.repos.commit("0.0.1")
+        commit = self.repos.Commit("0.0.1")
         self.assertEqual(commit.subject, 'new: first commit')
-        commit = self.repos.commit("HEAD")
+        commit = self.repos.Commit("HEAD")
         self.assertEqual(
             commit.subject,
             'add ``b`` with non-ascii chars éèàâ§µ and HTML chars ``&<``')
 
     def test_exception_when_requesting_unexistent_commit(self):
-        commit = self.repos.commit("XXX")  ## No exception yet.
+        commit = self.repos.Commit("XXX")  ## No exception yet.
         with self.assertRaises(ValueError):
             commit.subject
 
     def test_commit_less_or_equal(self):
-        self.assertTrue(self.repos.commit("0.0.1") < self.repos.commit("HEAD"))
-        self.assertTrue(self.repos.commit("0.0.1") < "HEAD")
-        self.assertTrue(self.repos.commit("HEAD") == "HEAD")
-        self.assertTrue(self.repos.commit("0.0.1") <= "HEAD")
-        self.assertTrue(self.repos.commit("HEAD") <= "HEAD")
+        self.assertTrue(self.repos.Commit("0.0.1") < self.repos.Commit("HEAD"))
+        self.assertTrue(self.repos.Commit("0.0.1") < "HEAD")
+        self.assertTrue(self.repos.Commit("HEAD") == "HEAD")
+        self.assertTrue(self.repos.Commit("0.0.1") <= "HEAD")
+        self.assertTrue(self.repos.Commit("HEAD") <= "HEAD")
 
     def test_commit_less_or_equal_unrelated(self):
         self.repos.git.checkout("unrelated_commit", orphan=True)
@@ -72,13 +72,13 @@ class GitReposTest(BaseGitReposTest):
             date='2000-01-02 11:00:00',
             allow_empty=True)
         with self.assertRaisesRegexp(ValueError, "Unrelated commits"):
-            self.repos.commit("0.0.1") < self.repos.commit("HEAD")
+            self.repos.Commit("0.0.1") < self.repos.Commit("HEAD")
         with self.assertRaisesRegexp(ValueError, "Unrelated commits"):
-            self.repos.commit("0.0.1") > self.repos.commit("HEAD")
+            self.repos.Commit("0.0.1") > self.repos.Commit("HEAD")
         with self.assertRaisesRegexp(ValueError, "Unrelated commits"):
-            self.repos.commit("0.0.1") <= self.repos.commit("HEAD")
+            self.repos.Commit("0.0.1") <= self.repos.Commit("HEAD")
         with self.assertRaisesRegexp(ValueError, "Unrelated commits"):
-            self.repos.commit("0.0.1") >= self.repos.commit("HEAD")
+            self.repos.Commit("0.0.1") >= self.repos.Commit("HEAD")
 
 
 class TestCrossBranchReleasesOrder(BaseGitReposTest):
