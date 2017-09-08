@@ -76,7 +76,6 @@ if WIN32 and not PY3:
     from ctypes.wintypes import BYTE, WORD, LPWSTR, BOOL, DWORD, LPVOID, \
          HANDLE
 
-
     ##
     ## Types
     ##
@@ -86,6 +85,7 @@ if WIN32 and not PY3:
     LPTSTR = c_wchar_p
     LPSECURITY_ATTRIBUTES = c_void_p
     LPBYTE  = ctypes.POINTER(BYTE)
+
 
     class STARTUPINFOW(Structure):
         _fields_ = [
@@ -125,7 +125,6 @@ if WIN32 and not PY3:
 
         def __int__(self):
             return self.value
-
 
     CreateProcessW = windll.kernel32.CreateProcessW
     CreateProcessW.argtypes = [
