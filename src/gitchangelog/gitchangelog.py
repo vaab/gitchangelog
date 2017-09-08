@@ -738,6 +738,7 @@ GIT_FORMAT_KEYS = {
     'committer_date_timestamp': "%ct",
     'raw_body': "%B",
     'body': "%b",
+    'parent_list_string': "%P",
     'decorate_string': "%D",
 }
 
@@ -773,6 +774,7 @@ class GitCommit(SubGitObjectMixin):
         ...             'committer_date_timestamp': "0", ## epoch
         ...             'raw_body': "my subject\n\n%s" % BODY,
         ...             'body': BODY,
+        ...             'parent_list_string': '',
         ...             'decorate_string': 'HEAD -> master, tag: 0.1.4, origin/master',
         ...         }[key] for key in GIT_FORMAT_KEYS.keys()])
         >>> repos.git.rev_list.mock_returns = "123456"
@@ -788,6 +790,8 @@ class GitCommit(SubGitObjectMixin):
         'fee fie foh'
         >>> head.author_name
         'John Smith'
+        >>> list(head.parents)
+        []
         >>> list(head.tags)
         Called gitRepos.git.rev_parse(['0.1.4^{tag}', '--'])
         [<GitTag '0.1.4' (annotated)>]
@@ -932,6 +936,20 @@ class GitCommit(SubGitObjectMixin):
         d = datetime.datetime.utcfromtimestamp(
             float(self.author_date_timestamp))
         return d.strftime('%Y-%m-%d')
+
+    @property
+    def parents(self):
+        for sha1 in self.parents_sha1:
+            c = self._repos.Commit(sha1)
+            c.sha1 = sha1
+            yield c
+
+    @property
+    def parents_sha1(self):
+        for sha1 in self.parent_list_string.split(' '):
+            if not sha1:
+                continue
+            yield sha1
 
     @property
     def tags_name(self):
