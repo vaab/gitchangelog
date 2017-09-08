@@ -53,6 +53,13 @@ class GitReposTest(BaseGitReposTest):
             commit.subject,
             'add ``b`` with non-ascii chars éèàâ§µ and HTML chars ``&<``')
 
+    def test_commit_contains(self):
+        first = self.repos.Commit("0.0.1")
+        second = self.repos.Commit("HEAD")
+        self.assertTrue(
+            first in second,
+            'first commit should be considered ``in`` second')
+
     def test_exception_when_requesting_unexistent_commit(self):
         commit = self.repos.Commit("XXX")  ## No exception yet.
         with self.assertRaises(ValueError):

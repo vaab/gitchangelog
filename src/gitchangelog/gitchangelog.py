@@ -963,23 +963,19 @@ class GitCommit(SubGitObjectMixin):
         """
         if not isinstance(value, GitCommit):
             value = self._repos.Commit(value)
-        try:
-            self.git.merge_base(value.sha1, is_ancestor=self.sha1)
+
+        if self in value:
             return True
-        except ShellError as e:
-            if e.errlvl != 1:
-                raise
+
         try:
             self.git.merge_base(value.sha1, self.sha1)
         except ShellError as e:
             raise ValueError("Unrelated commits %r and %r."
                              % (self, value))
-        try:
-            self.git.merge_base(self.sha1, is_ancestor=value.sha1)
+
+        if value in self:
             return False
-        except ShellError as e:
-            if e.errlvl != 1:
-                raise
+
         ## neither ``self`` nor ``value`` is ancestor of the other,
         ## they have a merge base, so they are in different branches
         ## so we need to check their tag dates
@@ -996,6 +992,17 @@ class GitCommit(SubGitObjectMixin):
         if not isinstance(value, GitCommit):
             value = self._repos.Commit(value)
         return self.sha1 == value.sha1
+
+    def __contains__(self, value):
+        if not isinstance(value, GitCommit):
+            value = self._repos.Commit(value)
+        try:
+            self.git.merge_base("--is-ancestor", value.sha1, self.sha1)
+            return True
+        except ShellError as e:
+            if e.errlvl != 1:
+                raise
+        return False
 
     def __hash__(self):
         return hash(self.sha1)
