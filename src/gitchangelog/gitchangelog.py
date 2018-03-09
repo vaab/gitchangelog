@@ -1181,10 +1181,10 @@ class GitRepos(object):
         No firm reason for that, and it could change in future version.
 
         """
+        kwargs = {'merged': True}
         if contains:
-            tags = self.git.tag(contains=contains).split("\n")
-        else:
-            tags = self.git.tag().split("\n")
+            kwargs['contains'] = contains
+        tags = self.git.tag(**kwargs).split("\n")
         ## Should we use new version name sorting ?  refering to :
         ## ``git tags --sort -v:refname`` in git version >2.0.
         ## Sorting and reversing with command line is not available on
