@@ -612,7 +612,7 @@ class Phile(object):
             chunk = self._file.read(self._buffersize)
             if not chunk:
                 yield buf.decode(self._encoding)
-                raise StopIteration
+                return
             records = chunk.split(delimiter)
             records[0] = buf + records[0]
             for record in records[:-1]:
@@ -1232,6 +1232,9 @@ class GitRepos(object):
             while True:  ## next(values) will eventualy raise a StopIteration
                 yield mk_commit(dict([(key, next(values))
                                       for key in GIT_FORMAT_KEYS]))
+        except StopIteration:
+            pass  ## since 3.7, we are not allowed anymore to trickle down
+                  ## StopIteration.
         finally:
             plog.stdout.close()
             plog.stderr.close()
