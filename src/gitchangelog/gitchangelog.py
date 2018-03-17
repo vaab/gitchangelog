@@ -1306,7 +1306,7 @@ class GitRepos(object):
         return sorted([self.Commit(tag) for tag in tags if tag != ''],
                       key=lambda x: int(x.committer_date_timestamp))
 
-    def log(self, includes=["HEAD", ], excludes=[], include_merge=True,
+    def log(self, revlist, args=["--topo-order", ],
             encoding=_preferred_encoding):
         """Reverse chronological list of git repository's commits
 
@@ -1314,25 +1314,16 @@ class GitRepos(object):
 
         """
 
-        refs = {'includes': includes,
-                'excludes': excludes}
-        for ref_type in ('includes', 'excludes'):
-            for idx, ref in enumerate(refs[ref_type]):
-                if not isinstance(ref, GitCommit):
-                    refs[ref_type][idx] = self.Commit(ref)
-
         plog = Proc(
             ["git", "log", "--stdin", "-z",
-             "--topo-order",  ## don't mix commits from separate branches.
-             "--pretty=format:%s" % GIT_FULL_FORMAT_STRING] +
-            (["--no-merges"] if not include_merge else []) +
-            ["--", ],
+             "--format=%s" % GIT_FULL_FORMAT_STRING] +
+            args +
+            (["--", ] if "--" not in args else []),
             encoding=encoding)
-        for ref in refs["includes"]:
-            plog.stdin.write("%s\n" % ref.sha1)
 
-        for ref in refs["excludes"]:
-            plog.stdin.write("^%s\n" % ref.sha1)
+        for rev in revlist:
+            plog.stdin.write("%s\n" % rev)
+
         plog.stdin.close()
 
         def mk_commit(dct):
@@ -1649,10 +1640,6 @@ def versions_data_iter(repository, revlist=None,
 
     ## Hash to speedup lookups
     versions_done = {}
-    excludes = [rev[1:]
-                for rev in repository.git.rev_parse([
-                    "--rev-only", ] + revlist + ["--", ]).split("\n")
-                if rev.startswith("^")] if revlist else []
 
     revs = repository.git.rev_list(*revlist).split("\n") if revlist else []
     revs = [rev for rev in revs if rev != ""]
@@ -1697,9 +1684,9 @@ def versions_data_iter(repository, revlist=None,
 
         sections = collections.defaultdict(list)
         commits = repository.log(
-            includes=[min(tag, max_rev)],
-            excludes=tags[idx + 1:] + excludes,
-            include_merge=include_merge,
+            [min(tag, max_rev).sha1] + ["^%s" % t.sha1 for t in tags[idx + 1:]]
+            + revlist,
+            ["--topo-order", ] + (["--no-merges"] if not include_merge else []),
             encoding=log_encoding)
 
         for commit in commits:
