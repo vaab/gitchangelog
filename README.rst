@@ -6,10 +6,6 @@ gitchangelog
    :target: https://pypi.python.org/pypi/gitchangelog/
    :alt: Latest PyPI version
 
-.. image:: https://img.shields.io/pypi/dm/gitchangelog.svg?style=flat
-   :target: https://pypi.python.org/pypi/gitchangelog/
-   :alt: Number of PyPI downloads
-
 .. image:: https://img.shields.io/travis/vaab/gitchangelog/master.svg?style=flat
    :target: https://travis-ci.org/vaab/gitchangelog/
    :alt: Travis CI build status
@@ -23,7 +19,7 @@ gitchangelog
    :alt: Test coverage
 
 
-Use your commit log to make beautifull and configurable changelog file.
+Use your commit log to make beautiful and configurable changelog file.
 
 
 Feature
