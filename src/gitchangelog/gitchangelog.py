@@ -949,6 +949,14 @@ class GitCommit(SubGitObjectMixin):
         d = datetime.datetime.utcfromtimestamp(
             float(self.tagger_date_timestamp))
         return d.strftime('%Y-%m-%d')
+    
+    @property
+    def tag_subject(self):
+        if not self.has_annotated_tag:
+            raise ValueError("Can't access 'tag_subject' on commit without annotated tag.")        
+        tag_subject = self.git.for_each_ref(
+            'refs/tags/%s' % self.identifier, format='%(contents:subject)')
+        return tag_subject
 
     def __le__(self, value):
         if not isinstance(value, GitCommit):
@@ -1579,6 +1587,7 @@ def versions_data_iter(repository, revlist=None,
             "tagger_date": tag.tagger_date if tag.has_annotated_tag else None,
             "tag": tag.identifier if tag.identifier != "HEAD" else None,
             "commit": tag,
+            "subject": tag.tag_subject if tag.has_annotated_tag else None,
         }
 
         sections = collections.defaultdict(list)

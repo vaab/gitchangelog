@@ -331,7 +331,8 @@ This is a sample of the current data structure sent to output engines::
   {'title': 'Changelog',
    'versions': [{'label': '%%version%% (unreleased)',
                  'date': None,
-                 'tag': None
+                 'tag': None,
+                 'subject': None,
                  'sections': [{'label': 'Changes',
                                'commits': [{'author': 'John doe',
                                             'body': '',
@@ -348,7 +349,8 @@ This is a sample of the current data structure sent to output engines::
                                             'subject': 'Adding some stuff to do.'}]}]},
                 {'label': 'v0.2.5 (2013-08-06)',
                  'date': '2013-08-06',
-                 'tag': 'v0.2.5'
+                 'tag': 'v0.2.5',
+                 'subject': 'tag message',
                  'sections': [{'commits': [{'author': 'John Doe',
                                             'body': '',
                                             'subject': 'Updating Changelog installation.'}],
