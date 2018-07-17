@@ -13,12 +13,11 @@ import textwrap
 from .common import BaseGitReposTest
 
 
-
 def simple_renderer(data, opts):
     s = ""
     for version in data["versions"]:
-        s += "%s: %s (%s)\n" % (version["tag"], 
-                            version["subject"], 
+        s += "%s: %s (%s)\n" % (version["tag"],
+                            version["subject"],
                             version["tagger_date"])
         for section in version["sections"]:
             s += "  %s:\n" % section["label"]
@@ -26,6 +25,7 @@ def simple_renderer(data, opts):
                 s += "    * %(subject)s [%(author)s]\n" % commit
         s += "\n"
     return s
+
 
 class TagSubjectTest(BaseGitReposTest):
 

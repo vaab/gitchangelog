@@ -953,7 +953,7 @@ class GitCommit(SubGitObjectMixin):
     @property
     def tag_subject(self):
         if not self.has_annotated_tag:
-            raise ValueError("Can't access 'tag_subject' on commit without annotated tag.")        
+            raise ValueError("Can't access 'tag_subject' on commit without annotated tag.")
         tag_subject = self.git.for_each_ref(
             'refs/tags/%s' % self.identifier, format='%(contents:subject)')
         return tag_subject
