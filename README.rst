@@ -190,7 +190,6 @@ And here is the ``gitchangelog`` output::
 And the rendered full result is directly used to generate the HTML webpage of
 the `changelog of the PyPI page`_.
 
-
 Usage
 =====
 
@@ -229,6 +228,16 @@ The changelog of gitchangelog is generated with himself and with the reference
 configuration file. You'll see the output in the `changelog of the PyPI page`_.
 
 .. _changelog of the PyPI page: http://pypi.python.org/pypi/gitchangelog
+
+Some common settings
+--------------------------
+
+These settings can be found in the reference configuration file and can be fully customized. Some useful settings are:
+
+- Tag format: `gitchangelog` uses a regular expresion to extract tags. This expresion can be modified in the `tag_filter_regexp`_ setting,
+  and it detects by defaults tags in the form of `0.1` (it won't detect tags like `v0.1`).
+
+.. _tag_filter_regexp: https://github.com/vaab/gitchangelog/blob/master/src/gitchangelog/gitchangelog.rc.reference#L153
 
 
 Output Engines
