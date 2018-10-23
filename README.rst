@@ -190,6 +190,7 @@ And here is the ``gitchangelog`` output::
 And the rendered full result is directly used to generate the HTML webpage of
 the `changelog of the PyPI page`_.
 
+
 Usage
 =====
 
