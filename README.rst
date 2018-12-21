@@ -605,7 +605,7 @@ and ask your question. I won't bite. Promise.
 License
 =======
 
-Copyright (c) 2012-2015 Valentin Lab.
+Copyright (c) 2012-2018 Valentin Lab.
 
 Licensed under the `BSD License`_.
 
