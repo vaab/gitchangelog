@@ -568,6 +568,18 @@ As a second example, here is the same recipe for mustache markdown format::
     publish = FileRegexSubst(OUTPUT_FILE, INSERT_POINT_REGEX, r"\1\o\n\g<tail>")
 
 
+FAQ
+===
+
+Q: `gitchangelog` is not recognizing my tag `v0.x`. What's happening? 
+
+A: Check the regular expresion in the `tag_filter_regexp`_ setting and change
+it accordingly. It detects by default tags in the form of `0.1` (it won't detect
+tags like `v0.1`).
+
+.. _tag_filter_regexp: https://github.com/vaab/gitchangelog/blob/master/src/gitchangelog/gitchangelog.rc.reference#L153
+
+
 Contributing
 ============
 
