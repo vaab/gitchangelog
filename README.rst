@@ -23,7 +23,7 @@ gitchangelog
    :alt: Test coverage
 
 
-Use your commit log to make beautifull and configurable changelog file.
+Use your commit log to make beautiful and configurable changelog file.
 
 
 Feature
@@ -394,10 +394,10 @@ Use cases
 =========
 
 
-No sectionning
+No sectioning
 --------------
 
-If you want to remove sectionning but keep anything else, you should
+If you want to remove sectioning but keep anything else, you should
 probably use::
 
     section_regexps = [
@@ -406,8 +406,8 @@ probably use::
 
     subject_process = (strip | ucfirst | final_dot)
 
-This will disable sectionning and won't remove the prefixes
-used for sectionning from the commit's summary.
+This will disable sectioning and won't remove the prefixes
+used for sectioning from the commit's summary.
 
 
 Incremental changelog
