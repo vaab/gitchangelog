@@ -228,7 +228,7 @@ if WIN32 and not PY3:
 usage_msg = """
   %(exname)s {-h|--help}
   %(exname)s {-v|--version}
-  %(exname)s [--debug|-d] [REVLIST]"""
+  %(exname)s [--debug|-d] [--author-format=name|email|both|none] [--omit-author authorname ...] [REVLIST]"""
 
 description_msg = """\
 Run this command in a git repository to output a formatted changelog
@@ -913,6 +913,11 @@ class GitCommit(SubGitObjectMixin):
                 for author in self.authors]
 
     @property
+    def author_emails(self):
+        return [re.sub(r'^[^<]+<([^>]+)>\s*$', r'\1', author).strip()
+                for author in self.authors]
+
+    @property
     def authors(self):
         co_authors = getattr(self, 'trailer_co_authored_by', [])
         co_authors = co_authors if isinstance(co_authors, list) \
@@ -1330,7 +1335,27 @@ def rest_py(data, opts={}):
 
     def render_commit(commit, opts=opts):
         subject = commit["subject"]
-        subject += " [%s]" % (", ".join(commit["authors"]), )
+        if opts["author_format"] != "none":
+            if opts["author_format"] == "both":
+                authors = commit["commit"].authors
+            elif opts["author_format"] == "name":
+                authors = commit["commit"].author_names
+            elif opts["author_format"] == "email":
+                authors = commit["commit"].author_emails
+            else:
+                assert(not "Unhandled author_format")
+                authors = []
+
+            if authors:
+                for omit in [o.lower() for o in opts["omitted_authors"]]:
+                    for author in list(authors):
+                        if omit in author.lower():
+                            authors.remove(author)
+
+                if authors:
+                    start, end = ("<", ">") \
+                        if opts["author_format"] == "email" else ("[", "]")
+                    subject += " %s%s%s" % (start, ", ".join(authors), end)
 
         entry = indent('\n'.join(textwrap.wrap(subject)),
                        first="- ").strip() + "\n"
@@ -1600,6 +1625,7 @@ def versions_data_iter(repository, revlist=None,
             sections[matched_section].append({
                 "author": commit.author_name,
                 "authors": commit.author_names,
+                "author_email": commit.author_email,
                 "subject": subject_process(commit.subject),
                 "body": body_process(commit.body),
                 "commit": commit,
@@ -1614,7 +1640,7 @@ def versions_data_iter(repository, revlist=None,
         versions_done[tag] = current_version
 
 
-def changelog(output_engine=rest_py,
+def changelog(opts, output_engine=rest_py,
               unreleased_version_label="unreleased",
               warn=warn,        ## Mostly used for test
               **kwargs):
@@ -1636,9 +1662,7 @@ def changelog(output_engine=rest_py,
 
     """
 
-    opts = {
-        'unreleased_version_label': unreleased_version_label,
-    }
+    opts['unreleased_version_label'] = unreleased_version_label
 
     ## Setting main container of changelog elements
     title = None if kwargs.get("revlist") else "Changelog"
@@ -1727,6 +1751,14 @@ def parse_cmd_line(usage, description, epilog, exname, version):
                         help="Enable debug mode (show full tracebacks).",
                         action="store_true", dest="debug")
     parser.add_argument('revlist', nargs='*', action="store", default=[])
+    parser.add_argument('--author-format', action="store", default="name",
+                        choices=["name", "email", "both", "none"])
+    parser.add_argument('--omit-author', action="append", default=[],
+                        dest="omitted_authors",
+                        help="If the author contains the argument value "
+                             "it is not displayed along with the "
+                             "changelog entry. The option may be specified "
+                             "multiple times.")
 
     ## Remove "show" as first argument for compatibility reason.
 
@@ -1896,6 +1928,7 @@ def main():
                           exname=basename,
                           version=__version__)
     DEBUG = DEBUG or opts.debug
+    opts_dict = dict(opts.__dict__)
 
     try:
         repository = GitRepos(".")
@@ -1954,6 +1987,7 @@ def main():
 
     try:
         content = changelog(
+            opts_dict,
             repository=repository, revlist=revlist,
             ignore_regexps=config['ignore_regexps'],
             section_regexps=config['section_regexps'],
