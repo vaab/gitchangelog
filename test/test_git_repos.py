@@ -53,6 +53,14 @@ class GitReposTest(BaseGitReposTest):
             commit.subject,
             'add ``b`` with non-ascii chars éèàâ§µ and HTML chars ``&<``')
 
+    def test_log_nonexistent_path(self):
+        logs = list(self.repos.log(path=r'/does/not/exist'))
+        self.assertEqual(logs, [], 'Expected no logs with non-existent path restriction')
+
+    def test_log_default_path(self):
+        logs = list(self.repos.log(path=r''))
+        self.assertTrue(len(logs) > 0, 'Expected logs with default path restriction; got none')
+
     def test_exception_when_requesting_unexistent_commit(self):
         commit = self.repos.commit("XXX")  ## No exception yet.
         with self.assertRaises(ValueError):

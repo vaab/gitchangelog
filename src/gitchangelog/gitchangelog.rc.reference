@@ -287,3 +287,13 @@ include_merge = True
 #    "HEAD"
 #]
 revs = []
+
+
+## ``path`` is a string
+##
+## This option tells ``gitchangelog`` which path within the repository 
+## ``git log`` should be called from.
+##
+## If not defined or None, the default, ``gitchangelog`` will look at commits 
+## for all directories within the repo.
+#path = r''
