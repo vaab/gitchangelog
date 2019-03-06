@@ -140,6 +140,25 @@ class BasicCallOnSimpleGit(BaseGitReposTest):
         self.assertEqual(errlvl, 1)
         self.assertContains(err.lower(), "syntax error")
 
+    def test_no_path_restrictions(self):
+        gitchangelog.file_put_contents(
+            ".gitchangelog.rc",
+            "path = r''")
+
+        changelog = w('$tprog')
+        self.assertContains(changelog, "Bob",
+            msg="Should include 'Bob'..."
+            "content of changelog:\n%s" % changelog)
+
+    def test_path_restrictions(self):
+        gitchangelog.file_put_contents(
+            ".gitchangelog.rc",
+            "path = r'does/not/exist'")
+
+        changelog = w('$tprog')
+        self.assertNotContains(changelog, "Bob",
+            msg="Should be empty with path restriction..."
+            "content of changelog:\n%s" % changelog)
 
 class TestOnUnreleased(BaseGitReposTest):
 

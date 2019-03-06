@@ -1193,7 +1193,7 @@ class GitRepos(object):
                       key=lambda x: int(x.committer_date_timestamp))
 
     def log(self, includes=["HEAD", ], excludes=[], include_merge=True,
-            encoding=_preferred_encoding):
+            encoding=_preferred_encoding, path=None):
         """Reverse chronological list of git repository's commits
 
         Note: rev lists can be GitCommit instance list or identifier list.
@@ -1208,9 +1208,10 @@ class GitRepos(object):
                     refs[ref_type][idx] = self.commit(ref)
 
         ## --topo-order: don't mix commits from separate branches.
-        plog = Proc("git log --stdin -z --topo-order --pretty=format:%s %s --"
+        plog = Proc("git log --stdin -z --topo-order --pretty=format:%s %s %s"
                     % (GIT_FULL_FORMAT_STRING,
-                       '--no-merges' if not include_merge else ''),
+                       '--no-merges' if not include_merge else '',
+                       '--' if not path else '-- ' + path),
                     encoding=encoding)
         for ref in refs["includes"]:
             plog.stdin.write("%s\n" % ref.sha1)
@@ -1513,6 +1514,7 @@ def versions_data_iter(repository, revlist=None,
                        subject_process=lambda x: x,
                        log_encoding=DEFAULT_GIT_LOG_ENCODING,
                        warn=warn,        ## Mostly used for test
+                       path=None,
                        ):
     """Returns an iterator through versions data structures
 
@@ -1528,6 +1530,7 @@ def versions_data_iter(repository, revlist=None,
     :param subject_process: text processing object to apply to subject
     :param log_encoding: the encoding used in git logs
     :param warn: callable to output warnings, mocked by tests
+    :param path: limit commits to those occurring under this path
 
     :returns: iterator of versions data_structures
 
@@ -1586,7 +1589,8 @@ def versions_data_iter(repository, revlist=None,
             includes=[min(tag, max_rev)],
             excludes=tags[idx + 1:] + excludes,
             include_merge=include_merge,
-            encoding=log_encoding)
+            encoding=log_encoding,
+            path=path)
 
         for commit in commits:
             if any(re.search(pattern, commit.subject) is not None
@@ -1964,6 +1968,7 @@ def main():
             body_process=config.get("body_process", noop),
             subject_process=config.get("subject_process", noop),
             log_encoding=log_encoding,
+            path=config.get('path', None)
         )
 
         if isinstance(content, basestring):
