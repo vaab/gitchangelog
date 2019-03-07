@@ -31,7 +31,7 @@ except ImportError:  ## pragma: no cover
     mako = None
 
 
-__version__ = "%%version%%"  ## replaced by autogen.sh
+__version__ = "3.0.3"  ## replaced by autogen.sh
 
 DEBUG = None
 
@@ -1193,7 +1193,7 @@ class GitRepos(object):
                       key=lambda x: int(x.committer_date_timestamp))
 
     def log(self, includes=["HEAD", ], excludes=[], include_merge=True,
-            encoding=_preferred_encoding):
+            encoding=_preferred_encoding, path_options=None):
         """Reverse chronological list of git repository's commits
 
         Note: rev lists can be GitCommit instance list or identifier list.
@@ -1208,9 +1208,10 @@ class GitRepos(object):
                     refs[ref_type][idx] = self.commit(ref)
 
         ## --topo-order: don't mix commits from separate branches.
-        plog = Proc("git log --stdin -z --topo-order --pretty=format:%s %s --"
+        plog = Proc("git log --stdin -z --topo-order --pretty=format:%s %s -- %s"
                     % (GIT_FULL_FORMAT_STRING,
-                       '--no-merges' if not include_merge else ''),
+                       '--no-merges' if not include_merge else '',
+                       '' if not path_options else path_options),
                     encoding=encoding)
         for ref in refs["includes"]:
             plog.stdin.write("%s\n" % ref.sha1)
@@ -1513,6 +1514,7 @@ def versions_data_iter(repository, revlist=None,
                        subject_process=lambda x: x,
                        log_encoding=DEFAULT_GIT_LOG_ENCODING,
                        warn=warn,        ## Mostly used for test
+                       path_options=None
                        ):
     """Returns an iterator through versions data structures
 
@@ -1528,6 +1530,7 @@ def versions_data_iter(repository, revlist=None,
     :param subject_process: text processing object to apply to subject
     :param log_encoding: the encoding used in git logs
     :param warn: callable to output warnings, mocked by tests
+    :param path_options: commits are limited to only those that affect the specified path
 
     :returns: iterator of versions data_structures
 
@@ -1586,7 +1589,9 @@ def versions_data_iter(repository, revlist=None,
             includes=[min(tag, max_rev)],
             excludes=tags[idx + 1:] + excludes,
             include_merge=include_merge,
-            encoding=log_encoding)
+            encoding=log_encoding,
+            path_options=path_options)
+
 
         for commit in commits:
             if any(re.search(pattern, commit.subject) is not None
@@ -1726,6 +1731,9 @@ def parse_cmd_line(usage, description, epilog, exname, version):
     parser.add_argument('-d', '--debug',
                         help="Enable debug mode (show full tracebacks).",
                         action="store_true", dest="debug")
+    parser.add_argument('-p', '--path',
+                        help="Limit to only commits that affect the specified path",
+                        action="store", dest='path_options', default=None)
     parser.add_argument('revlist', nargs='*', action="store", default=[])
 
     ## Remove "show" as first argument for compatibility reason.
@@ -1935,6 +1943,9 @@ def main():
             else:
                 break
 
+    ## keep a copy of current working directlry for later use
+    cwd = os.getcwd()
+
     ## config file may lookup for templates relative to the toplevel
     ## of git repository
     os.chdir(repository.toplevel)
@@ -1952,6 +1963,10 @@ def main():
         config['unreleased_version_label'])
     manage_obsolete_options(config)
 
+    ## restore current working directory, otherwise path_options will
+    ## be relative to the wrong location
+    os.chdir(cwd)
+
     try:
         content = changelog(
             repository=repository, revlist=revlist,
@@ -1964,6 +1979,7 @@ def main():
             body_process=config.get("body_process", noop),
             subject_process=config.get("subject_process", noop),
             log_encoding=log_encoding,
+            path_options=opts.path_options
         )
 
         if isinstance(content, basestring):
