@@ -7,7 +7,7 @@
 ## {{{label}}}
 
 {{#sections}}
-### {{{label}}}
+**{{{label}}}**
 
 {{#commits}}
 * {{{subject}}} [{{{author}}}]
