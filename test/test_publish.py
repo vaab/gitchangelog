@@ -181,3 +181,4 @@ class FileInsertAtFirstRegexMatchTest(BaseTmpDirTest):
         self.assertEqual(make_insertion("A\nC\n", r"C", "B\n"), "A\nB\nC\n")
         self.assertEqual(make_insertion("B\nC\n", r"B", "A\n"), "A\nB\nC\n")
         self.assertEqual(make_insertion("A\nB\n", r"$", "C\n", idx=lambda m: m.end() + 1), "A\nB\nC\n")
+        self.assertEqual(make_insertion("A\nB\n", r"$", "✔\n", idx=lambda m: m.end() + 1), "A\nB\n✔\n")
