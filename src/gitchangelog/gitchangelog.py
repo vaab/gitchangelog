@@ -291,7 +291,7 @@ def set_cwd(directory):
 def format_last_exception(prefix="  | "):
     """Format the last exception for display it in tests.
 
-    This allows to raise custom exception, without loosing the context of what
+    This allows to raise custom exception, without losing the context of what
     caused the problem in the first place:
 
     >>> def f():
@@ -300,11 +300,11 @@ def format_last_exception(prefix="  | "):
     ...     f()
     ... except Exception:
     ...     formated_exception = format_last_exception()
-    ...     raise ValueError('Oups, an error occured:\\n%s'
+    ...     raise ValueError('Oups, an error occurred:\\n%s'
     ...         % formated_exception)
     Traceback (most recent call last):
     ...
-    ValueError: Oups, an error occured:
+    ValueError: Oups, an error occurred:
       | Traceback (most recent call last):
     ...
       | Exception: Something terrible happened
@@ -1185,7 +1185,7 @@ class GitRepos(object):
             tags = self.git.tag(contains=contains).split("\n")
         else:
             tags = self.git.tag().split("\n")
-        ## Should we use new version name sorting ?  refering to :
+        ## Should we use new version name sorting ?  referring to :
         ## ``git tags --sort -v:refname`` in git version >2.0.
         ## Sorting and reversing with command line is not available on
         ## git version <2.0
@@ -1229,7 +1229,7 @@ class GitRepos(object):
         values = plog.stdout.read("\x00")
 
         try:
-            while True:  ## next(values) will eventualy raise a StopIteration
+            while True:  ## next(values) will eventually raise a StopIteration
                 yield mk_commit(dict([(key, next(values))
                                       for key in GIT_FORMAT_KEYS]))
         except StopIteration:

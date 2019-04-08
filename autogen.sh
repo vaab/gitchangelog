@@ -207,7 +207,7 @@ fi
 if get_path gitchangelog >/dev/null; then
     gitchangelog > CHANGELOG.rst
     if [ "$?" != 0 ]; then
-        echo "Changelog NOT generated. An error occured while running \`\`gitchangelog\`\`." >&2
+        echo "Changelog NOT generated. An error occurred while running \`\`gitchangelog\`\`." >&2
     else
         echo "Changelog generated."
     fi
