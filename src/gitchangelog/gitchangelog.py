@@ -1589,7 +1589,8 @@ def versions_data_iter(repository, revlist=None,
             encoding=log_encoding)
 
         for commit in commits:
-            if any(re.search(pattern, commit.subject) is not None
+            commit_message = "%s\n%s" % (commit.subject, commit.body)
+            if any(re.search(pattern, commit_message) is not None
                    for pattern in ignore_regexps):
                 continue
 
