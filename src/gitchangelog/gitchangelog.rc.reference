@@ -240,7 +240,7 @@ include_merge = True
 ##        take care of everything and might be more complex. Check the README
 ##        for a complete copy-pastable example.
 ##
-# publish = FileInsertIntoFirstRegexMatch(
+# publish = FileInsertAtFirstRegexMatch(
 #     "CHANGELOG.rst",
 #     r'/(?P<rev>[0-9]+\.[0-9]+(\.[0-9]+)?)\s+\([0-9]+-[0-9]{2}-[0-9]{2}\)\n--+\n/',
 #     idx=lambda m: m.start(1)
