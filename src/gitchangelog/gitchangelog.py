@@ -476,7 +476,7 @@ for _label in ("Indent", "Wrap", "ReSub", "noop", "final_dot",
 ##
 
 def file_get_contents(filename):
-    with open(filename) as f:
+    with open(filename, encoding="utf-8") as f:
         out = f.read()
     if not PY3:
         if not isinstance(out, unicode):
@@ -1820,6 +1820,8 @@ def safe_print(content):
             content = content.encode(_preferred_encoding)
 
     try:
+        sys.stdout.reconfigure(encoding='utf-8')
+        
         print(content, end='')
         sys.stdout.flush()
     except UnicodeEncodeError:
