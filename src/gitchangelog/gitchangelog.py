@@ -247,6 +247,13 @@ Config file location will be resolved in this order:
 
 
 ##
+## ENCODING
+##
+
+sys.stdout.reconfigure(encoding='utf-8')
+
+
+##
 ## Shell command helper functions
 ##
 
@@ -1821,8 +1828,6 @@ def safe_print(content):
             content = content.encode(_preferred_encoding)
 
     try:
-        sys.stdout.reconfigure(encoding='utf-8')
-        
         print(content, end='')
         sys.stdout.flush()
     except UnicodeEncodeError:
