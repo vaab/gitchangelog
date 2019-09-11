@@ -247,6 +247,13 @@ Config file location will be resolved in this order:
 
 
 ##
+## ENCODING
+##
+
+sys.stdout.reconfigure(encoding='utf-8')
+
+
+##
 ## Shell command helper functions
 ##
 
@@ -476,7 +483,7 @@ for _label in ("Indent", "Wrap", "ReSub", "noop", "final_dot",
 ##
 
 def file_get_contents(filename):
-    with open(filename) as f:
+    with open(filename, encoding="utf-8") as f:
         out = f.read()
     if not PY3:
         if not isinstance(out, unicode):
@@ -1589,11 +1596,12 @@ def versions_data_iter(repository, revlist=None,
             encoding=log_encoding)
 
         for commit in commits:
-            if any(re.search(pattern, commit.subject) is not None
+            commit_message = "%s\n%s" % (commit.subject, commit.body)
+            if any(re.search(pattern, commit_message) is not None
                    for pattern in ignore_regexps):
                 continue
 
-            matched_section = first_matching(section_regexps, commit.subject)
+            matched_section = first_matching(section_regexps, commit_message)
 
             ## Finally storing the commit in the matching section
 
