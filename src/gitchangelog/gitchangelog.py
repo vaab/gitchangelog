@@ -5,6 +5,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import locale
+import logging
 import re
 import os
 import os.path
@@ -34,6 +35,7 @@ except ImportError:  ## pragma: no cover
 __version__ = "%%version%%"  ## replaced by autogen.sh
 
 DEBUG = None
+LOGGER = logging.getLogger(__name__)
 
 
 ##
@@ -643,7 +645,7 @@ class Proc(Popen):
 
 
 def cmd(command, env=None, shell=True):
-
+    LOGGER.debug('Executing: %s', ' '.join(command))
     p = Popen(command, shell=shell,
               stdin=PIPE, stdout=PIPE, stderr=PIPE,
               close_fds=PLT_CFG['close_fds'], env=env,
@@ -1724,7 +1726,8 @@ def parse_cmd_line(usage, description, epilog, exname, version):
                             action="version", version=version)
 
     parser.add_argument('-d', '--debug',
-                        help="Enable debug mode (show full tracebacks).",
+                        help="Enable debug mode (show commands executed"
+                             " & full tracebacks).",
                         action="store_true", dest="debug")
     parser.add_argument('revlist', nargs='*', action="store", default=[])
 
@@ -1887,6 +1890,7 @@ def main():
 
     debug_varname = "DEBUG_%s" % basename.upper()
     DEBUG = os.environ.get(debug_varname, False)
+    logging.basicConfig(level=logging.DEBUG if DEBUG else logging.INFO)
 
     i = lambda x: x % {'exname': basename}
 
