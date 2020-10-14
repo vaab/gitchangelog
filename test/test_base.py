@@ -88,6 +88,26 @@ class GitChangelogTest(BaseGitReposTest):
           """
     )
 
+    MUSTACHE_INCR_REFERENCE_002_003 = textwrap.dedent(
+        """\
+        0.0.3 (2000-01-05)
+        ------------------
+
+        New
+        ~~~
+        - Add file ``e``, modified ``b`` [Bob] `[{bob_commit}] <{bob_commit}>`_
+
+          This is a message body.
+
+          With multi-line content:
+          - one
+          - two
+        - Add file ``c`` [Charly] `[{charly_commit}] <{charly_commit}>`_
+
+
+        """
+    )
+
     INCR_REFERENCE_002_003 = textwrap.dedent(
         """\
         0.0.3 (2000-01-05)
@@ -414,7 +434,15 @@ class GitChangelogTest(BaseGitReposTest):
             ".gitchangelog.rc", "output_engine = mustache('restructuredtext')"
         )
         changelog = w("$tprog 0.0.2..0.0.3")
-        self.assertNoDiff(self.INCR_REFERENCE_002_003, changelog)
+
+        # get second commit from Bob
+        bob_commit = self.get_commits("Bob")[1]
+        # get first commit
+        charly_commit = self.get_commits("Charly")[0]
+        self.assertNoDiff(self.MUSTACHE_INCR_REFERENCE_002_003.format(**{
+            "charly_commit": charly_commit,
+            "bob_commit": bob_commit,
+        }), changelog)
 
         gitchangelog.file_put_contents(
             ".gitchangelog.rc",
