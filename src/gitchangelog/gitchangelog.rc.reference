@@ -287,3 +287,9 @@ include_merge = True
 #    "HEAD"
 #]
 revs = []
+
+
+# variable to reference on template commit link for example
+# https://github.com/<user>/<project_name>/commits/
+# script will join this url with the commit sha1
+project_commit_url = ""

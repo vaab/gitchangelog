@@ -1512,7 +1512,8 @@ def versions_data_iter(repository, revlist=None,
                        body_process=lambda x: x,
                        subject_process=lambda x: x,
                        log_encoding=DEFAULT_GIT_LOG_ENCODING,
-                       warn=warn,        ## Mostly used for test
+                       warn=warn,        ## Mostly used for test,
+                       **kwargs
                        ):
     """Returns an iterator through versions data structures
 
@@ -1528,6 +1529,7 @@ def versions_data_iter(repository, revlist=None,
     :param subject_process: text processing object to apply to subject
     :param log_encoding: the encoding used in git logs
     :param warn: callable to output warnings, mocked by tests
+    :param project_commit_url: Url for setting commit ref
 
     :returns: iterator of versions data_structures
 
@@ -1656,6 +1658,7 @@ def changelog(output_engine=rest_py,
     else:
         data["versions"] = itertools.chain([first_version], versions)
 
+    data["project_commit_url"] = kwargs.get("project_commit_url", "")
     return output_engine(data=data, opts=opts)
 
 ##
@@ -1964,6 +1967,7 @@ def main():
             body_process=config.get("body_process", noop),
             subject_process=config.get("subject_process", noop),
             log_encoding=log_encoding,
+            project_commit_url=config.get("project_commit_url", "")
         )
 
         if isinstance(content, basestring):

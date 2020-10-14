@@ -2,7 +2,6 @@
 {{{title}}}
 {{#title_chars}}={{/title_chars}}
 
-
 {{/general_title}}
 {{#versions}}
 {{{label}}}
@@ -14,7 +13,7 @@
 {{#label_chars}}~{{/label_chars}}
 {{/display_label}}
 {{#commits}}
-- {{{subject}}} [{{{author_names_joined}}}]
+- {{{subject}}} [{{{author_names_joined}}}] `[{{commit.sha1}}] <{{project_commit_url}}{{commit.sha1}}>`_
 
 {{#body}}
 {{{body_indented}}}
