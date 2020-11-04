@@ -7,7 +7,6 @@ from __future__ import absolute_import
 import locale
 import re
 import os
-import os.path
 import sys
 import glob
 import textwrap
@@ -31,7 +30,10 @@ except ImportError:  ## pragma: no cover
     mako = None
 
 
-__version__ = "%%version%%"  ## replaced by autogen.sh
+# this accepts a git tag with a 'pN' suffix (as a patch/post release tag) and
+# returns a PEP 440 '-N' that normalizes to a .post version for python
+# __version__ = '3.0.4p1'.replace('p', '-')
+__version__ = '3.0.4-1'
 
 DEBUG = None
 
@@ -300,11 +302,11 @@ def format_last_exception(prefix="  | "):
     ...     f()
     ... except Exception:
     ...     formated_exception = format_last_exception()
-    ...     raise ValueError('Oups, an error occured:\\n%s'
+    ...     raise ValueError('Oops, an error occured:\\n%s'
     ...         % formated_exception)
     Traceback (most recent call last):
     ...
-    ValueError: Oups, an error occured:
+    ValueError: Oops, an error occured:
       | Traceback (most recent call last):
     ...
       | Exception: Something terrible happened

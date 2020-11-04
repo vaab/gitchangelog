@@ -1,9 +1,12 @@
 INSTALL
 =======
 
-If you downloaded the code from git:
+If you downloaded the code from git::
 
-    ./autogen.sh &&
-    python setup.py install
+  $ pip install -e .
+
+or::
+
+  $ pip install -e .[test]
 
 

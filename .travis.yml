@@ -1,89 +1,90 @@
-dist: xenial
+os: linux
+dist: bionic
 language: python
-python:
-  - "3.7"
-  - "3.6"
-  - "3.5"
-  - "2.7"
+
+cache:
+  directories:
+  - "$HOME/.cache/pip"
+  - "$HOME/.pyenv"
+
+# upgrade system pip and test driver
+before_install:
+  - python3 --version
+  - pip3 install -U pip
+
+# command to install dev dependencies (linux)
 install:
-  - git fetch --unshallow || true ## required as we need it to make own gitchangelog
-  - if [ -e requirements.txt ]; then pip install -r requirements.txt; fi
-  - if [ -z "$DOVIS" -o "$PKG_COVERAGE" ]; then pip install coverage; fi
-  ## getting test deps
-  - python setup.py develop easy_install "$(./autogen.sh --get-name)[test]"
+  - pip3 install tox-travis codecov
+
+# command to run tests (linux)
 script:
-  ## real tests
-  - nosetests -sx .
+  - tox -e lint
+  - tox
+
 after_success:
-  - "bash <(curl -s https://codecov.io/bash)  #dovis: ignore"
+    - bash <(curl -s https://codecov.io/bash)
 
+matrix:
+  include:
+  - python: 3.6
+  - python: 3.6
+    arch: arm64
+  - python: 3.7
+  - python: 3.7
+    arch: arm64
+  - python: 3.8
+  - python: 3.8
+    arch: arm64
+  - python: 3.8
+    services:
+    - docker
+    env:
+    - BUILD_SDIST=true
+    - BUILD_WHEEL=true
+  - python: 3.8
+    arch: arm64
+    services:
+    - docker
+    env: BUILD_WHEEL=true
+  - name: Python 3.6.9 on macOS
+    os: osx
+    language: objective-c
+    env: PYENV_VERSION=3.6.9
+    before_install:
+    install: "./.travis/install.sh"
+    script:
+      - "./.travis/run.sh"
+    after_success:
+  - name: Python 3.7.5 on macOS
+    os: osx
+    osx_image: xcode11.3
+    language: objective-c
+    env: PYENV_VERSION=3.7.5
+    before_install:
+    install: "./.travis/install.sh"
+    script:
+      - "./.travis/run.sh"
+    after_success:
+  - name: Python 3.8.0 on macOS
+    os: osx
+    osx_image: xcode11.3
+    language: objective-c
+    env: PYENV_VERSION=3.8.0
+    before_install:
+    install: "./.travis/install.sh"
+    script:
+      - "./.travis/run.sh"
+    after_success:
 
-## Ignored by Travis, but used internally to check packaging
-dist_check:
-  options:
-    exclude:
-      - ["v:3.6", "pkg:old"]  ## old version is breaking python 3.6 pkg_resources
-  tests:
-  - label: install
-    matrix:
-      'yes':
-        - label: venv
-          matrix:
-            'on': |
-              pip install virtualenv
-              virtualenv /tmp/virtualenv
-              . /tmp/virtualenv/bin/activate
-            'off': |
-              true
-        - label: pkg
-          matrix:
-            old: |
-              ## version 10 introduce a bug with d2to1
-              pip install setuptools==9.1
-              ## some ``python setup.py`` black magic do not work with d2to1 and pip ``6.0.7``
-              pip install pip==1.5.6
-            docker: |
-              ## Using the versions of python docker images
-              true
-            latest: |
-              ## Using the last version of pip and setuptools
-              pip install pip --upgrade
-              pip install setuptools --upgrade
-        - label: method
-          matrix:
-            setup: python setup.py install
-            pip+git: pip install "git+file://$PWD"
-            dist:
-              dist_files:
-                pip install "$DIST_FILE"
-        - |
-          pip show -f gitchangelog
-          pip list
-      'no':
-      - |
-        ln -sf $PWD/gitchangelog /usr/local/bin/
-        touch /tmp/not-installed
-
-  - |
-    cd /tmp
-    mkdir test_gitchangelog
-    cd test_gitchangelog
-    touch a
-    git init .
-    git add -A .
-    git config --global user.email "you@example.com"
-    git config --global user.name "Your Name"
-    git commit -m "first commit"
-    git tag 0.0.1
-    echo 'a' > b
-    git add b
-    git commit -m "new: added b"
-    git tag 0.0.2
-    DEBUG_GITCHANGELOG=1 gitchangelog
-    cat <<EOF > .gitchangelog.rc
-    output_engine = makotemplate("restructuredtext")
-    EOF
-    pip install mako
-    DEBUG_GITCHANGELOG=1 gitchangelog
-  - |
-    [ -e /tmp/not-installed ] || pip uninstall -y gitchangelog
+#deploy:
+  #provider: releases
+  #file:
+  #- dist/*.whl
+  #- dist/*.tar.gz
+  #file_glob: true
+  #on:
+    #repo: simplejson/simplejson
+    #tags: true
+  #skip_cleanup: true
+  #api_key:
+    #secure: FhcBCuL/33fsotaDLv157pQ0HpxYAXI9h4TNhT0CDgrh1i2J1m/hmJMqlrrn0j/E2TpYyXf1citLra6QrBP//FnFMGQ43el369tC3W9RPXYpfThzU6JcJecoWGQMMMiJgPLpOC7+tyDpphsNFKmySG/ITvX+OEZ4lzL8+1CWyRk=

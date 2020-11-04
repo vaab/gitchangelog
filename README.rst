@@ -2,28 +2,32 @@
 gitchangelog
 ============
 
-.. image:: https://img.shields.io/pypi/v/gitchangelog.svg?style=flat
-   :target: https://pypi.python.org/pypi/gitchangelog/
-   :alt: Latest PyPI version
+.. image:: https://img.shields.io/pypi/l/gitchangelog?color=green
+    :target: https://github.com/vaab/gitchangelog/blob/master/LICENSE
+    :alt: PyPI - License
 
-.. image:: https://img.shields.io/pypi/dm/gitchangelog.svg?style=flat
-   :target: https://pypi.python.org/pypi/gitchangelog/
-   :alt: Number of PyPI downloads
+.. image:: https://img.shields.io/github/v/tag/vaab/gitchangelog?color=green&include_prereleases&label=latest%20release
+    :target: https://github.com/vaab/gitchangelog/releases
+    :alt: GitHub tag (latest SemVer, including pre-release)
 
-.. image:: https://img.shields.io/travis/vaab/gitchangelog/master.svg?style=flat
-   :target: https://travis-ci.org/vaab/gitchangelog/
-   :alt: Travis CI build status
+.. image:: https://travis-ci.com/vaab/gitchangelog.svg?branch=master
+    :target: https://travis-ci.com/vaab/gitchangelog
+    :alt: Travis CI build status
 
-.. image:: https://img.shields.io/appveyor/ci/vaab/gitchangelog.svg
-   :target: https://ci.appveyor.com/project/vaab/gitchangelog/branch/master
-   :alt: Appveyor CI build status
+.. image:: https://ci.appveyor.com/api/projects/status/github/vaab/gitchangelog?svg=true
+    :target: https://ci.appveyor.com/project/vaab/gitchangelog/branch/master
+    :alt: Appveyor CI build status
 
-.. image:: https://img.shields.io/codecov/c/github/vaab/gitchangelog.svg
-   :target: https://codecov.io/gh/vaab/gitchangelog
-   :alt: Test coverage
+.. image:: https://img.shields.io/codecov/c/github/vaab/gitchangelog
+    :target: https://codecov.io/gh/vaab/gitchangelog
+    :alt: Codecov test coverage
+
+.. image:: https://img.shields.io/codeclimate/maintainability/vaab/gitchangelog
+    :target: https://codeclimate.com/github/vaab/gitchangelog
+    :alt: Code Climate rating
 
 
-Use your commit log to make beautifull and configurable changelog file.
+Use your commit log to make beautiful and configurable changelog file.
 
 
 Feature
@@ -49,7 +53,7 @@ Feature
 Requirements
 ============
 
-``gitchangelog`` is compatible Python 2 and Python 3 on
+``gitchangelog`` is compatible with Python 2.7 and Python 3 on
 Linux/BSD/MacOSX and Windows.
 
 Please submit an issue if you encounter incompatibilities.
@@ -62,33 +66,49 @@ Installation
 full package
 ------------
 
-Gitchangelog is published on PyPI, thus:
+Gitchangelog is published on PyPI, thus::
 
-    pip install gitchangelog
+  $ pip install gitchangelog
 
-\.. is the way to go for install the full package on any platform.
+\.. is the way to go to install the full package on any platform.
 
 If you are installing from source, please note that the development tools
 are not working fully yet on Windows.
 
-The full package provides the ``gitchangelog.py`` executable as long as:
+The full package provides the ``gitchangelog.py`` executable as well as:
 
 - a `reference configuration file`_ that provides system wide defaults for
   all values.
-- some example templates in ``mustache`` and ``mako`` templating
-  engine's language. Ideal to bootstrap your variations.
+- some example templates in the ``mustache`` and ``mako`` templating engine language.
+  Ideal to bootstrap your variations.
 
 
 from source
 -----------
 
 If you'd rather work from the source repository, it supports the common
-idiom to install it on your system::
+idiom to install it on your system in a virtual env::
 
-    python setup.py install
+  $ python3 -m venv env
+  $ source env/bin/activate
+  $ pip install -e .[test]
+  $ nosetests -sx .
+  $ deactivate
 
 Note that for linux/BSD, there's a link to the executable in the root of the
 source. This can be a convenient way to work on the source version.
+
+The alternative to python venv is the ``tox`` test driver.  If you have it
+installed already, use the following commands to run the test environments
+from the gitchangelog source directory::
+
+To run tests::
+
+  $ tox
+
+To run pylint::
+
+  $ tox -e lint
 
 
 single executable installation
@@ -98,8 +118,8 @@ The file ``gitchangelog.py`` is a full blown executable and can be used
 without any other files. This is easier to use naturally on Linux/BSD
 systems. For instance, you could type in::
 
-    curl -sSL https://raw.githubusercontent.com/vaab/gitchangelog/master/src/gitchangelog/gitchangelog.py > /usr/local/bin/gitchangelog &&
-    chmod +x /usr/local/bin/gitchangelog
+  $ curl -sSL https://raw.githubusercontent.com/vaab/gitchangelog/master/src/gitchangelog/gitchangelog.py > /usr/local/bin/gitchangelog &&
+  $ chmod +x /usr/local/bin/gitchangelog
 
 It'll install ``gitchangelog`` to be accessible for all users and will
 use the default python interpreter of your running session.
@@ -306,10 +326,9 @@ of gitchangelog. These can be called by providing a simple label to the
 
     output_engine = makotemplate("markdown")
 
-Or you could provide your own mustache template by specifying an
-absolute path (or a relative one, starting from the git toplevel of
-your project by default, or if set, the
-``git config gitchangelog.template-path``
+Or you could provide your own mako template by specifying an absolute
+path (or a relative one, starting from the git toplevel of your project
+by default, or if set, the ``git config gitchangelog.template-path``
 location) to your template file, for instance::
 
     output_engine = makotemplate(".gitchangelog.tpl")
@@ -394,10 +413,10 @@ Use cases
 =========
 
 
-No sectionning
---------------
+No sectioning
+-------------
 
-If you want to remove sectionning but keep anything else, you should
+If you want to remove sectioning but keep anything else, you should
 probably use::
 
     section_regexps = [
@@ -406,8 +425,8 @@ probably use::
 
     subject_process = (strip | ucfirst | final_dot)
 
-This will disable sectionning and won't remove the prefixes
-used for sectionning from the commit's summary.
+This will disable sectioning and won't remove the prefixes
+used for sectioning from the commit's summary.
 
 
 Incremental changelog
@@ -571,11 +590,11 @@ As a second example, here is the same recipe for mustache markdown format::
 Contributing
 ============
 
-Any suggestion or issue is welcome. Push request are very welcome,
+Any suggestion or issue is welcome. Pull request are very welcome,
 please check out the guidelines.
 
 
-Push Request Guidelines
+Pull Request Guidelines
 -----------------------
 
 You can send any code. I'll look at it and will integrate it myself in

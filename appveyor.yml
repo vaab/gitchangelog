@@ -5,14 +5,14 @@ environment:
   global:
     PYTHONIOENCODING: utf-8
   matrix:
-    - PYTHON: "C:\\Python27"
-    - PYTHON: "C:\\Python27-x64"
-    - PYTHON: "C:\\Python35"
-    - PYTHON: "C:\\Python35-x64"
     - PYTHON: "C:\\Python36"
     - PYTHON: "C:\\Python36-x64"
     - PYTHON: "C:\\Python37"
     - PYTHON: "C:\\Python37-x64"
+    - PYTHON: "C:\\Python38"
+    - PYTHON: "C:\\Python38-x64"
+    - PYTHON: "C:\\Python39"
+    - PYTHON: "C:\\Python39-x64"
 
 ## Before repo cloning
 init:
@@ -29,9 +29,8 @@ build: false
 
 ## Before tests
 before_test:
-  - for /f %%i in ('bash .\autogen.sh --get-name') do set PACKAGE_NAME=%%i
-  - python setup.py develop easy_install %PACKAGE_NAME%[test]
-  - pip install coverage codecov
+  - pip install -e .[test,ci]
+  - pip install codecov
 
 ## Custom test script
 test_script:
@@ -44,7 +43,7 @@ test_script:
   - nosetests -sx .
 
   ## installable
-  - python setup.py install
+  - pip install .
   - gitchangelog --debug
   - "gitchangelog HEAD^^..HEAD"
 
