@@ -26,6 +26,12 @@ after_success:
 
 matrix:
   include:
+  - python: 2.7
+    before_install:
+    - python --version
+    - pip install -U pip
+    install:
+    - pip install tox-travis codecov
   - python: 3.6
   - python: 3.6
     arch: arm64
@@ -76,15 +82,3 @@ matrix:
       - "./.travis/run.sh"
     after_success:
 
-#deploy:
-  #provider: releases
-  #file:
-  #- dist/*.whl
-  #- dist/*.tar.gz
-  #file_glob: true
-  #on:
-    #repo: simplejson/simplejson
-    #tags: true
-  #skip_cleanup: true
-  #api_key:
-    #secure: FhcBCuL/33fsotaDLv157pQ0HpxYAXI9h4TNhT0CDgrh1i2J1m/hmJMqlrrn0j/E2TpYyXf1citLra6QrBP//FnFMGQ43el369tC3W9RPXYpfThzU6JcJecoWGQMMMiJgPLpOC7+tyDpphsNFKmySG/ITvX+OEZ4lzL8+1CWyRk=
