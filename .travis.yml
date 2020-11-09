@@ -32,6 +32,8 @@ matrix:
     - pip install -U pip
     install:
     - pip install tox-travis codecov
+    script:
+    - tox
   - python: 3.6
   - python: 3.6
     arch: arm64
