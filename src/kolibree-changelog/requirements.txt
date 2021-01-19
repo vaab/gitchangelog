@@ -1,0 +1,2 @@
+PyGithub>=1.54
+git+https://github.com/pycontribs/jira.git@3.0#egg=jira
