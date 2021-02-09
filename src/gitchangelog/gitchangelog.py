@@ -31,6 +31,12 @@ except ImportError:  ## pragma: no cover
     mako = None
 
 
+try:
+    from github import Github
+except ImportError:
+    Github = None
+
+
 __version__ = "%%version%%"  ## replaced by autogen.sh
 
 DEBUG = None
@@ -1349,6 +1355,102 @@ def rest_py(data, opts={}):
             yield render_version(version) + "\n\n"
 
 
+@available_in_config
+def kolibree_output(data, opts={}):
+    """Returns Markdown Text changelog content from data
+
+    Connect to GitHub if commit is missing a body and retrieve PR description.
+    """
+
+    token = opts.get("github_token")
+    repo = opts.get("github_repo")
+    if not all([token, repo]):
+        die("Github token, repo and/or PR regexp config is missing.")
+
+    # GitHub
+    github = None
+    RE_PR_NUM = None
+    if Github:
+        try:
+            github = Github(token)
+            repo = github.get_repo(repo)
+        except Exception:
+            die("Unable to connect to Github")
+
+        RE_PR_NUM = re.compile(
+            # Example: "Title of commit (#PR_NUM)"
+            r"""
+                \(
+                \#(\d+)     # wrapped in parentheses for direct number match
+                \)
+                $
+            """,
+            re.X,
+        )
+        # Extract only description section from Github PR body
+        RE_PR_DESC = re.compile(
+            # Example: PR template markdown file in git repo
+            r"##[ ]*Description(?P<desc>.*)##[ ]*Preflight Checklist",
+            re.DOTALL,
+        )
+
+    def rest_title(label, char="="):
+        return (label.strip() + "\n") + (char * len(label) + "\n")
+
+    def render_version(version):
+        title = "%s (%s)" % (version["tag"], version["date"]) \
+                if version["tag"] else \
+                opts["unreleased_version_label"]
+        s = rest_title(title, char="-")
+
+        sections = version["sections"]
+        nb_sections = len(sections)
+        for section in sections:
+
+            section_label = section["label"] if section.get("label", None) \
+                            else "Other"
+
+            if not (section_label == "Other" and nb_sections == 1):
+                s += "\n" + rest_title(section_label, "~")
+
+            for commit in section["commits"]:
+                s += render_commit(commit)
+        return s
+
+    def render_commit(commit, opts=opts):
+        subject = commit["subject"]
+
+        entry = indent('\n'.join(textwrap.wrap(subject)),
+                       first="- ").strip() + "\n"
+
+        if commit["body"]:
+            entry += "\n" + indent(commit["body"]) + "\n"
+        else:
+            if RE_PR_NUM:
+                # Get GitHub PR description/body
+                pr_num = RE_PR_NUM.search(commit["subject"])
+                pr_num = pr_num.groups()[0] if pr_num else None
+                if pr_num:
+                    try:
+                        pull = repo.get_pull(int(pr_num))
+                        body = RE_PR_DESC.search(pull.body)
+                        body = body.groupdict()['desc'].strip() if body else ""
+                        if body:
+                            entry += "\n```\n" + body + "\n```\n"
+                    except Exception as e:
+                        err("Unable to retrieve PR #{} from Github.".format(pr_num))
+                        err("Exception: {}".format(e))
+
+        return entry
+
+    if data["title"]:
+        yield rest_title(data["title"], char="=") + "\n\n"
+
+    for version in data["versions"]:
+        if len(version["sections"]) > 0:
+            yield render_version(version) + "\n\n"
+
+
 ## formatter engines
 
 if pystache:
@@ -1639,6 +1741,10 @@ def changelog(output_engine=rest_py,
     opts = {
         'unreleased_version_label': unreleased_version_label,
     }
+    github_opts = {
+        'github_token': kwargs.pop('github_token', None),
+        'github_repo': kwargs.pop('github_repo', None),
+    }
 
     ## Setting main container of changelog elements
     title = None if kwargs.get("revlist") else "Changelog"
@@ -1656,6 +1762,7 @@ def changelog(output_engine=rest_py,
     else:
         data["versions"] = itertools.chain([first_version], versions)
 
+    opts.update(**github_opts)
     return output_engine(data=data, opts=opts)
 
 ##
@@ -1964,6 +2071,10 @@ def main():
             body_process=config.get("body_process", noop),
             subject_process=config.get("subject_process", noop),
             log_encoding=log_encoding,
+            # Kolibree output additions
+            # -------------------------
+            github_token=os.environ.get("GITHUB_TOKEN", None),
+            github_repo=config.get("github_repo", None),
         )
 
         if isinstance(content, basestring):
