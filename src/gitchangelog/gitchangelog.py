@@ -37,6 +37,12 @@ except ImportError:
     Github = None
 
 
+try:
+    from jira import JIRA
+except ImportError:
+    JIRA = None
+
+
 __version__ = "%%version%%"  ## replaced by autogen.sh
 
 DEBUG = None
@@ -1304,6 +1310,33 @@ def ensure_template_file_exists(label, template_name):
 
 
 ##
+## Kolibree additions
+##
+def get_repo(github_repo, github_token):
+    repo = None
+    if Github:
+        try:
+            github = Github(github_token)
+            repo = github.get_repo(github_repo)
+        except Exception:
+            die("Unable to connect to Github")
+    return repo
+
+
+def get_jira(jira_server, jira_username, jira_apitoken):
+    jira = None
+    if JIRA:
+        try:
+            jira = JIRA(
+                server=jira_server,
+                basic_auth=(jira_username, jira_apitoken)
+            )
+        except Exception:
+            die("Unable to connect to Jira")
+    return jira
+
+
+##
 ## Output Engines
 ##
 
@@ -1357,26 +1390,35 @@ def rest_py(data, opts={}):
 
 @available_in_config
 def kolibree_output(data, opts={}):
-    """Returns Markdown Text changelog content from data
+    """Returns Markdown Text changelog content from data.
 
+    Connect to Jira and use Jira title(summary) as changelog title/subject.
     Connect to GitHub if commit is missing a body and retrieve PR description.
     """
 
-    token = opts.get("github_token")
-    repo = opts.get("github_repo")
-    if not all([token, repo]):
-        die("Github token, repo and/or PR regexp config is missing.")
+    # JIRA
+    jira_server = opts.get("jira_server")
+    jira_username = opts.get("jira_username")
+    jira_apitoken = opts.get("jira_apitoken")
+    if not all([jira_server, jira_username, jira_apitoken]):
+        die("Jira server, username and/or apitoken config is missing.")
+    jira = get_jira(jira_server, jira_username, jira_apitoken)
+    RE_TICKET = None
+    if jira:
+        RE_TICKET = re.compile(
+            # Example: "[feature][KLTB002-XXX] Title of commit"
+            r"\[KLTB002.+?\]",
+            re.X,
+        )
 
-    # GitHub
-    github = None
+    # Github
+    github_token = opts.get("github_token")
+    github_repo = opts.get("github_repo")
+    if not all([github_token, github_repo]):
+        die("Github token and/or repo config is missing.")
+    repo = get_repo(github_repo, github_token)
     RE_PR_NUM = None
-    if Github:
-        try:
-            github = Github(token)
-            repo = github.get_repo(repo)
-        except Exception:
-            die("Unable to connect to Github")
-
+    if repo:
         RE_PR_NUM = re.compile(
             # Example: "Title of commit (#PR_NUM)"
             r"""
@@ -1418,10 +1460,26 @@ def kolibree_output(data, opts={}):
         return s
 
     def render_commit(commit, opts=opts):
-        subject = commit["subject"]
+        # Get Jira summary
+        ticket = None
+        if RE_TICKET:
+            ticket = RE_TICKET.search(commit["subject"])
+            ticket = ticket.group()[1:-1] if ticket else None
+        if ticket:
+            try:
+                issue = jira.issue(ticket, fields="summary")
+                subject = "[{}]({}) {}".format(
+                    ticket,
+                    "{}/browse/{}".format(jira_server, ticket),
+                    issue.fields.summary,
+                )
+            except Exception as e:
+                err("Unable to retrieve Ticket #{} from Jira".format(ticket))
+                err("Exception: {}".format(e))
+        else:
+            subject = commit["subject"]
 
-        entry = indent('\n'.join(textwrap.wrap(subject)),
-                       first="- ").strip() + "\n"
+        entry = indent(subject, first="- ").strip() + "\n"
 
         if commit["body"]:
             entry += "\n" + indent(commit["body"]) + "\n"
@@ -1440,7 +1498,6 @@ def kolibree_output(data, opts={}):
                     except Exception as e:
                         err("Unable to retrieve PR #{} from Github.".format(pr_num))
                         err("Exception: {}".format(e))
-
         return entry
 
     if data["title"]:
@@ -1745,6 +1802,11 @@ def changelog(output_engine=rest_py,
         'github_token': kwargs.pop('github_token', None),
         'github_repo': kwargs.pop('github_repo', None),
     }
+    jira_opts = {
+        'jira_server': kwargs.pop('jira_server', None),
+        'jira_username': kwargs.pop('jira_username', None),
+        'jira_apitoken': kwargs.pop('jira_apitoken', None),
+    }
 
     ## Setting main container of changelog elements
     title = None if kwargs.get("revlist") else "Changelog"
@@ -1763,7 +1825,9 @@ def changelog(output_engine=rest_py,
         data["versions"] = itertools.chain([first_version], versions)
 
     opts.update(**github_opts)
+    opts.update(**jira_opts)
     return output_engine(data=data, opts=opts)
+
 
 ##
 ## Manage obsolete options
@@ -2075,6 +2139,9 @@ def main():
             # -------------------------
             github_token=os.environ.get("GITHUB_TOKEN", None),
             github_repo=config.get("github_repo", None),
+            jira_server=config.get("jira_server", None),
+            jira_username=os.environ.get("JIRA_USERNAME", None),
+            jira_apitoken=os.environ.get("JIRA_APITOKEN", None),
         )
 
         if isinstance(content, basestring):

@@ -60,6 +60,10 @@ if "%%short-version%%".startswith("%%"):
 
 setup(
     setup_requires=['d2to1'],
+    install_requires=[
+        'PyGithub',
+        'jira',
+    ],
     extras_require={
         'Mustache': ["pystache", ],
         'Mako': ["mako", ],

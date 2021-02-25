@@ -302,3 +302,7 @@ revs = []
 ## Github repo
 ##
 github_repo = "kolibree-git/gitchangelog"
+##
+## Jira server
+##
+jira_server = "https://kolibree.atlassian.net"
