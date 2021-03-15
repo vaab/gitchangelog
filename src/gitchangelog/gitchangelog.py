@@ -1436,14 +1436,14 @@ def kolibree_output(data, opts={}):
             re.DOTALL,
         )
 
-    def rest_title(label, char="="):
-        return (label.strip() + "\n") + (char * len(label) + "\n")
+    def md_title(label, level=1):
+        return "#" * level + " " + label.strip() + "\n"
 
     def render_version(version):
         title = "%s (%s)" % (version["tag"], version["date"]) \
                 if version["tag"] else \
                 opts["unreleased_version_label"]
-        s = rest_title(title, char="-")
+        s = md_title(title, level=2)
 
         sections = version["sections"]
         nb_sections = len(sections)
@@ -1453,7 +1453,7 @@ def kolibree_output(data, opts={}):
                             else "Other"
 
             if not (section_label == "Other" and nb_sections == 1):
-                s += "\n" + rest_title(section_label, "~")
+                s += "\n" + md_title(section_label, level=3) + "\n"
 
             for commit in section["commits"]:
                 s += render_commit(commit)
@@ -1482,7 +1482,7 @@ def kolibree_output(data, opts={}):
         entry = indent(subject, first="- ").strip() + "\n"
 
         if commit["body"]:
-            entry += "\n" + indent(commit["body"]) + "\n"
+            entry += indent(commit["body"]) + "\n"
         else:
             if RE_PR_NUM:
                 # Get GitHub PR description/body
@@ -1494,14 +1494,14 @@ def kolibree_output(data, opts={}):
                         body = RE_PR_DESC.search(pull.body)
                         body = body.groupdict()['desc'].strip() if body else ""
                         if body:
-                            entry += "\n```\n" + body + "\n```\n"
+                            entry += "\n```\n" + body + "\n```"
                     except Exception as e:
                         err("Unable to retrieve PR #{} from Github.".format(pr_num))
                         err("Exception: {}".format(e))
-        return entry
+        return entry + "\n"
 
     if data["title"]:
-        yield rest_title(data["title"], char="=") + "\n\n"
+        yield md_title(data["title"], level=1) + "\n\n"
 
     for version in data["versions"]:
         if len(version["sections"]) > 0:
