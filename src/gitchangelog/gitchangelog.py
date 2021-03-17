@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
-from __future__ import absolute_import
-
 import locale
 import re
 import os
@@ -52,14 +49,6 @@ DEBUG = None
 ## Platform and python compatibility
 ##
 
-PY_VERSION = float("%d.%d" % sys.version_info[0:2])
-PY3 = PY_VERSION >= 3
-
-try:
-    basestring
-except NameError:
-    basestring = str  ## pylint: disable=redefined-builtin
-
 WIN32 = sys.platform == 'win32'
 if WIN32:
     PLT_CFG = {
@@ -69,168 +58,6 @@ else:
     PLT_CFG = {
         'close_fds': True,
     }
-
-##
-##
-##
-
-if WIN32 and not PY3:
-
-    ## Sorry about the following, all this code is to ensure full
-    ## compatibility with python 2.7 under windows about sending unicode
-    ## command-line
-
-    import ctypes
-    import subprocess
-    import _subprocess
-    from ctypes import byref, windll, c_char_p, c_wchar_p, c_void_p, \
-         Structure, sizeof, c_wchar, WinError
-    from ctypes.wintypes import BYTE, WORD, LPWSTR, BOOL, DWORD, LPVOID, \
-         HANDLE
-
-
-    ##
-    ## Types
-    ##
-
-    CREATE_UNICODE_ENVIRONMENT = 0x00000400
-    LPCTSTR = c_char_p
-    LPTSTR = c_wchar_p
-    LPSECURITY_ATTRIBUTES = c_void_p
-    LPBYTE  = ctypes.POINTER(BYTE)
-
-    class STARTUPINFOW(Structure):
-        _fields_ = [
-            ("cb",              DWORD),  ("lpReserved",    LPWSTR),
-            ("lpDesktop",       LPWSTR), ("lpTitle",       LPWSTR),
-            ("dwX",             DWORD),  ("dwY",           DWORD),
-            ("dwXSize",         DWORD),  ("dwYSize",       DWORD),
-            ("dwXCountChars",   DWORD),  ("dwYCountChars", DWORD),
-            ("dwFillAtrribute", DWORD),  ("dwFlags",       DWORD),
-            ("wShowWindow",     WORD),   ("cbReserved2",   WORD),
-            ("lpReserved2",     LPBYTE), ("hStdInput",     HANDLE),
-            ("hStdOutput",      HANDLE), ("hStdError",     HANDLE),
-        ]
-
-    LPSTARTUPINFOW = ctypes.POINTER(STARTUPINFOW)
-
-
-    class PROCESS_INFORMATION(Structure):
-        _fields_ = [
-            ("hProcess",         HANDLE), ("hThread",          HANDLE),
-            ("dwProcessId",      DWORD),  ("dwThreadId",       DWORD),
-        ]
-
-    LPPROCESS_INFORMATION = ctypes.POINTER(PROCESS_INFORMATION)
-
-
-    class DUMMY_HANDLE(ctypes.c_void_p):
-
-        def __init__(self, *a, **kw):
-            super(DUMMY_HANDLE, self).__init__(*a, **kw)
-            self.closed = False
-
-        def Close(self):
-            if not self.closed:
-                windll.kernel32.CloseHandle(self)
-                self.closed = True
-
-        def __int__(self):
-            return self.value
-
-
-    CreateProcessW = windll.kernel32.CreateProcessW
-    CreateProcessW.argtypes = [
-        LPCTSTR, LPTSTR, LPSECURITY_ATTRIBUTES,
-        LPSECURITY_ATTRIBUTES, BOOL, DWORD, LPVOID, LPCTSTR,
-        LPSTARTUPINFOW, LPPROCESS_INFORMATION,
-    ]
-    CreateProcessW.restype = BOOL
-
-
-    ##
-    ## Patched functions/classes
-    ##
-
-    def CreateProcess(executable, args, _p_attr, _t_attr,
-                      inherit_handles, creation_flags, env, cwd,
-                      startup_info):
-        """Create a process supporting unicode executable and args for win32
-
-        Python implementation of CreateProcess using CreateProcessW for Win32
-
-        """
-
-        si = STARTUPINFOW(
-            dwFlags=startup_info.dwFlags,
-            wShowWindow=startup_info.wShowWindow,
-            cb=sizeof(STARTUPINFOW),
-            ## XXXvlab: not sure of the casting here to ints.
-            hStdInput=int(startup_info.hStdInput),
-            hStdOutput=int(startup_info.hStdOutput),
-            hStdError=int(startup_info.hStdError),
-        )
-
-        wenv = None
-        if env is not None:
-            ## LPCWSTR seems to be c_wchar_p, so let's say CWSTR is c_wchar
-            env = (unicode("").join([
-                unicode("%s=%s\0") % (k, v)
-                for k, v in env.items()])) + unicode("\0")
-            wenv = (c_wchar * len(env))()
-            wenv.value = env
-
-        pi = PROCESS_INFORMATION()
-        creation_flags |= CREATE_UNICODE_ENVIRONMENT
-
-        if CreateProcessW(executable, args, None, None,
-                          inherit_handles, creation_flags,
-                          wenv, cwd, byref(si), byref(pi)):
-            return (DUMMY_HANDLE(pi.hProcess), DUMMY_HANDLE(pi.hThread),
-                    pi.dwProcessId, pi.dwThreadId)
-        raise WinError()
-
-
-    class Popen(subprocess.Popen):
-        """This superseeds Popen and corrects a bug in cPython 2.7 implem"""
-
-        def _execute_child(self, args, executable, preexec_fn, close_fds,
-                           cwd, env, universal_newlines,
-                           startupinfo, creationflags, shell, to_close,
-                           p2cread, p2cwrite,
-                           c2pread, c2pwrite,
-                           errread, errwrite):
-            """Code from part of _execute_child from Python 2.7 (9fbb65e)
-
-            There are only 2 little changes concerning the construction of
-            the the final string in shell mode: we preempt the creation of
-            the command string when shell is True, because original function
-            will try to encode unicode args which we want to avoid to be able to
-            sending it as-is to ``CreateProcess``.
-
-            """
-            if not isinstance(args, subprocess.types.StringTypes):
-                args = subprocess.list2cmdline(args)
-
-            if startupinfo is None:
-                startupinfo = subprocess.STARTUPINFO()
-            if shell:
-                startupinfo.dwFlags |= _subprocess.STARTF_USESHOWWINDOW
-                startupinfo.wShowWindow = _subprocess.SW_HIDE
-                comspec = os.environ.get("COMSPEC", unicode("cmd.exe"))
-                args = unicode('{} /c "{}"').format(comspec, args)
-                if (_subprocess.GetVersion() >= 0x80000000 or
-                        os.path.basename(comspec).lower() == "command.com"):
-                    w9xpopen = self._find_w9xpopen()
-                    args = unicode('"%s" %s') % (w9xpopen, args)
-                    creationflags |= _subprocess.CREATE_NEW_CONSOLE
-
-            super(Popen, self)._execute_child(args, executable,
-                preexec_fn, close_fds, cwd, env, universal_newlines,
-                startupinfo, creationflags, False, to_close, p2cread,
-                p2cwrite, c2pread, c2pwrite, errread, errwrite)
-
-    _subprocess.CreateProcess = CreateProcess
 
 
 ##
@@ -334,7 +161,6 @@ def format_last_exception(prefix="  | "):
 
 _config_env = {
     'WIN32': WIN32,
-    'PY3': PY3,
 }
 
 
@@ -490,23 +316,12 @@ for _label in ("Indent", "Wrap", "ReSub", "noop", "final_dot",
 def file_get_contents(filename):
     with open(filename) as f:
         out = f.read()
-    if not PY3:
-        if not isinstance(out, unicode):
-            out = out.decode(_preferred_encoding)
-        ## remove encoding declaration (for some reason, python 2.7
-        ## don't like it).
-        out = re.sub(r"^(\s*#.*\s*)coding[:=]\s*([-\w.]+\s*;?\s*)",
-                     r"\1", out, re.DOTALL)
-
     return out
 
 
 def file_put_contents(filename, string):
     """Write string to filename."""
-    if PY3:
-        fopen = open(filename, 'w', newline='')
-    else:
-        fopen = open(filename, 'wb')
+    fopen = open(filename, 'w', newline='')
 
     with fopen as f:
         f.write(string)
@@ -574,15 +389,12 @@ class Phile(object):
 
     This is an adaptor on a file object.
 
-        >>> if PY3:
-        ...     from io import BytesIO
-        ...     def File(s):
-        ...         _obj = BytesIO()
-        ...         _obj.write(s.encode(_preferred_encoding))
-        ...         _obj.seek(0)
-        ...         return _obj
-        ... else:
-        ...     from cStringIO import StringIO as File
+        >>> from io import BytesIO
+        ... def File(s):
+        ...     _obj = BytesIO()
+        ...     _obj.write(s.encode(_preferred_encoding))
+        ...     _obj.seek(0)
+        ...     return _obj
 
         >>> f = Phile(File("a-b-c-d"))
 
@@ -617,9 +429,8 @@ class Phile(object):
 
     def read(self, delimiter="\n"):
         buf = ""
-        if PY3:
-            delimiter = delimiter.encode(_preferred_encoding)
-            buf = buf.encode(_preferred_encoding)
+        delimiter = delimiter.encode(_preferred_encoding)
+        buf = buf.encode(_preferred_encoding)
         while True:
             chunk = self._file.read(self._buffersize)
             if not chunk:
@@ -632,8 +443,7 @@ class Phile(object):
             buf = records[-1]
 
     def write(self, buf):
-        if PY3:
-            buf = buf.encode(self._encoding)
+        buf = buf.encode(self._encoding)
         return self._file.write(buf)
 
     def close(self):
@@ -1105,7 +915,7 @@ class GitCmd(SubGitObjectMixin):
                 return swrap(command, **kwargs)
 
         def method(*args, **kwargs):
-            if (len(args) == 1 and not isinstance(args[0], basestring)):
+            if (len(args) == 1 and not isinstance(args[0], str)):
                 return dir_swrap(
                     ['git', label, ] + args[0],
                     shell=False,
@@ -1652,8 +1462,6 @@ def FileRegexSubst(filename, pattern, replace, flags=0):
                 pattern,
                 replace.replace(r'\o', "".join(content).replace('\\', '\\\\')),
                 src, flags=flags)
-        if not PY3:
-            src = src.encode(_preferred_encoding)
         file_put_contents(filename, src)
 
     return _wrapped
@@ -1937,7 +1745,7 @@ def get_revision(repository, config, opts):
             revs = []
 
     for rev in revs:
-        if not isinstance(rev, basestring):
+        if not isinstance(rev, str):
             die("Invalid type for revision in revs list from config file. "
                 "'str' type is required, and a %r was given."
                 % type(rev).__name__)
@@ -1986,10 +1794,6 @@ class Config(dict):
 ##
 
 def safe_print(content):
-    if not PY3:
-        if isinstance(content, unicode):
-            content = content.encode(_preferred_encoding)
-
     try:
         print(content, end='')
         sys.stdout.flush()
@@ -2007,32 +1811,21 @@ def safe_print(content):
               that can't be translated to characters in your current charset
               (%s).
             """) % sys.stdout.encoding))
-        if WIN32 and PY_VERSION < 3.6 and sys.stdout.encoding != 'utf-8':
-            ## As of PY 3.6, encoding is now ``utf-8`` regardless of
-            ## PYTHONIOENCODING
-            ## https://www.python.org/dev/peps/pep-0528/
-            stderr("  You might want to try to fix that by setting "
-                   "PYTHONIOENCODING to 'utf-8'.")
         exit(1)
     except IOError as e:
-        if e.errno == 0 and not PY3 and WIN32:
-            ## Yes, had a strange IOError Errno 0 after outputing string
-            ## that contained UTF-8 chars on Windows and PY2.7
-            pass  ## Ignoring exception
-        elif ((WIN32 and e.errno == 22) or              ## Invalid argument
+        if ((WIN32 and e.errno == 22) or                ## Invalid argument
               (not WIN32 and e.errno == errno.EPIPE)):  ## Broken Pipe
             ## Nobody is listening anymore to stdout it seems. Let's bailout.
-            if PY3:
-                try:
-                    ## Called only to generate exception and have a chance at
-                    ## ignoring it. Otherwise this happens upon exit, and gets
-                    ## some error message printed on stderr.
-                    sys.stdout.close()
-                except BrokenPipeError:  ## expected outcome on linux
-                    pass
-                except OSError as e2:
-                    if e2.errno != 22:   ## expected outcome on WIN32
-                        raise
+            try:
+                ## Called only to generate exception and have a chance at
+                ## ignoring it. Otherwise this happens upon exit, and gets
+                ## some error message printed on stderr.
+                sys.stdout.close()
+            except BrokenPipeError:  ## expected outcome on linux
+                pass
+            except OSError as e2:
+                if e2.errno != 22:   ## expected outcome on WIN32
+                    raise
             ## Yay ! stdout is closed we can now exit safely.
             exit(0)
         else:
@@ -2144,7 +1937,7 @@ def main():
             jira_apitoken=os.environ.get("JIRA_APITOKEN", None),
         )
 
-        if isinstance(content, basestring):
+        if isinstance(content, str):
             content = content.splitlines(True)
 
         config.get("publish", stdout)(content)

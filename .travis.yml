@@ -3,8 +3,6 @@ language: python
 python:
   - "3.7"
   - "3.6"
-  - "3.5"
-  - "2.7"
 install:
   - git fetch --unshallow || true ## required as we need it to make own gitchangelog
   - if [ -e requirements.txt ]; then pip install -r requirements.txt; fi

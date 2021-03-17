@@ -49,8 +49,7 @@ Feature
 Requirements
 ============
 
-``gitchangelog`` is compatible Python 2 and Python 3 on
-Linux/BSD/MacOSX and Windows.
+``gitchangelog`` is compatible with Python 3.6 and above on Linux/BSD/MacOSX and Windows.
 
 Please submit an issue if you encounter incompatibilities.
 

@@ -20,7 +20,6 @@ import sys
 from gitchangelog import gitchangelog
 
 WIN32 = gitchangelog.WIN32
-PY3 = gitchangelog.PY3
 
 
 def raw_renderer(data, opts):
