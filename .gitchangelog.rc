@@ -198,6 +198,12 @@ unreleased_version_label = "(unreleased)"
 #output_engine = mustache("restructuredtext")
 #output_engine = mustache("markdown")
 #output_engine = makotemplate("restructuredtext")
+
+#
+# Warning: section_regexps config will be ignored!
+# --------
+# Sections will be retrieved directly from Jira issue
+#
 output_engine = kolibree_output
 
 

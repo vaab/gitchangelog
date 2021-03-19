@@ -16,6 +16,7 @@ import itertools
 import errno
 
 from subprocess import Popen, PIPE
+from typing import Generator
 
 try:
     import pystache
@@ -1198,8 +1199,15 @@ def rest_py(data, opts={}):
             yield render_version(version) + "\n\n"
 
 
+JIRA_ISSUETYPE_TO_SECTION = {
+    "story": "Feature",
+    "bug": "Fix",
+    "other": "Other",
+}
+
+
 @available_in_config
-def kolibree_output(data, opts={}):
+def kolibree_output(data: dict, opts: dict = {}) -> Generator[str, None, None]:
     """Returns Markdown Text changelog content from data.
 
     Connect to Jira and use Jira title(summary) as changelog title/subject.
@@ -1246,30 +1254,42 @@ def kolibree_output(data, opts={}):
             re.DOTALL,
         )
 
-    def md_title(label, level=1):
+    def render_title(label: str, level: int = 1) -> str:
         return "#" * level + " " + label.strip() + "\n"
 
-    def render_version(version):
+    def render_version(version: dict) -> str:
         title = "%s (%s)" % (version["tag"], version["date"]) \
                 if version["tag"] else \
                 opts["unreleased_version_label"]
-        s = md_title(title, level=2)
+        s = render_title(title, level=2)
 
         sections = version["sections"]
-        nb_sections = len(sections)
-        for section in sections:
+        if len(sections) != 1:
+            die("There can be exactly one section for kolibree output")
 
-            section_label = section["label"] if section.get("label", None) \
-                            else "Other"
+        jira_sections = {
+            section: [] for section in JIRA_ISSUETYPE_TO_SECTION.values()
+        }
 
-            if not (section_label == "Other" and nb_sections == 1):
-                s += "\n" + md_title(section_label, level=3) + "\n"
+        for commit in sections[0]["commits"]:
+            section, entry = render_commit(commit)
+            section = JIRA_ISSUETYPE_TO_SECTION[section]
+            jira_sections[section].append(entry)
 
-            for commit in section["commits"]:
-                s += render_commit(commit)
+        for section, entries in jira_sections.items():
+            if not entries:
+                continue
+            s += "\n" + render_title(section, level=3) + "\n"
+            for entry in entries:
+                s += entry
         return s
 
-    def render_commit(commit, opts=opts):
+    def render_commit(commit: str) -> tuple:
+        """
+        Parse commit and return Jira issue type mapped as section and commit text.
+        """
+        section = "other"
+
         # Get Jira summary
         ticket = None
         if RE_TICKET:
@@ -1277,12 +1297,13 @@ def kolibree_output(data, opts={}):
             ticket = ticket.group()[1:-1] if ticket else None
         if ticket:
             try:
-                issue = jira.issue(ticket, fields="summary")
+                issue = jira.issue(ticket, fields="summary,issuetype")
                 subject = "[{}]({}) {}".format(
                     ticket,
                     "{}/browse/{}".format(jira_server, ticket),
                     issue.fields.summary,
                 )
+                section = issue.fields.issuetype.name.lower()
             except Exception as e:
                 err("Unable to retrieve Ticket #{} from Jira".format(ticket))
                 err("Exception: {}".format(e))
@@ -1292,7 +1313,7 @@ def kolibree_output(data, opts={}):
         entry = indent(subject, first="- ").strip() + "\n"
 
         if commit["body"]:
-            entry += indent(commit["body"]) + "\n"
+            entry += indent(commit["body"]) + "\n\n"
         else:
             if RE_PR_NUM:
                 # Get GitHub PR description/body
@@ -1304,14 +1325,20 @@ def kolibree_output(data, opts={}):
                         body = RE_PR_DESC.search(pull.body)
                         body = body.groupdict()['desc'].strip() if body else ""
                         if body:
-                            entry += "\n```\n" + body + "\n```"
+                            entry += "\n"
+                            entry += "\n".join(
+                                f"  {line}"
+                                for line in body.split("\n")
+                            )
+                            entry += "\n\n"
                     except Exception as e:
                         err("Unable to retrieve PR #{} from Github.".format(pr_num))
                         err("Exception: {}".format(e))
-        return entry + "\n"
+
+        return section, entry
 
     if data["title"]:
-        yield md_title(data["title"], level=1) + "\n\n"
+        yield render_title(data["title"], level=1) + "\n\n"
 
     for version in data["versions"]:
         if len(version["sections"]) > 0:
@@ -1621,6 +1648,11 @@ def changelog(output_engine=rest_py,
     data = {"title": title,
             "versions": []}
 
+    # Do not generate sections from git commit subject
+    # if we are parsing based on Jira issue types (kolibree_output engine)
+    if output_engine.__name__ == "kolibree_output":
+        kwargs.update(section_regexps=[(None, '')])
+
     versions = versions_data_iter(warn=warn, **kwargs)
 
     ## poke once in versions to know if there's at least one:
@@ -1634,6 +1666,7 @@ def changelog(output_engine=rest_py,
 
     opts.update(**github_opts)
     opts.update(**jira_opts)
+
     return output_engine(data=data, opts=opts)
 
 
