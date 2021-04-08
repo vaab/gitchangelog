@@ -15,6 +15,7 @@ import contextlib
 import itertools
 import errno
 
+from enum import Enum
 from subprocess import Popen, PIPE
 from typing import Generator
 
@@ -1204,6 +1205,10 @@ JIRA_ISSUETYPE_TO_SECTION = {
     "bug": "Fix",
     "other": "Other",
 }
+class EntryType(Enum):
+    jira = "jira"
+    github = "github"
+    commit = "commit"
 
 
 @available_in_config
@@ -1254,6 +1259,9 @@ def kolibree_output(data: dict, opts: dict = {}) -> Generator[str, None, None]:
             re.DOTALL,
         )
 
+    # Commit body type
+    entry_desc = data.get("entry_desc", "").lower()
+
     def render_title(label: str, level: int = 1) -> str:
         return "#" * level + " " + label.strip() + "\n"
 
@@ -1281,7 +1289,7 @@ def kolibree_output(data: dict, opts: dict = {}) -> Generator[str, None, None]:
                 continue
             s += "\n" + render_title(section, level=3) + "\n"
             for entry in entries:
-                s += entry
+                s += entry + "\n"
         return s
 
     def render_commit(commit: str) -> tuple:
@@ -1290,14 +1298,17 @@ def kolibree_output(data: dict, opts: dict = {}) -> Generator[str, None, None]:
         """
         section = "other"
 
-        # Get Jira summary
+        # Get Jira info
         ticket = None
         if RE_TICKET:
             ticket = RE_TICKET.search(commit["subject"])
             ticket = ticket.group()[1:-1] if ticket else None
         if ticket:
             try:
-                issue = jira.issue(ticket, fields="summary,issuetype")
+                fields = "summary,issuetype"
+                if entry_desc == "jira":
+                    fields += ",description"
+                issue = jira.issue(ticket, fields=fields)
                 subject = "[{}]({}) {}".format(
                     ticket,
                     "{}/browse/{}".format(jira_server, ticket),
@@ -1310,11 +1321,16 @@ def kolibree_output(data: dict, opts: dict = {}) -> Generator[str, None, None]:
         else:
             subject = commit["subject"]
 
+        # Subject
         entry = indent(subject, first="- ").strip() + "\n"
 
-        if commit["body"]:
-            entry += indent(commit["body"]) + "\n\n"
-        else:
+        # Choose entry description
+        if ticket and entry_desc == EntryType.jira.value:
+            desc = issue.fields.description if issue.fields.description else ""
+            entry += indent("\n" + desc)
+        elif entry_desc == EntryType.commit.value and commit["body"]:
+            entry += indent(commit["body"] + "\n")
+        elif entry_desc == EntryType.github.value:
             if RE_PR_NUM:
                 # Get GitHub PR description/body
                 pr_num = RE_PR_NUM.search(commit["subject"])
@@ -1330,7 +1346,7 @@ def kolibree_output(data: dict, opts: dict = {}) -> Generator[str, None, None]:
                                 f"  {line}"
                                 for line in body.split("\n")
                             )
-                            entry += "\n\n"
+                            entry += "\n"
                     except Exception as e:
                         err("Unable to retrieve PR #{} from Github.".format(pr_num))
                         err("Exception: {}".format(e))
@@ -1642,11 +1658,13 @@ def changelog(output_engine=rest_py,
         'jira_username': kwargs.pop('jira_username', None),
         'jira_apitoken': kwargs.pop('jira_apitoken', None),
     }
+    entry_desc = kwargs.pop('entry_desc', "")
 
     ## Setting main container of changelog elements
     title = None if kwargs.get("revlist") else "Changelog"
     data = {"title": title,
-            "versions": []}
+            "versions": [],
+            "entry_desc": entry_desc}
 
     # Do not generate sections from git commit subject
     # if we are parsing based on Jira issue types (kolibree_output engine)
@@ -1968,6 +1986,7 @@ def main():
             jira_server=config.get("jira_server", None),
             jira_username=os.environ.get("JIRA_USERNAME", None),
             jira_apitoken=os.environ.get("JIRA_APITOKEN", None),
+            entry_desc=config.get("entry_desc", ""),
         )
 
         if isinstance(content, str):

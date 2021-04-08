@@ -81,6 +81,10 @@ ignore_regexps = [
 ## ``subject_process`` (or ``body_process``) to do some changes to the subject,
 ## whenever you are tweaking this variable.
 ##
+## Note:
+## For ``kolibree output`` setting this varialbe has no effect, since Jira
+## task/issue type will be used for section title.
+##
 section_regexps = [
     ('Fix', [
         r'''(?ix)
@@ -100,7 +104,6 @@ section_regexps = [
     ]),
     ('Other', None ## Match all lines
      ),
-
 ]
 
 
@@ -312,3 +315,15 @@ github_repo = "kolibree-git/gitchangelog"
 ## Jira server
 ##
 jira_server = "https://kolibree.atlassian.net"
+##
+## Entry description
+##
+## Available choices:
+##
+##  - "jira"    use Jira task/issue description
+##  - "github"  use Github PR message
+##  - "commit"  use git commit message
+##  or
+##  - ""        to skip description altogether
+##
+entry_desc = ""
