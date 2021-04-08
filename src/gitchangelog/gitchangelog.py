@@ -1306,7 +1306,7 @@ def kolibree_output(data: dict, opts: dict = {}) -> Generator[str, None, None]:
         if ticket:
             try:
                 fields = "summary,issuetype"
-                if entry_desc == "jira":
+                if entry_desc == EntryType.jira.value:
                     fields += ",description"
                 issue = jira.issue(ticket, fields=fields)
                 subject = "[{}]({}) {}".format(
