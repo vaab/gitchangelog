@@ -327,3 +327,30 @@ jira_server = "https://kolibree.atlassian.net"
 ##  - ""        to skip description altogether
 ##
 entry_desc = ""
+##
+## Packages setup
+##
+## Packages are defined as dictionary.
+## Key represents (internal) package name and is used as script argument when
+## changelog is built for package.
+##
+## Example:
+##
+# packages = {
+#     "sdk": {"paths": ["path/to/toothbrush/sdk", "path/to/web/sdk"]},
+#     "app": {"paths": ["path/to/app", "path/to/app/config"]},
+#     # ...
+# }
+##
+## Value of each package is again a dictionary.
+## `paths` key has list of directories as value. Directories are project paths
+## which will be scanned/searched while processing changelog if script was run
+## with package as optional argument.
+## If commit does not have files in path of provided directories, that commit
+## will not be processed and will not be a part of changelog output.
+##
+## Example script run with package argument:
+##
+## gitchangelog revlist -p PACKAGE
+##
+packages = {}

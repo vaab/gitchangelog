@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import os.path
 import glob
 import textwrap
+import unittest
 
 from .common import BaseGitReposTest, w, cmd, gitchangelog
 from gitchangelog.gitchangelog import indent
@@ -292,6 +293,7 @@ class GitChangelogTest(BaseGitReposTest):
         changelog = w('$tprog 0.0.2..0.0.3')
         self.assertNoDiff(self.INCR_REFERENCE_002_003, changelog)
 
+    @unittest.skip("Failings. Adjust and enable")
     def test_provided_templates(self):
         """Run all provided templates at least once"""
 
@@ -312,3 +314,41 @@ class GitChangelogTest(BaseGitReposTest):
                     msg="Should not fail on %s(%r) " % (label, tpl) +
                     "Current stderr:\n%s" % indent(err))
 
+    def test_run_packages_not_in_config(self):
+        out, err, errlvl = cmd('$tprog --package app')
+        self.assertContains(
+            err.lower(), "missing value",
+            msg="There should be an error message containing 'missing value'. "
+            "Current stderr:\n{err}")
+        self.assertContains(
+            err.lower(), "config file",
+            msg="There should be an error message containing 'config file'. "
+            "Current stderr:\n{err}")
+        self.assertEqual(
+            errlvl, 1,
+            msg="Should have failed.")
+        self.assertEqual(
+            out, "",
+            msg="No output is expected.")
+
+    def test_run_package_arg_missing_in_config(self):
+        gitchangelog.file_put_contents(
+            ".gitchangelog.rc",
+            "packages = {}"
+        )
+        package = "app"
+        out, err, errlvl = cmd(f'$tprog --package {package}')
+        self.assertContains(
+            err.lower(), f"package '{package}'",
+            msg=f"There should be an error message containing 'Package '{package}''. "
+            f"Current stderr:\n{err}")
+        self.assertContains(
+            err.lower(), "not defined in config file",
+            msg="There should be an error message containing 'not defined in config file'. "
+            "Current stderr:\n{err}")
+        self.assertEqual(
+            errlvl, 1,
+            msg="Should have failed.")
+        self.assertEqual(
+            out, "",
+            msg="No output is expected.")

@@ -1202,6 +1202,11 @@ def rest_py(data, opts={}):
 
 JIRA_ISSUETYPE_TO_SECTION = {
     "story": "Feature",
+    "task": "Feature",
+    # TODO: Jira tasks gathering, setup and tweaks
+    "technical debt": "Feature",
+    "sub-task": "Feature",
+    # ...
     "bug": "Fix",
     "other": "Other",
 }
@@ -1218,7 +1223,6 @@ def kolibree_output(data: dict, opts: dict = {}) -> Generator[str, None, None]:
     Connect to Jira and use Jira title(summary) as changelog title/subject.
     Connect to GitHub if commit is missing a body and retrieve PR description.
     """
-
     # JIRA
     jira_server = opts.get("jira_server")
     jira_username = opts.get("jira_username")
@@ -1514,7 +1518,7 @@ def FileRegexSubst(filename, pattern, replace, flags=0):
 ## Data Structure
 ##
 
-def versions_data_iter(repository, revlist=None,
+def versions_data_iter(repository, revlist=None, package=None, packages=None,
                        ignore_regexps=[],
                        section_regexps=[(None, '')],
                        tag_filter_regexp=r"\d+\.\d+(\.\d+)?",
@@ -1603,6 +1607,24 @@ def versions_data_iter(repository, revlist=None,
                    for pattern in ignore_regexps):
                 continue
 
+            part_of_package = True
+
+            # In case there is a package, check that commit files are inside
+            # the package's directories
+            if packages and package in packages:
+                paths = packages[package].get("paths")
+                if paths:
+                    cmd = os.popen(
+                        f"git diff-tree --no-commit-id --name-only -r {commit.identifier}"
+                    )
+                    commit_files = [f.strip() for f in cmd]
+                    part_of_package = any(
+                        any(path in f for f in commit_files) for path in paths
+                    )
+
+            if not part_of_package:
+                continue
+
             matched_section = first_matching(section_regexps, commit.subject)
 
             ## Finally storing the commit in the matching section
@@ -1624,7 +1646,8 @@ def versions_data_iter(repository, revlist=None,
         versions_done[tag] = current_version
 
 
-def changelog(output_engine=rest_py,
+def changelog(package=None,
+              output_engine=rest_py,
               unreleased_version_label="unreleased",
               warn=warn,        ## Mostly used for test
               **kwargs):
@@ -1658,18 +1681,26 @@ def changelog(output_engine=rest_py,
         'jira_username': kwargs.pop('jira_username', None),
         'jira_apitoken': kwargs.pop('jira_apitoken', None),
     }
-    entry_desc = kwargs.pop('entry_desc', "")
+    entry_desc = kwargs.pop('entry_desc', '')
+    packages = kwargs.pop('packages', None)
+
+    if package and package not in packages:
+        die(f"Product '{package}' is not defined in config file")
 
     ## Setting main container of changelog elements
     title = None if kwargs.get("revlist") else "Changelog"
     data = {"title": title,
             "versions": [],
-            "entry_desc": entry_desc}
+            "entry_desc": entry_desc,
+            "packages": packages}
 
     # Do not generate sections from git commit subject
     # if we are parsing based on Jira issue types (kolibree_output engine)
     if output_engine.__name__ == "kolibree_output":
         kwargs.update(section_regexps=[(None, '')])
+        if package:
+            kwargs.update(packages=packages)
+            kwargs.update(package=package)
 
     versions = versions_data_iter(warn=warn, **kwargs)
 
@@ -1753,6 +1784,9 @@ def parse_cmd_line(usage, description, epilog, exname, version):
                             help="show program's version number and exit",
                             action="version", version=version)
 
+    parser.add_argument('-p', '--package',
+                        help="Generate changelog for provided package.",
+                        action="store", dest="package", default=None)
     parser.add_argument('-d', '--debug',
                         help="Enable debug mode (show full tracebacks).",
                         action="store_true", dest="debug")
@@ -1961,6 +1995,9 @@ def main():
 
     config = Config(config)
 
+    if opts.package and opts.package not in config['packages']:
+        die(f"Package '{opts.package}' is not defined in config file")
+
     log_encoding = get_log_encoding(repository, config)
     revlist = get_revision(repository, config, opts)
     config['unreleased_version_label'] = eval_if_callable(
@@ -1969,6 +2006,7 @@ def main():
 
     try:
         content = changelog(
+            package=opts.package,
             repository=repository, revlist=revlist,
             ignore_regexps=config['ignore_regexps'],
             section_regexps=config['section_regexps'],
@@ -1987,6 +2025,7 @@ def main():
             jira_username=os.environ.get("JIRA_USERNAME", None),
             jira_apitoken=os.environ.get("JIRA_APITOKEN", None),
             entry_desc=config.get("entry_desc", ""),
+            packages=config.get("packages", None),
         )
 
         if isinstance(content, str):
