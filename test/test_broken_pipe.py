@@ -38,19 +38,13 @@ from .common import BaseGitReposTest, cmd, WIN32
 
 
 class BrokenPipeTest(BaseGitReposTest):
-
     def setUp(self):
         super(BrokenPipeTest, self).setUp()
 
-        self.git.commit(
-            message='foo',
-            author='Bob <bob@example.com>',
-            date='2000-01-01 10:00:00',
-            allow_empty=True)
+        self.git.commit(message="foo", author="Bob <bob@example.com>", date="2000-01-01 10:00:00", allow_empty=True)
 
     def test_break_pipe(self):
-        out, err, errlvl = cmd(
-            '$tprog | %s' % ("REM" if WIN32 else ":"))
+        out, err, errlvl = cmd("$tprog | %s" % ("REM" if WIN32 else ":"))
         self.assertEqual(errlvl, 0)
         self.assertNoDiff("", err)
         self.assertNoDiff("", out)

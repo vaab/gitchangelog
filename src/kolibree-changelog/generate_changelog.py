@@ -97,9 +97,7 @@ if __name__ == "__main__":
     arguments = Arguments(arguments=parser.parse_args())
 
     github_access_token = (
-        arguments.github_access_token
-        if arguments.github_access_token
-        else getpass.getpass("Github access token:")
+        arguments.github_access_token if arguments.github_access_token else getpass.getpass("Github access token:")
     )
 
     commits_parser = CommitParser(
@@ -109,14 +107,10 @@ if __name__ == "__main__":
         github_access_token=github_access_token,
     )
 
-    jira_tickets = commits_parser.jira_tickets(
-        start_tag=arguments.start_tag, end_tag=arguments.end_tag
-    )
+    jira_tickets = commits_parser.jira_tickets(start_tag=arguments.start_tag, end_tag=arguments.end_tag)
 
     jira_access_token = (
-        arguments.jira_access_token
-        if arguments.jira_access_token
-        else getpass.getpass("Jira access token:")
+        arguments.jira_access_token if arguments.jira_access_token else getpass.getpass("Jira access token:")
     )
 
     jira_parser = JiraParser(

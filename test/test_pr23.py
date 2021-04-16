@@ -14,14 +14,16 @@ from .common import BaseGitReposTest
 
 class TestCrossBranchTags(BaseGitReposTest):
 
-    REFERENCE = textwrap.dedent("""\
+    REFERENCE = textwrap.dedent(
+        """\
         None
           None:
             * c [The Committer]
             * b [The Committer]
             * a [The Committer]
 
-        """)
+        """
+    )
 
     def setUp(self):
         super(TestCrossBranchTags, self).setUp()
@@ -33,15 +35,12 @@ class TestCrossBranchTags(BaseGitReposTest):
         ## * b
         ## * a
 
-        self.git.commit(message='a', allow_empty=True)
-        self.git.commit(message='b', allow_empty=True)
-        self.git.commit(message='c', allow_empty=True)
+        self.git.commit(message="a", allow_empty=True)
+        self.git.commit(message="b", allow_empty=True)
+        self.git.commit(message="c", allow_empty=True)
 
     def test_matching_reference(self):
         """Test that all 3 commits are in the changelog"""
 
         changelog = self.simple_changelog()
-        self.assertNoDiff(
-            self.REFERENCE, changelog)
-
-
+        self.assertNoDiff(self.REFERENCE, changelog)

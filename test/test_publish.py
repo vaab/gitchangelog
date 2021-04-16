@@ -8,13 +8,13 @@ from __future__ import unicode_literals
 
 import textwrap
 
-from .common import BaseGitReposTest, BaseTmpDirTest, cmd, \
-     gitchangelog
+from .common import BaseGitReposTest, BaseTmpDirTest, cmd, gitchangelog
 
 
 class FullIncrementalRecipeTest(BaseGitReposTest):
 
-    REFERENCE = textwrap.dedent("""\
+    REFERENCE = textwrap.dedent(
+        """\
         Changelog
         =========
 
@@ -28,21 +28,16 @@ class FullIncrementalRecipeTest(BaseGitReposTest):
         ----------------
         - Previous content
 
-        """)
+        """
+    )
 
     def setUp(self):
         super(FullIncrementalRecipeTest, self).setUp()
 
-        self.git.commit(message="a",
-                        date="2017-02-20 11:00:00",
-                        allow_empty=True)
-        self.git.commit(message="b",
-                        date="2017-02-20 11:00:00",
-                        allow_empty=True)
+        self.git.commit(message="a", date="2017-02-20 11:00:00", allow_empty=True)
+        self.git.commit(message="b", date="2017-02-20 11:00:00", allow_empty=True)
         self.git.tag("1.2")
-        self.git.commit(message="c",
-                        date="2017-02-20 11:00:00",
-                        allow_empty=True)
+        self.git.commit(message="c", date="2017-02-20 11:00:00", allow_empty=True)
 
     def test_insert_changelog_recipe(self):
         """Full incremental recipe"""
@@ -62,10 +57,13 @@ class FullIncrementalRecipeTest(BaseGitReposTest):
                     OUTPUT_FILE, INSERT_POINT,
                     idx=lambda m: m.start(1)
                 )
-                """))
+                """
+            ),
+        )
         gitchangelog.file_put_contents(
             "CHANGELOG.rst",
-            textwrap.dedent("""\
+            textwrap.dedent(
+                """\
                 Changelog
                 =========
 
@@ -74,18 +72,14 @@ class FullIncrementalRecipeTest(BaseGitReposTest):
                 ----------------
                 - Previous content
 
-                """))
+                """
+            ),
+        )
 
-        out, err, errlvl = cmd('$tprog')
-        self.assertEqual(
-            err, "",
-            msg="There should be non error messages. "
-            "Current stderr:\n%s" % err)
-        self.assertEqual(
-            errlvl, 0,
-            msg="Should succeed")
-        self.assertNoDiff(gitchangelog.file_get_contents("CHANGELOG.rst"),
-                          self.REFERENCE)
+        out, err, errlvl = cmd("$tprog")
+        self.assertEqual(err, "", msg="There should be non error messages. " "Current stderr:\n%s" % err)
+        self.assertEqual(errlvl, 0, msg="Should succeed")
+        self.assertNoDiff(gitchangelog.file_get_contents("CHANGELOG.rst"), self.REFERENCE)
 
     def test_insert_changelog_recipe2(self):
         """Full incremental recipe with subst"""
@@ -127,10 +121,13 @@ class FullIncrementalRecipeTest(BaseGitReposTest):
                 publish = FileRegexSubst(
                     OUTPUT_FILE, INSERT_POINT_REGEX, r"\1\o\g<rev>"
                 )
-                """))
+                """
+            ),
+        )
         gitchangelog.file_put_contents(
             "CHANGELOG.rst",
-            textwrap.dedent("""\
+            textwrap.dedent(
+                """\
                 Changelog
                 =========
 
@@ -141,34 +138,25 @@ class FullIncrementalRecipeTest(BaseGitReposTest):
                 ----------------
                 - Previous content
 
-                """))
+                """
+            ),
+        )
 
-        out, err, errlvl = cmd('$tprog')
-        self.assertEqual(
-            err, "",
-            msg="There should be non error messages. "
-            "Current stderr:\n%s" % err)
-        self.assertEqual(
-            errlvl, 0,
-            msg="Should succeed")
-        self.assertNoDiff(
-            self.REFERENCE,
-            gitchangelog.file_get_contents("CHANGELOG.rst"))
+        out, err, errlvl = cmd("$tprog")
+        self.assertEqual(err, "", msg="There should be non error messages. " "Current stderr:\n%s" % err)
+        self.assertEqual(errlvl, 0, msg="Should succeed")
+        self.assertNoDiff(self.REFERENCE, gitchangelog.file_get_contents("CHANGELOG.rst"))
         ## Re-applying will change nothing
-        out, err, errlvl = cmd('$tprog')
-        self.assertNoDiff(
-            self.REFERENCE,
-            gitchangelog.file_get_contents("CHANGELOG.rst"))
+        out, err, errlvl = cmd("$tprog")
+        self.assertNoDiff(self.REFERENCE, gitchangelog.file_get_contents("CHANGELOG.rst"))
 
 
 class FileInsertAtFirstRegexMatchTest(BaseTmpDirTest):
-
     def test_insertions(self):
         def make_insertion(string, pattern, insert, **kw):
             FILE = "testing.txt"
             gitchangelog.file_put_contents(FILE, string)
-            gitchangelog.FileInsertAtFirstRegexMatch(FILE, pattern, **kw)(
-                insert.splitlines(True))
+            gitchangelog.FileInsertAtFirstRegexMatch(FILE, pattern, **kw)(insert.splitlines(True))
             return gitchangelog.file_get_contents(FILE)
 
         self.assertEqual(make_insertion("", r"^", "B"), "B")

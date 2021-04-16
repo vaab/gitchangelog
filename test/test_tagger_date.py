@@ -50,25 +50,23 @@ def simple_renderer_auto_date(data, opts):
 
 class TaggerDateTest(BaseGitReposTest):
 
-    REFERENCE = textwrap.dedent("""\
+    REFERENCE = textwrap.dedent(
+        """\
         1.2 (2017-03-17)
           None:
             * b [The Committer]
 
-        """)
+        """
+    )
 
     def setUp(self):
         super(TaggerDateTest, self).setUp()
 
-        self.git.commit(message="b",
-                        date="2017-02-20 11:00:00",
-                        allow_empty=True)
-        self.git.tag(['-a', "1.2", '--message="tag message"'],
-                     env={'GIT_COMMITTER_DATE': "2017-03-17 11:00:00"})
+        self.git.commit(message="b", date="2017-02-20 11:00:00", allow_empty=True)
+        self.git.tag(["-a", "1.2", '--message="tag message"'], env={"GIT_COMMITTER_DATE": "2017-03-17 11:00:00"})
 
     def test_checking_tagger_date_in_commit_object(self):
-        out = self.changelog(
-            output_engine=simple_renderer_using_commit_internal)
+        out = self.changelog(output_engine=simple_renderer_using_commit_internal)
         self.assertNoDiff(self.REFERENCE, out)
 
     def test_checking_tagger_date(self):
@@ -77,13 +75,10 @@ class TaggerDateTest(BaseGitReposTest):
 
 
 class TaggerDateNonAnnotatedTest(BaseGitReposTest):
-
     def setUp(self):
         super(TaggerDateNonAnnotatedTest, self).setUp()
 
-        self.git.commit(message="b",
-                        date="2017-02-20 11:00:00",
-                        allow_empty=True)
+        self.git.commit(message="b", date="2017-02-20 11:00:00", allow_empty=True)
         self.git.tag(["1.2"])
 
     def test_checking_tagger_date_in_non_tag_with_commit_object(self):
@@ -93,7 +88,8 @@ class TaggerDateNonAnnotatedTest(BaseGitReposTest):
 
 class TaggerDateAutoDateTest(BaseGitReposTest):
 
-    REFERENCE = textwrap.dedent("""\
+    REFERENCE = textwrap.dedent(
+        """\
         1.3 (2017-02-20)
           None:
             * b [The Committer]
@@ -102,19 +98,15 @@ class TaggerDateAutoDateTest(BaseGitReposTest):
           None:
             * b [The Committer]
 
-        """)
+        """
+    )
 
     def setUp(self):
         super(TaggerDateAutoDateTest, self).setUp()
 
-        self.git.commit(message="b",
-                        date="2017-02-20 11:00:00",
-                        allow_empty=True)
-        self.git.tag(['-a', "1.2", '--message="tag message"'],
-                     env={'GIT_COMMITTER_DATE': "2017-03-17 11:00:00"})
-        self.git.commit(message="b",
-                        date="2017-02-20 11:00:00",
-                        allow_empty=True)
+        self.git.commit(message="b", date="2017-02-20 11:00:00", allow_empty=True)
+        self.git.tag(["-a", "1.2", '--message="tag message"'], env={"GIT_COMMITTER_DATE": "2017-03-17 11:00:00"})
+        self.git.commit(message="b", date="2017-02-20 11:00:00", allow_empty=True)
         self.git.tag(["1.3"])
 
     def test_checking_tagger_date(self):

@@ -25,13 +25,9 @@ class CommitParser(object):
     def jira_tickets(self, start_tag, end_tag) -> [str]:
         commits = self._get_commits(start_tag, end_tag)
 
-        jira_tickets, github_prs = self._process_commits(
-            commits, self.jira_regex_format
-        )
+        jira_tickets, github_prs = self._process_commits(commits, self.jira_regex_format)
 
-        jira_tickets += self._get_jira_tickets_from_github(
-            github_prs, self.jira_regex_format
-        )
+        jira_tickets += self._get_jira_tickets_from_github(github_prs, self.jira_regex_format)
 
         return jira_tickets
 
@@ -61,9 +57,7 @@ class CommitParser(object):
         repo = github.get_repo(self.repository)
         # Include the serve in the url.
         server_netloc = urlparse(self.jira_server).netloc
-        url_regex = re.compile(
-            f"https?:\\/\\/{server_netloc}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*{regex_format})"
-        )
+        url_regex = re.compile(f"https?:\\/\\/{server_netloc}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*{regex_format})")
         jira_ticket_regex = re.compile(regex_format)
 
         jira_tickets = []
@@ -78,9 +72,6 @@ class CommitParser(object):
             # In case the ticket ends with 1XXXX, the regex match will not contain the XXXX.
             # The match will be PROJECT-1, which is wrong.
             # This check is to exclude this results.
-            if (
-                jira_ticket_match is not None
-                and jira_ticket_match.group() == url_path.name
-            ):
+            if jira_ticket_match is not None and jira_ticket_match.group() == url_path.name:
                 jira_tickets.append(jira_ticket_match.group())
         return jira_tickets
