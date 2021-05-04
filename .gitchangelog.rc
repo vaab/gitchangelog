@@ -316,6 +316,39 @@ github_repo = "kolibree-git/gitchangelog"
 ##
 jira_server = "https://kolibree.atlassian.net"
 ##
+## Jira project key
+##
+## Set to a value which will be used for filtering out 'Jira type' commits (PRs).
+## It will be a part of regular expression so please treat it as raw string
+## and escape special characters if needed.
+##
+## Example of Jira type commit subject: "[feature][KLTB002-XXX] Title of commit"
+##
+jira_project_key = "KLTB002"
+##
+## Jira issue types
+##
+## Set to a dictionary which will map Jira issue types to string representation.
+## Commits will be group inside mapped key value pairs as output sections.
+##
+## Example output:
+## ### Feature
+## - [KLTB002-12345] ...
+## ...
+## ### Other
+## ...
+##
+## If `other` key is not present in defined dictionary, it will be added as:
+## "other": "Other"
+##
+jira_issue_types = {
+    "story": "Feature",
+    "task": "Feature",
+    "technical debt": "Feature",
+    "sub-task": "Feature",
+    "bug": "Fix",
+}
+##
 ## Entry description
 ##
 ## Available choices:

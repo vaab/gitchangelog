@@ -1205,15 +1205,13 @@ def rest_py(data, opts={}):
             yield render_version(version) + "\n\n"
 
 
-JIRA_ISSUETYPE_TO_SECTION = {
+JIRA_ISSUE_TYPE_DEFAULT_KEY = "other"
+JIRA_ISSUE_TYPES = {
     "story": "Feature",
     "task": "Feature",
-    # TODO: Jira tasks gathering, setup and tweaks
     "technical debt": "Feature",
     "sub-task": "Feature",
-    # ...
     "bug": "Fix",
-    "other": "Other",
 }
 
 
@@ -1234,14 +1232,16 @@ def kolibree_output(data: dict, opts: dict = {}) -> Generator[str, None, None]:
     jira_server = opts.get("jira_server")
     jira_username = opts.get("jira_username")
     jira_apitoken = opts.get("jira_apitoken")
-    if not all([jira_server, jira_username, jira_apitoken]):
-        die("Jira server, username and/or apitoken config is missing.")
+    jira_project_key = opts.get("jira_project_key")
+    jira_issue_types = opts.get("jira_issue_types")
+    if not all([jira_server, jira_username, jira_apitoken, jira_project_key]):
+        die("Jira server, username, apitoken and/or project key config is missing.")
     jira = get_jira(jira_server, jira_username, jira_apitoken)
     RE_TICKET = None
     if jira:
         RE_TICKET = re.compile(
             # Example: "[feature][KLTB002-XXX] Title of commit"
-            r"\[KLTB002.+?\]",
+            rf"\[{jira_project_key}.+?\]",
             re.X,
         )
 
@@ -1284,17 +1284,16 @@ def kolibree_output(data: dict, opts: dict = {}) -> Generator[str, None, None]:
         if len(sections) != 1:
             die("There can be exactly one section for kolibree output")
 
-        jira_sections = {section: [] for section in JIRA_ISSUETYPE_TO_SECTION.values()}
+        jira_sections = {section: [] for section in jira_issue_types.keys()}
 
         for commit in sections[0]["commits"]:
             section, entry = render_commit(commit)
-            section = JIRA_ISSUETYPE_TO_SECTION[section]
             jira_sections[section].append(entry)
 
         for section, entries in jira_sections.items():
             if not entries:
                 continue
-            s += "\n" + render_title(section, level=3) + "\n"
+            s += "\n" + render_title(jira_issue_types[section], level=3) + "\n"
             for entry in entries:
                 s += entry + "\n"
         return s
@@ -1303,7 +1302,7 @@ def kolibree_output(data: dict, opts: dict = {}) -> Generator[str, None, None]:
         """
         Parse commit and return Jira issue type mapped as section and commit text.
         """
-        section = "other"
+        section = JIRA_ISSUE_TYPE_DEFAULT_KEY
 
         # Get Jira info
         ticket = None
@@ -1695,6 +1694,8 @@ def changelog(
         "jira_server": kwargs.pop("jira_server", None),
         "jira_username": kwargs.pop("jira_username", None),
         "jira_apitoken": kwargs.pop("jira_apitoken", None),
+        "jira_project_key": kwargs.pop("jira_project_key", None),
+        "jira_issue_types": kwargs.pop("jira_issue_types", None),
     }
     entry_desc = kwargs.pop("entry_desc", "")
     packages = kwargs.pop("packages", None)
@@ -2015,6 +2016,10 @@ def main():
     config["unreleased_version_label"] = eval_if_callable(config["unreleased_version_label"])
     manage_obsolete_options(config)
 
+    jira_issue_types = config.get("jira_issue_types", JIRA_ISSUE_TYPES)
+    if JIRA_ISSUE_TYPE_DEFAULT_KEY not in jira_issue_types:
+        jira_issue_types.update({JIRA_ISSUE_TYPE_DEFAULT_KEY: "Other"})
+
     try:
         content = changelog(
             package=opts.package,
@@ -2036,6 +2041,8 @@ def main():
             jira_server=config.get("jira_server", None),
             jira_username=os.environ.get("JIRA_USERNAME", None),
             jira_apitoken=os.environ.get("JIRA_APITOKEN", None),
+            jira_project_key=config.get("jira_project_key", None),
+            jira_issue_types=jira_issue_types,
             entry_desc=config.get("entry_desc", ""),
             packages=config.get("packages", None),
         )
