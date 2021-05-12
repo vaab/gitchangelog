@@ -42,7 +42,7 @@ except ImportError:
     JIRA = None
 
 
-__version__ = "%%version%%"  ## replaced by autogen.sh
+__version__ = "3.0.4"
 
 DEBUG = None
 
