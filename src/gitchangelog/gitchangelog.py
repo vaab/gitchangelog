@@ -1156,7 +1156,7 @@ def fix_incorrect_ticket(ticket):
     Rules :
      - Ticket should contain exactly one "-" (e.g KLTB002-12345)
     """
-    if ticket.count("-") > 1:
+    if ticket and ticket.count("-") > 1:
         ticket = "-".join(ticket.split("-", 2)[:2])
     return ticket
 
