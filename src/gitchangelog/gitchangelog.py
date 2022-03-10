@@ -1,20 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import collections
+import contextlib
+import datetime
+import errno
+import glob
+import itertools
 import locale
-import re
 import os
 import os.path
+import re
 import sys
-import glob
 import textwrap
-import datetime
-import collections
 import traceback
-import contextlib
-import itertools
-import errno
-
 from enum import Enum
 from subprocess import Popen, PIPE
 from typing import Generator
@@ -29,23 +28,19 @@ try:
 except ImportError:  ## pragma: no cover
     mako = None
 
-
 try:
     from github import Github
 except ImportError:
     Github = None
-
 
 try:
     from jira import JIRA
 except ImportError:
     JIRA = None
 
-
 __version__ = "3.0.4"
 
 DEBUG = None
-
 
 ##
 ## Platform and python compatibility
@@ -60,7 +55,6 @@ else:
     PLT_CFG = {
         "close_fds": True,
     }
-
 
 ##
 ## Help and usage strings
@@ -309,6 +303,7 @@ SetIfEmpty = curryfy(set_if_empty)
 for _label in ("Indent", "Wrap", "ReSub", "noop", "final_dot", "ucfirst", "strip", "SetIfEmpty"):
     _config_env[_label] = locals()[_label]
 
+
 ##
 ## File
 ##
@@ -471,7 +466,6 @@ class Proc(Popen):
 
 
 def cmd(command, env=None, shell=True):
-
     p = Popen(
         command,
         shell=shell,
@@ -1156,6 +1150,16 @@ def get_jira(jira_server, jira_username, jira_apitoken):
     return jira
 
 
+def fix_incorrect_ticket(ticket):
+    """
+    Verifies that the ticket format is correct and if not tries to fix it.
+    Rules :
+     - Ticket should contain exactly one "-" (e.g KLTB002-12345)
+    """
+    if ticket.count("-") > 1:
+        ticket = "-".join(ticket.split("-", 2)[:2])
+    return ticket
+
 ##
 ## Output Engines
 ##
@@ -1310,6 +1314,7 @@ def kolibree_output(data: dict, opts: dict = {}) -> Generator[str, None, None]:
         if RE_TICKET:
             ticket = RE_TICKET.search(commit["subject"])
             ticket = ticket.group()[1:-1] if ticket else None
+            ticket = fix_incorrect_ticket(ticket)
         if ticket:
             try:
                 fields = "summary,issuetype"
@@ -1417,12 +1422,12 @@ else:
     def mustache(template_name):  ## pylint: disable=unused-argument
         die("Required 'pystache' python module not found.")
 
-
 if mako:
 
     import mako.template  ## pylint: disable=wrong-import-position
 
     mako_env = dict((f.__name__, f) for f in (ucfirst, indent, textwrap, paragraph_wrap))
+
 
     @available_in_config
     def makotemplate(template_name):
@@ -1484,9 +1489,9 @@ def FileInsertAtFirstRegexMatch(filename, pattern, flags=0, idx=lambda m: m.star
                         offset = new_offset
                         dst.write(line)
                         continue
-                    dst.write(line[0 : index - offset])
+                    dst.write(line[0: index - offset])
                     write_content(dst, content)
-                    dst.write(line[index - offset :])
+                    dst.write(line[index - offset:])
                     postfix = True
             if not postfix:
                 write_content(dst, content)
@@ -1499,7 +1504,6 @@ def FileInsertAtFirstRegexMatch(filename, pattern, flags=0, idx=lambda m: m.star
 
 @available_in_config
 def FileRegexSubst(filename, pattern, replace, flags=0):
-
     replace = re.sub(r"\\([0-9+])", r"\\g<\1>", replace)
 
     def _wrapped(content):
@@ -1557,14 +1561,14 @@ def versions_data_iter(
         [
             rev[1:]
             for rev in repository.git.rev_parse(
-                [
-                    "--rev-only",
-                ]
-                + revlist
-                + [
-                    "--",
-                ]
-            ).split("\n")
+            [
+                "--rev-only",
+            ]
+            + revlist
+            + [
+                "--",
+            ]
+        ).split("\n")
             if rev.startswith("^")
         ]
         if revlist
@@ -1616,7 +1620,7 @@ def versions_data_iter(
         sections = collections.defaultdict(list)
         commits = repository.log(
             includes=[min(tag, max_rev)],
-            excludes=tags[idx + 1 :] + excludes,
+            excludes=tags[idx + 1:] + excludes,
             include_merge=include_merge,
             encoding=log_encoding,
         )
@@ -1781,7 +1785,6 @@ def manage_obsolete_options(config):
 
 
 def parse_cmd_line(usage, description, epilog, exname, version):
-
     import argparse
 
     kwargs = dict(
@@ -1817,10 +1820,10 @@ def parse_cmd_line(usage, description, epilog, exname, version):
             continue
         if arg == "show":
             warn("'show' positional argument is deprecated.")
-            argv += sys.argv[i + 2 :]
+            argv += sys.argv[i + 2:]
             break
         else:
-            argv += sys.argv[i + 1 :]
+            argv += sys.argv[i + 1:]
             break
 
     return parser.parse_args(argv)
@@ -1866,7 +1869,6 @@ def get_revision(repository, config, opts):
 
 
 def get_log_encoding(repository, config):
-
     log_encoding = config.get("log_encoding", None)
     if log_encoding is None:
         try:
@@ -1946,7 +1948,6 @@ def safe_print(content):
 
 
 def main():
-
     global DEBUG
     ## Basic environment infos
 
