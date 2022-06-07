@@ -1277,13 +1277,16 @@ def kolibree_output(data: dict, opts: dict = {}) -> Generator[str, None, None]:
     # Commit body type
     entry_desc = data.get("entry_desc", "").lower()
 
+    def render_subject_w_pr_link(subject: str, repo: str, pr: int) -> str:
+        link = f"https://github.com/{repo}/pull/{pr}"
+        return f'{subject[:-7]} [#{pr}]({link})'
+
     def render_title(label: str, level: int = 1) -> str:
         return "#" * level + " " + label.strip() + "\n"
 
     def render_version(version: dict) -> str:
-        title = f"{'[' + version['package'] + ']' if version['package'] else ''} {version['tag']} ({version['date']})" \
-            if version["tag"] else opts["unreleased_version_label"]
-        s = render_title(title, level=2)
+        title = f"{'[' + version['package'] + ']' if version['package'] else ''} {version['date']}"
+        s = "\n" + render_title(title, level=2)
 
         sections = version["sections"]
         if len(sections) != 1:
@@ -1333,41 +1336,27 @@ def kolibree_output(data: dict, opts: dict = {}) -> Generator[str, None, None]:
         else:
             subject = commit["subject"]
 
-        # Subject
-        entry = indent(subject, first="- ").strip() + "\n"
+        if RE_PR_NUM:
+            # Get GitHub PR description/body
+            pr_num = RE_PR_NUM.search(subject)
+            pr_num = pr_num.groups()[0] if pr_num else None
+            if pr_num:
+                subject = render_subject_w_pr_link(subject, github_repo, pr_num)
 
-        # Choose entry description
-        if ticket and entry_desc == EntryType.jira.value:
-            desc = issue.fields.description if issue.fields.description else ""
-            entry += indent("\n" + desc)
-        elif entry_desc == EntryType.commit.value and commit["body"]:
-            entry += indent(commit["body"] + "\n")
-        elif entry_desc == EntryType.github.value:
-            if RE_PR_NUM:
-                # Get GitHub PR description/body
-                pr_num = RE_PR_NUM.search(commit["subject"])
-                pr_num = pr_num.groups()[0] if pr_num else None
-                if pr_num:
-                    try:
-                        pull = repo.get_pull(int(pr_num))
-                        body = RE_PR_DESC.search(pull.body)
-                        body = body.groupdict()["desc"].strip() if body else ""
-                        if body:
-                            entry += "\n"
-                            entry += "\n".join(f"  {line}" for line in body.split("\n"))
-                            entry += "\n"
-                    except Exception as e:
-                        err("Unable to retrieve PR #{} from Github.".format(pr_num))
-                        err("Exception: {}".format(e))
+        # Get commit date
+        commit_date = datetime.datetime.fromtimestamp(int(commit["commit"].author_date_timestamp)).strftime('%Y-%m-%d')
+
+        # Subject
+        entry = indent(subject, first="- ").strip() + f"    *{commit_date}*"
 
         return section, entry
 
     if data["title"]:
-        yield render_title(data["title"], level=1) + "\n\n"
+        yield render_title(data["title"], level=1) + "\n"
 
     for version in data["versions"]:
         if len(version["sections"]) > 0:
-            yield render_version(version) + "\n\n"
+            yield render_version(version)
 
 
 ## formatter engines
@@ -1521,18 +1510,18 @@ def FileRegexSubst(filename, pattern, replace, flags=0):
 
 
 def versions_data_iter(
-    repository,
-    revlist=None,
-    package=None,
-    packages=None,
-    ignore_regexps=[],
-    section_regexps=[(None, "")],
-    tag_filter_regexp=r"\d+\.\d+(\.\d+)?",
-    include_merge=True,
-    body_process=lambda x: x,
-    subject_process=lambda x: x,
-    log_encoding=DEFAULT_GIT_LOG_ENCODING,
-    warn=warn,  ## Mostly used for test
+        repository,
+        revlist=None,
+        package=None,
+        packages=None,
+        ignore_regexps=[],
+        section_regexps=[(None, "")],
+        tag_filter_regexp=r"\d+\.\d+(\.\d+)?",
+        include_merge=True,
+        body_process=lambda x: x,
+        subject_process=lambda x: x,
+        log_encoding=DEFAULT_GIT_LOG_ENCODING,
+        warn=warn,  ## Mostly used for test
 ):
     """Returns an iterator through versions data structures
 
@@ -1665,11 +1654,11 @@ def versions_data_iter(
 
 
 def changelog(
-    package=None,
-    output_engine=rest_py,
-    unreleased_version_label="unreleased",
-    warn=warn,  ## Mostly used for test
-    **kwargs,
+        package=None,
+        output_engine=rest_py,
+        unreleased_version_label="unreleased",
+        warn=warn,  ## Mostly used for test
+        **kwargs,
 ):
     """Returns a string containing the changelog of given repository
 
