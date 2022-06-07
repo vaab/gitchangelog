@@ -1284,9 +1284,12 @@ def kolibree_output(data: dict, opts: dict = {}) -> Generator[str, None, None]:
     def render_title(label: str, level: int = 1) -> str:
         return "#" * level + " " + label.strip() + "\n"
 
-    def render_version(version: dict) -> str:
-        title = f"{'[' + version['package'] + ']' if version['package'] else ''} {version['date']}"
-        s = "\n" + render_title(title, level=2)
+    def render_version(version: dict, new_title: bool = True) -> str:
+        if new_title:
+            title = f"{'[' + version['package'] + ']' if version['package'] else ''} {version['date']}"
+            s = "\n" + render_title(title, level=2)
+        else:
+            s = ""
 
         sections = version["sections"]
         if len(sections) != 1:
@@ -1301,7 +1304,6 @@ def kolibree_output(data: dict, opts: dict = {}) -> Generator[str, None, None]:
         for section, entries in jira_sections.items():
             if not entries:
                 continue
-            s += "\n" + render_title(jira_issue_types[section], level=3) + "\n"
             for entry in entries:
                 s += entry + "\n"
         return s
@@ -1354,9 +1356,14 @@ def kolibree_output(data: dict, opts: dict = {}) -> Generator[str, None, None]:
     if data["title"]:
         yield render_title(data["title"], level=1) + "\n"
 
+    prev_version_date = None
     for version in data["versions"]:
         if len(version["sections"]) > 0:
-            yield render_version(version)
+            if prev_version_date == version["date"]:
+                yield render_version(version, new_title=False)
+            else:
+                yield render_version(version)
+            prev_version_date = version["date"]
 
 
 ## formatter engines
